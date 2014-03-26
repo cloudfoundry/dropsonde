@@ -1,7 +1,7 @@
 package emitter
 
 type Event interface {
-
+	ProtoMessage()
 }
 
 type Emitter interface {
