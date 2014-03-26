@@ -1,0 +1,9 @@
+language: go
+notifications:
+  email:
+    - cf-lamb@pivotallabs.com
+
+install:
+  - go get -d -v -t ./...
+go:
+  - 1.2.1
