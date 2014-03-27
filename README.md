@@ -1,4 +1,4 @@
-# Dropsonde [![Build Status](https://travis-ci.org/cloudfoundry/dropsonde.svg)](https://travis-ci.org/cloudfoundry/dropsonde)
+# Dropsonde [![Build Status](https://travis-ci.org/cloudfoundry-incubator/dropsonde.svg?branch=master)](https://travis-ci.org/cloudfoundry-incubator/dropsonde)
 
 =========
 
