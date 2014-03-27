@@ -1,10 +1,10 @@
 package main
 
 import (
+	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/examples/hurricanehunter/hunter"
 	"log"
 	"net/http"
-	"github.com/cloudfoundry/dropsonde"
 )
 
 func main() {

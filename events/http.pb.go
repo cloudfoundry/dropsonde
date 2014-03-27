@@ -211,7 +211,7 @@ type HttpStop struct {
 	RequestId        *UUID     `protobuf:"bytes,2,req,name=requestId" json:"requestId,omitempty"`
 	PeerType         *PeerType `protobuf:"varint,3,req,name=peerType,enum=events.PeerType" json:"peerType,omitempty"`
 	StatusCode       *int32    `protobuf:"varint,4,req,name=statusCode" json:"statusCode,omitempty"`
-	ContentLength    *int32    `protobuf:"varint,5,req,name=contentLength" json:"contentLength,omitempty"`
+	ContentLength    *int64    `protobuf:"varint,5,req,name=contentLength" json:"contentLength,omitempty"`
 	XXX_unrecognized []byte    `json:"-"`
 }
 
@@ -247,7 +247,7 @@ func (m *HttpStop) GetStatusCode() int32 {
 	return 0
 }
 
-func (m *HttpStop) GetContentLength() int32 {
+func (m *HttpStop) GetContentLength() int64 {
 	if m != nil && m.ContentLength != nil {
 		return *m.ContentLength
 	}

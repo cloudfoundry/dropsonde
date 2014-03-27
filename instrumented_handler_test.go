@@ -1,7 +1,6 @@
 package dropsonde_test
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
@@ -16,6 +15,7 @@ type FakeHandler struct{}
 
 func (fh FakeHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	rw.Write([]byte("Hello World!"))
+	rw.WriteHeader(123)
 }
 
 var _ = Describe("InstrumentedHandler", func() {
@@ -34,7 +34,6 @@ var _ = Describe("InstrumentedHandler", func() {
 	})
 
 	Describe("request ID", func() {
-
 		It("should add it to the request", func() {
 			h.ServeHTTP(httptest.NewRecorder(), req)
 			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
@@ -64,7 +63,6 @@ var _ = Describe("InstrumentedHandler", func() {
 	})
 
 	Describe("event emission", func() {
-
 		var fake *emitter.Fake
 		var requestId *uuid.UUID
 
@@ -74,41 +72,23 @@ var _ = Describe("InstrumentedHandler", func() {
 
 			requestId, _ = uuid.NewV4()
 			req.Header.Set("X-CF-RequestID", requestId.String())
-			h.ServeHTTP(httptest.NewRecorder(), req)
 		})
 
-		It("should emit a start event", func() {
-			expectedStartEvent := &events.HttpStart{
-				RequestId:     events.NewUUID(requestId),
-				PeerType:      events.PeerType_Server.Enum(),
-				Method:        events.HttpStart_GET.Enum(),
-				Uri:           proto.String("foo.example.com/"),
-				RemoteAddress: proto.String("127.0.0.1"),
-				UserAgent:     proto.String("our-testing-client"),
-			}
+		Context("without an application ID or instanceIndex", func() {
+			BeforeEach(func() {
+				h.ServeHTTP(httptest.NewRecorder(), req)
+			})
 
-			startEvent := fake.Messages[0].(*events.HttpStart)
-			Expect(startEvent).ToNot(BeNil())
-			Expect(startEvent.GetTimestamp()).ToNot(BeZero())
-			startEvent.Timestamp = nil
+			It("should emit a start event", func() {
+				Expect(fake.Messages[0]).To(BeAssignableToTypeOf(new(events.HttpStart)))
+			})
 
-			Expect(startEvent).To(Equal(expectedStartEvent))
-		})
-
-		It("should emit a stop event", func() {
-			expectedStopEvent := &events.HttpStop{
-				RequestId:     events.NewUUID(requestId),
-				PeerType:      events.PeerType_Server.Enum(),
-				StatusCode:    proto.Int32(200),
-				ContentLength: proto.Int32(12),
-			}
-
-			stopEvent := fake.Messages[1].(*events.HttpStop)
-			Expect(stopEvent).ToNot(BeNil())
-			Expect(stopEvent.GetTimestamp()).ToNot(BeZero())
-			stopEvent.Timestamp = nil
-			Expect(stopEvent).To(Equal(expectedStopEvent))
+			It("should emit a stop event", func() {
+				Expect(fake.Messages[1]).To(BeAssignableToTypeOf(new(events.HttpStop)))
+				stopEvent := fake.Messages[1].(*events.HttpStop)
+				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 12))
+			})
 		})
 	})
-
 })

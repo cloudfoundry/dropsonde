@@ -38,5 +38,5 @@ message HttpStop {
     required UUID requestId = 2;
     required PeerType peerType = 3;
     required int32 statusCode = 4;
-    required int32 contentLength = 5;
+    required int64 contentLength = 5;
 }

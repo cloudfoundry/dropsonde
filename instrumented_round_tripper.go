@@ -1,6 +1,11 @@
 package dropsonde
 
-import "net/http"
+import (
+	"github.com/cloudfoundry/dropsonde/emitter"
+	"github.com/cloudfoundry/dropsonde/events"
+	uuid "github.com/nu7hatch/gouuid"
+	"net/http"
+)
 
 type instrumentedRoundTripper struct {
 	rt http.RoundTripper
@@ -20,6 +25,26 @@ Callers of RoundTrip are responsible for setting the ‘X-CF-RequestID’ field 
 Callers are also responsible for setting the ‘X-CF-ApplicationID’ and ‘X-CF-InstanceIndex’ fields in the request header if they are known.
 */
 func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	// ...emit metrics here...
-	return irt.rt.RoundTrip(req)
+	requestId, err := uuid.NewV4()
+	if err != nil {
+		panic(err)
+	}
+
+	httpStart := events.NewHttpStart(req, events.PeerType_Client, requestId)
+
+	parentRequestId, err := uuid.ParseHex(req.Header.Get("X-CF-RequestID"))
+	if err == nil {
+		httpStart.ParentRequestId = events.NewUUID(parentRequestId)
+	}
+
+	req.Header.Set("X-CF-RequestID", requestId.String())
+
+	emitter.Emit(httpStart)
+
+	resp, err := irt.rt.RoundTrip(req)
+
+	httpStop := events.NewHttpStop(resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
+	emitter.Emit(httpStop)
+
+	return resp, err
 }
