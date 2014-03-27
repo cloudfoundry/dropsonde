@@ -1,5 +1,6 @@
 package events;
 
+import "dropsonde_status.proto";
 import "http.proto";
 
 message Origin {
@@ -9,13 +10,15 @@ message Origin {
 
 message Envelope {
     enum EventType {
-        HttpStart = 1;
-        HttpStop = 2;
+        DropsondeStatus = 1;
+        HttpStart = 2;
+        HttpStop = 3;
     }
 
     required Origin origin = 1;
     required EventType eventType = 2;
 
-    optional HttpStart httpStart = 3;
-    optional HttpStop httpStop= 4;
+    optional DropsondeStatus dropsondeStatus = 3;
+    optional HttpStart httpStart = 4;
+    optional HttpStop httpStop = 5;
 }

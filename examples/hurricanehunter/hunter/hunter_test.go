@@ -3,7 +3,7 @@ package hunter_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/cloudfoundry/dropsonde/examples/hurricanehunter/hunter"
+	"github.com/cloudfoundry-incubator/dropsonde/examples/hurricanehunter/hunter"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net/http"

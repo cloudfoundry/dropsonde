@@ -16,17 +16,20 @@ var _ = math.Inf
 type Envelope_EventType int32
 
 const (
-	Envelope_HttpStart Envelope_EventType = 1
-	Envelope_HttpStop  Envelope_EventType = 2
+	Envelope_DropsondeStatus Envelope_EventType = 1
+	Envelope_HttpStart       Envelope_EventType = 2
+	Envelope_HttpStop        Envelope_EventType = 3
 )
 
 var Envelope_EventType_name = map[int32]string{
-	1: "HttpStart",
-	2: "HttpStop",
+	1: "DropsondeStatus",
+	2: "HttpStart",
+	3: "HttpStop",
 }
 var Envelope_EventType_value = map[string]int32{
-	"HttpStart": 1,
-	"HttpStop":  2,
+	"DropsondeStatus": 1,
+	"HttpStart":       2,
+	"HttpStop":        3,
 }
 
 func (x Envelope_EventType) Enum() *Envelope_EventType {
@@ -76,8 +79,9 @@ func (m *Origin) GetJobInstanceId() int32 {
 type Envelope struct {
 	Origin           *Origin             `protobuf:"bytes,1,req,name=origin" json:"origin,omitempty"`
 	EventType        *Envelope_EventType `protobuf:"varint,2,req,name=eventType,enum=events.Envelope_EventType" json:"eventType,omitempty"`
-	HttpStart        *HttpStart          `protobuf:"bytes,3,opt,name=httpStart" json:"httpStart,omitempty"`
-	HttpStop         *HttpStop           `protobuf:"bytes,4,opt,name=httpStop" json:"httpStop,omitempty"`
+	DropsondeStatus  *DropsondeStatus    `protobuf:"bytes,3,opt,name=dropsondeStatus" json:"dropsondeStatus,omitempty"`
+	HttpStart        *HttpStart          `protobuf:"bytes,4,opt,name=httpStart" json:"httpStart,omitempty"`
+	HttpStop         *HttpStop           `protobuf:"bytes,5,opt,name=httpStop" json:"httpStop,omitempty"`
 	XXX_unrecognized []byte              `json:"-"`
 }
 
@@ -97,6 +101,13 @@ func (m *Envelope) GetEventType() Envelope_EventType {
 		return *m.EventType
 	}
 	return 0
+}
+
+func (m *Envelope) GetDropsondeStatus() *DropsondeStatus {
+	if m != nil {
+		return m.DropsondeStatus
+	}
+	return nil
 }
 
 func (m *Envelope) GetHttpStart() *HttpStart {

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/examples/hurricanehunter/hunter"
+	"github.com/cloudfoundry-incubator/dropsonde"
+	"github.com/cloudfoundry-incubator/dropsonde/examples/hurricanehunter/hunter"
 	"log"
 	"net/http"
 )

@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"net/http"
 )
 
