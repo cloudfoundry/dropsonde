@@ -1,6 +1,9 @@
 package emitter
 
-import "os"
+import (
+	"errors"
+	"log"
+)
 
 type Event interface {
 	ProtoMessage()
@@ -13,12 +16,18 @@ type Emitter interface {
 var DefaultEmitter Emitter
 
 func init() {
-	if os.Getenv("BOSH_JOB_NAME") == "" || os.Getenv("BOSH_JOB_INSTANCE") == "" {
-		// warnings on stdout or stderr?
+	var err error
+	DefaultEmitter, err = NewUdpEmitter()
+	if err != nil {
+		log.Printf("WARNING: failed to create default emitter: %v\n", err)
 	}
-	DefaultEmitter = new(UdpEmitter)
 }
 
-func Emit(e Event) {
-	DefaultEmitter.Emit(e)
+
+func Emit(e Event) error {
+	if DefaultEmitter != nil {
+		return DefaultEmitter.Emit(e)
+	}
+
+	return errors.New("Default emitter not set")
 }
