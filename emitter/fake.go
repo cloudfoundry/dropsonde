@@ -11,4 +11,3 @@ func NewFake() *Fake {
 func (f *Fake) Emit(e Event) {
 	f.Messages = append(f.Messages, e)
 }
-

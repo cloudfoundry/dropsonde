@@ -1,12 +1,12 @@
 package emitter
 
 import (
-	"net"
 	"code.google.com/p/gogoprotobuf/proto"
+	"net"
 )
 
 type UdpEmitter struct {
-//	connection net.PacketConn
+	//	connection net.PacketConn
 }
 
 func (e *UdpEmitter) Emit(event Event) {

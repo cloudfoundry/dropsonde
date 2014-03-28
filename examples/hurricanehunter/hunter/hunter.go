@@ -1,10 +1,10 @@
 package hunter
 
 import (
+	"github.com/cloudfoundry-incubator/dropsonde"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"github.com/cloudfoundry-incubator/dropsonde"
 )
 
 func init() {

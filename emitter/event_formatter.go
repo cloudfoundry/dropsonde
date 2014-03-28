@@ -1,10 +1,10 @@
 package emitter
 
 import (
-	"github.com/cloudfoundry-incubator/dropsonde/events"
-	"errors"
-	"os"
 	"code.google.com/p/gogoprotobuf/proto"
+	"errors"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"os"
 	"strconv"
 )
 
@@ -15,7 +15,7 @@ func Wrap(e Event) (*events.Envelope, error) {
 	}
 
 	origin := &events.Origin{
-		JobName: proto.String(os.Getenv("BOSH_JOB_NAME")),
+		JobName:       proto.String(os.Getenv("BOSH_JOB_NAME")),
 		JobInstanceId: proto.Int(jobIndex),
 	}
 	envelope := &events.Envelope{Origin: origin}
@@ -36,4 +36,3 @@ func Wrap(e Event) (*events.Envelope, error) {
 
 	return envelope, nil
 }
-

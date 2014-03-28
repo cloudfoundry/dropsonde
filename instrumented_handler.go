@@ -1,10 +1,10 @@
 package dropsonde
 
 import (
-	"net/http"
-	uuid "github.com/nu7hatch/gouuid"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	uuid "github.com/nu7hatch/gouuid"
+	"net/http"
 )
 
 type instrumentedHandler struct {
@@ -43,9 +43,9 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 }
 
 type instrumentedResponseWriter struct {
-	writer http.ResponseWriter
+	writer        http.ResponseWriter
 	contentLength int64
-	statusCode int
+	statusCode    int
 }
 
 func (irw *instrumentedResponseWriter) Header() http.Header {
@@ -53,7 +53,7 @@ func (irw *instrumentedResponseWriter) Header() http.Header {
 }
 
 func (irw *instrumentedResponseWriter) Write(data []byte) (int, error) {
-	writeCount, err :=  irw.writer.Write(data)
+	writeCount, err := irw.writer.Write(data)
 	irw.contentLength += int64(writeCount)
 	return writeCount, err
 }

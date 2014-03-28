@@ -1,18 +1,18 @@
 package emitter_test
 
 import (
+	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
-	"code.google.com/p/gogoprotobuf/proto"
 	"os"
 )
 
 var _ = Describe("UdpEmitter", func() {
 
-	BeforeEach(func(){
+	BeforeEach(func() {
 		os.Setenv("BOSH_JOB_NAME", "awesome_job")
 		os.Setenv("BOSH_JOB_INSTANCE", "1")
 	})
@@ -29,7 +29,7 @@ var _ = Describe("UdpEmitter", func() {
 			testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
 		})
 
-		AfterEach(func(){
+		AfterEach(func() {
 			agentListener.Close()
 		})
 
@@ -37,7 +37,7 @@ var _ = Describe("UdpEmitter", func() {
 			emitter.Emit(testEvent)
 			buffer := make([]byte, 0, 4096)
 			_, _, err := agentListener.ReadFrom(buffer)
-				Expect(err).To(BeNil())
+			Expect(err).To(BeNil())
 			var envelope events.Envelope
 			err = proto.Unmarshal(buffer, &envelope)
 			Expect(err).To(BeNil())
