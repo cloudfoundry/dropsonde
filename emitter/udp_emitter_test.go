@@ -110,7 +110,6 @@ var _ = Describe("UdpEmitter", func() {
 				emitter, err := emitter.NewUdpEmitter()
 				Expect(emitter).To(BeNil())
 				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(ContainSubstring("unknown port"))
 			})
 		})
 
