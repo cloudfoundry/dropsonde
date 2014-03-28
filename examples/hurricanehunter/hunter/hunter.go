@@ -4,16 +4,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"github.com/cloudfoundry-incubator/dropsonde"
 )
 
-type Handler struct {
-	Client *http.Client
+func init() {
+	http.DefaultTransport = dropsonde.InstrumentedRoundTripper(http.DefaultTransport)
 }
 
-func NewHandler(client *http.Client) *Handler {
-	return &Handler{
-		Client: client,
-	}
+type Handler struct {
+	Client http.Client
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {

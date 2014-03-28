@@ -15,8 +15,9 @@ var _ = Describe("Hunter", func() {
 	var handler *hunter.Handler
 	var recorder *httptest.ResponseRecorder
 	var server *httptest.Server
+
 	BeforeEach(func() {
-		handler = hunter.NewHandler(http.DefaultClient)
+		handler = new(hunter.Handler)
 		recorder = httptest.NewRecorder()
 		server = httptest.NewServer(new(testHandler))
 	})
