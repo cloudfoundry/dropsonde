@@ -7,7 +7,7 @@ type Event interface {
 }
 
 type Emitter interface {
-	Emit(Event)
+	Emit(Event) error
 }
 
 var DefaultEmitter Emitter

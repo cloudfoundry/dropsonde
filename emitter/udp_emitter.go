@@ -6,20 +6,30 @@ import (
 )
 
 type UdpEmitter struct {
-	//	connection net.PacketConn
+	udpAddr *net.UDPAddr
+	udpConn net.PacketConn
 }
 
-func (e *UdpEmitter) Emit(event Event) {
+var DefaultAddress = "localhost:42420"
+
+func NewUdpEmitter() (emitter *UdpEmitter, err error) {
+	addr, _ := net.ResolveUDPAddr("udp", DefaultAddress)
+	conn, err := net.ListenPacket("udp", "")
+
+	emitter = &UdpEmitter{udpAddr: addr, udpConn: conn}
+	return
+}
+
+func (e *UdpEmitter) Emit(event Event) (err error) {
 	envelope, err := Wrap(event)
 	if err != nil {
 		return
 	}
-	data, _ := proto.Marshal(envelope)
-	addr, _ := net.ResolveUDPAddr("udp", ":42420")
-	e.connection().WriteTo(data, addr)
-}
+	data, err := proto.Marshal(envelope)
+	if err != nil {
+		return
+	}
 
-func (e *UdpEmitter) connection() net.PacketConn {
-	c, _ := net.DialUDP("udp", nil, nil)
-	return c
+	_, err = e.udpConn.WriteTo(data, e.udpAddr)
+	return
 }

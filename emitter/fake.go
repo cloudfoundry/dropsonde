@@ -8,6 +8,7 @@ func NewFake() *Fake {
 	return new(Fake)
 }
 
-func (f *Fake) Emit(e Event) {
+func (f *Fake) Emit(e Event) error {
 	f.Messages = append(f.Messages, e)
+	return nil
 }
