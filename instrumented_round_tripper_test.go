@@ -8,21 +8,26 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net/http"
+	"errors"
 )
 
-type FakeRoundTripper struct{}
+type FakeRoundTripper struct {
+	FakeError error
+}
 
-func (frt FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	return &http.Response{StatusCode: 123, ContentLength: 1234}, nil
+func (frt *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{StatusCode: 123, ContentLength: 1234}, frt.FakeError
 }
 
 var _ = Describe("InstrumentedRoundTripper", func() {
+	var fakeRoundTripper *FakeRoundTripper
 	var rt http.RoundTripper
 	var req *http.Request
 
 	BeforeEach(func() {
 		var err error
-		rt = dropsonde.InstrumentedRoundTripper(FakeRoundTripper{})
+		fakeRoundTripper = new(FakeRoundTripper)
+		rt = dropsonde.InstrumentedRoundTripper(fakeRoundTripper)
 
 		req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
 		Expect(err).To(BeNil())
@@ -67,14 +72,29 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 			})
 		})
 
-		It("should emit a stop event", func() {
-			rt.RoundTrip(req)
+		Context("if round tripper returns an error", func() {
+			It("should emit a stop event with blank response fields", func() {
+				fakeRoundTripper.FakeError = errors.New("fake error")
+				rt.RoundTrip(req)
 
-			Expect(fake.Messages[1]).To(BeAssignableToTypeOf(new(events.HttpStop)))
+				Expect(fake.Messages[1]).To(BeAssignableToTypeOf(new(events.HttpStop)))
 
-			stopEvent := fake.Messages[1].(*events.HttpStop)
-			Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
-			Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 1234))
+				stopEvent := fake.Messages[1].(*events.HttpStop)
+				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 0))
+				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 0))
+			})
+		})
+
+		Context("if round tripper does not return an error", func() {
+			It("should emit a stop event with the round tripper's response", func() {
+				rt.RoundTrip(req)
+
+				Expect(fake.Messages[1]).To(BeAssignableToTypeOf(new(events.HttpStop)))
+
+				stopEvent := fake.Messages[1].(*events.HttpStop)
+				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 1234))
+			})
 		})
 	})
 })
