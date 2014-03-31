@@ -2,9 +2,9 @@ package emitter
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
+	"errors"
 	"net"
 	"os"
-	"errors"
 )
 
 type udpEmitter struct {

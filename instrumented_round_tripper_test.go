@@ -1,6 +1,7 @@
 package dropsonde_test
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
@@ -8,7 +9,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net/http"
-	"errors"
 )
 
 type FakeRoundTripper struct {

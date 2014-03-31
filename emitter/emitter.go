@@ -23,7 +23,6 @@ func init() {
 	}
 }
 
-
 func Emit(e Event) error {
 	if DefaultEmitter != nil {
 		return DefaultEmitter.Emit(e)
