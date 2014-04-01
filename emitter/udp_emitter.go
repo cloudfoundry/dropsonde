@@ -2,9 +2,8 @@ package emitter
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
-	"errors"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"net"
-	"os"
 )
 
 type udpEmitter struct {
@@ -15,11 +14,6 @@ type udpEmitter struct {
 var DefaultAddress = "localhost:42420"
 
 func NewUdpEmitter() (emitter Emitter, err error) {
-	if os.Getenv("BOSH_JOB_NAME") == "" || os.Getenv("BOSH_JOB_INSTANCE") == "" {
-		err = errors.New("BOSH_JOB_NAME or BOSH_JOB_INSTANCE not set")
-		return
-	}
-
 	addr, err := net.ResolveUDPAddr("udp", DefaultAddress)
 	if err != nil {
 		return
@@ -34,8 +28,8 @@ func NewUdpEmitter() (emitter Emitter, err error) {
 	return
 }
 
-func (e *udpEmitter) Emit(event Event) (err error) {
-	envelope, err := Wrap(event)
+func (e *udpEmitter) Emit(event Event, origin events.Origin) (err error) {
+	envelope, err := Wrap(event, &origin)
 	if err != nil {
 		return
 	}

@@ -7,7 +7,6 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
-	"os"
 )
 
 var _ = Describe("UdpEmitter", func() {
@@ -15,12 +14,15 @@ var _ = Describe("UdpEmitter", func() {
 	Describe("Emit()", func() {
 		var udpEmitter emitter.Emitter
 		var testEvent *events.DropsondeStatus
+		var origin events.Origin
+		var jobName string
+		var jobIndex int32
 
 		BeforeEach(func() {
-			os.Setenv("BOSH_JOB_NAME", "awesome_job")
-			os.Setenv("BOSH_JOB_INSTANCE", "1")
 			testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
 			udpEmitter, _ = emitter.NewUdpEmitter()
+			jobName = "testInstrumentedEmitter"
+			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
 		})
 
 		Context("when the agent is listening", func() {
@@ -36,7 +38,7 @@ var _ = Describe("UdpEmitter", func() {
 			})
 
 			It("should send the envelope as a []byte", func(done Done) {
-				err := udpEmitter.Emit(testEvent)
+				err := udpEmitter.Emit(testEvent, origin)
 				Expect(err).To(BeNil())
 				buffer := make([]byte, 4096)
 				readCount, _, err := agentListener.ReadFrom(buffer)
@@ -46,22 +48,24 @@ var _ = Describe("UdpEmitter", func() {
 				Expect(err).To(BeNil())
 				Expect(envelope.GetEventType()).To(Equal(events.Envelope_DropsondeStatus))
 				Expect(envelope.GetDropsondeStatus()).To(Equal(testEvent))
+				Expect(envelope.GetOrigin().GetJobName()).To(Equal(jobName))
+				Expect(envelope.GetOrigin().GetJobInstanceId()).To(Equal(jobIndex))
 				close(done)
 			})
 		})
 
 		Context("when the agent is not listening", func() {
 			It("should attempt to send the envelope", func() {
-				err := udpEmitter.Emit(testEvent)
+				err := udpEmitter.Emit(testEvent, origin)
 				Expect(err).To(BeNil())
 			})
 			Context("then the agent starts Listening", func() {
 				It("should eventually send envelopes as a []byte", func(done Done) {
-					err := udpEmitter.Emit(testEvent)
+					err := udpEmitter.Emit(testEvent, origin)
 					Expect(err).To(BeNil())
 					agentListener, err := net.ListenPacket("udp", ":42420")
 					Expect(err).To(BeNil())
-					err = udpEmitter.Emit(testEvent)
+					err = udpEmitter.Emit(testEvent, origin)
 					Expect(err).To(BeNil())
 					buffer := make([]byte, 4096)
 					readCount, _, err := agentListener.ReadFrom(buffer)
@@ -78,26 +82,10 @@ var _ = Describe("UdpEmitter", func() {
 	})
 
 	Describe("NewUdpEmitter()", func() {
-		Context("with missing environment variables", func() {
-			BeforeEach(func() {
-				os.Setenv("BOSH_JOB_NAME", "")
-				os.Setenv("BOSH_JOB_INSTANCE", "")
-			})
-
-			It("returns an error", func() {
-				emitter, err := emitter.NewUdpEmitter()
-				Expect(emitter).To(BeNil())
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(Equal("BOSH_JOB_NAME or BOSH_JOB_INSTANCE not set"))
-			})
-		})
-
 		Context("when ResolveUDPAddr fails", func() {
 			var originalDefaultAddress string
 
 			BeforeEach(func() {
-				os.Setenv("BOSH_JOB_NAME", "test-job-name")
-				os.Setenv("BOSH_JOB_INSTANCE", "0")
 				originalDefaultAddress = emitter.DefaultAddress
 				emitter.DefaultAddress = "invalid-address:"
 			})
@@ -114,11 +102,6 @@ var _ = Describe("UdpEmitter", func() {
 		})
 
 		Context("when all is good", func() {
-			BeforeEach(func() {
-				os.Setenv("BOSH_JOB_NAME", "test-job-name")
-				os.Setenv("BOSH_JOB_INSTANCE", "0")
-			})
-
 			It("creates an emitter", func() {
 				emitter, err := emitter.NewUdpEmitter()
 				Expect(emitter).ToNot(BeNil())

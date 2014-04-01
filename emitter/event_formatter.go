@@ -1,23 +1,15 @@
 package emitter
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
-	"os"
-	"strconv"
 )
 
-func Wrap(e Event) (*events.Envelope, error) {
-	jobIndex, err := strconv.Atoi(os.Getenv("BOSH_JOB_INSTANCE"))
-	if os.Getenv("BOSH_JOB_NAME") == "" || err != nil {
+func Wrap(e Event, origin *events.Origin) (*events.Envelope, error) {
+	if origin == nil {
 		return nil, errors.New("Event not emitted due to missing origin information")
 	}
 
-	origin := &events.Origin{
-		JobName:       proto.String(os.Getenv("BOSH_JOB_NAME")),
-		JobInstanceId: proto.Int(jobIndex),
-	}
 	envelope := &events.Envelope{Origin: origin}
 
 	switch e.(type) {

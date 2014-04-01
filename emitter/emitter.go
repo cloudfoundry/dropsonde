@@ -2,6 +2,7 @@ package emitter
 
 import (
 	"errors"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"log"
 )
 
@@ -10,7 +11,7 @@ type Event interface {
 }
 
 type Emitter interface {
-	Emit(Event) error
+	Emit(Event, events.Origin) error
 }
 
 var DefaultEmitter Emitter
@@ -20,16 +21,15 @@ func init() {
 	if err != nil {
 		log.Printf("WARNING: failed to create udpEmitter: %v\n", err)
 	}
-
 	DefaultEmitter, err = NewInstrumentedEmitter(udpEmitter)
 	if err != nil {
 		log.Printf("WARNING: failed to create instrumentedEmitter: %v\n", err)
 	}
 }
 
-func Emit(e Event) error {
+func Emit(e Event, o events.Origin) error {
 	if DefaultEmitter != nil {
-		return DefaultEmitter.Emit(e)
+		return DefaultEmitter.Emit(e, o)
 	}
 
 	return errors.New("Default emitter not set")

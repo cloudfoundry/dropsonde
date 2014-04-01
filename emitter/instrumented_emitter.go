@@ -1,21 +1,24 @@
 package emitter
 
-import "sync"
+import (
+	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"sync"
+)
 
-type InstrumentedEmitter struct{
-	concreteEmitter Emitter
-	mutex *sync.RWMutex
+type InstrumentedEmitter struct {
+	concreteEmitter        Emitter
+	mutex                  *sync.RWMutex
 	ReceivedMetricsCounter uint64
-	SentMetricsCounter uint64
-	ErrorCounter uint64
+	SentMetricsCounter     uint64
+	ErrorCounter           uint64
 }
 
-func (emitter *InstrumentedEmitter) Emit(event Event) (err error) {
+func (emitter *InstrumentedEmitter) Emit(event Event, origin events.Origin) (err error) {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
 
-	err = emitter.concreteEmitter.Emit(event)
+	err = emitter.concreteEmitter.Emit(event, origin)
 	if err != nil {
 		emitter.ErrorCounter++
 	} else {

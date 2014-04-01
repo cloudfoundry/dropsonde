@@ -8,14 +8,16 @@ import (
 )
 
 type instrumentedRoundTripper struct {
-	rt http.RoundTripper
+	rt     http.RoundTripper
+	origin events.Origin
 }
 
 /*
-Constructor for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
+Helper for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
 */
-func InstrumentedRoundTripper(rt http.RoundTripper) http.RoundTripper {
-	return &instrumentedRoundTripper{rt: rt}
+func InstrumentedRoundTripper(rt http.RoundTripper, jobName string, jobIndex int32) http.RoundTripper {
+	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+	return &instrumentedRoundTripper{rt, origin}
 }
 
 /*
@@ -39,7 +41,7 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 
 	req.Header.Set("X-CF-RequestID", requestId.String())
 
-	emitter.Emit(httpStart)
+	emitter.Emit(httpStart, irt.origin)
 
 	resp, err := irt.rt.RoundTrip(req)
 
@@ -50,7 +52,7 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 		httpStop = events.NewHttpStop(resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
 	}
 
-	emitter.Emit(httpStop)
+	emitter.Emit(httpStop, irt.origin)
 
 	return resp, err
 }
