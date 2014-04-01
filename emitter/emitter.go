@@ -16,10 +16,14 @@ type Emitter interface {
 var DefaultEmitter Emitter
 
 func init() {
-	var err error
-	DefaultEmitter, err = NewUdpEmitter()
+	udpEmitter, err := NewUdpEmitter()
 	if err != nil {
-		log.Printf("WARNING: failed to create default emitter: %v\n", err)
+		log.Printf("WARNING: failed to create udpEmitter: %v\n", err)
+	}
+
+	DefaultEmitter, err = NewInstrumentedEmitter(udpEmitter)
+	if err != nil {
+		log.Printf("WARNING: failed to create instrumentedEmitter: %v\n", err)
 	}
 }
 
