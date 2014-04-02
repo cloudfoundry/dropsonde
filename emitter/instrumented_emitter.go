@@ -3,6 +3,7 @@ package emitter
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"sync"
+	"errors"
 )
 
 type InstrumentedEmitter struct {
@@ -29,5 +30,11 @@ func (emitter *InstrumentedEmitter) Emit(event Event, origin events.Origin) (err
 }
 
 func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter *InstrumentedEmitter, err error) {
-	return &InstrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}, nil
+	if concreteEmitter == nil {
+		err = errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
+		return
+	}
+
+	emitter = &InstrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
+	return
 }

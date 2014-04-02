@@ -70,4 +70,16 @@ var _ = Describe("InstrumentedUdpEmitter", func() {
 		})
 	})
 
+	Describe("NewInstrumentedEmitter", func(){
+			Context("when the concrete Emitter is nil", func(){
+					It("returns a nil instrumented emitter", func(){
+							emitter, _ := emitter.NewInstrumentedEmitter(nil)
+							Expect(emitter).To(BeNil())
+						})
+					It("returns a helpful error", func(){
+							_, err := emitter.NewInstrumentedEmitter(nil)
+							Expect(err).To(HaveOccurred())
+						})
+				})
+		})
 })
