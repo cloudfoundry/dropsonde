@@ -28,7 +28,7 @@ func NewUdpEmitter() (emitter Emitter, err error) {
 	return
 }
 
-func (e *udpEmitter) Emit(event Event, origin events.Origin) (err error) {
+func (e *udpEmitter) Emit(event events.Event, origin events.Origin) (err error) {
 	envelope, err := Wrap(event, &origin)
 	if err != nil {
 		return

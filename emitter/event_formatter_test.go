@@ -59,7 +59,7 @@ var _ = Describe("EventFormatter", func() {
 
 		Context("with a known event type", func() {
 
-			var testEvent emitter.Event
+			var testEvent events.Event
 
 			BeforeEach(func() {
 				id, _ := uuid.NewV4()

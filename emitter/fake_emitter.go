@@ -3,10 +3,11 @@ package emitter
 import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"sync"
 )
 
 type envelope struct {
-	Event  Event
+	Event  events.Event
 	Origin events.Origin
 }
 
@@ -18,8 +19,8 @@ type FakeEmitter struct {
 func NewFake() *FakeEmitter {
 	return &FakeEmitter{}
 }
+func (f *FakeEmitter) Emit(e events.Event, origin events.Origin) (err error) {
 
-func (f *FakeEmitter) Emit(e Event, origin events.Origin) (err error) {
 	if f.ReturnError {
 		f.ReturnError = false
 		return errors.New("Returning error as requested")

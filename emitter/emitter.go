@@ -6,12 +6,8 @@ import (
 	"log"
 )
 
-type Event interface {
-	ProtoMessage()
-}
-
 type Emitter interface {
-	Emit(Event, events.Origin) error
+	Emit(events.Event, events.Origin) error
 }
 
 var DefaultEmitter Emitter
@@ -25,9 +21,12 @@ func init() {
 	if err != nil {
 		log.Printf("WARNING: failed to create instrumentedEmitter: %v\n", err)
 	}
+
+	//	HeartbeatEmiter, err = NewHeartbeatGenerator(tcpEmitter, DefaultEmitter)
+
 }
 
-func Emit(e Event, o events.Origin) error {
+func Emit(e events.Event, o events.Origin) error {
 	if DefaultEmitter != nil {
 		return DefaultEmitter.Emit(e, o)
 	}

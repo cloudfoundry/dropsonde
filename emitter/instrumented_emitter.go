@@ -14,7 +14,7 @@ type InstrumentedEmitter struct {
 	ErrorCounter           uint64
 }
 
-func (emitter *InstrumentedEmitter) Emit(event Event, origin events.Origin) (err error) {
+func (emitter *InstrumentedEmitter) Emit(event events.Event, origin events.Origin) (err error) {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++

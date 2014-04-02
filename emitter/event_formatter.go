@@ -5,7 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 )
 
-func Wrap(e Event, origin *events.Origin) (*events.Envelope, error) {
+func Wrap(e events.Event, origin *events.Origin) (*events.Envelope, error) {
 	if origin == nil {
 		return nil, errors.New("Event not emitted due to missing origin information")
 	}
