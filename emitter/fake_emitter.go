@@ -8,19 +8,20 @@ import (
 
 type envelope struct {
 	Event  events.Event
-	Origin events.Origin
+	Origin *events.Origin
 }
 
 type FakeEmitter struct {
 	ReturnError bool
 	Messages    []envelope
 	mutex       *sync.RWMutex
+	origin      *events.Origin
 }
 
 func NewFake() *FakeEmitter {
 	return &FakeEmitter{mutex: new(sync.RWMutex)}
 }
-func (f *FakeEmitter) Emit(e events.Event, origin events.Origin) (err error) {
+func (f *FakeEmitter) Emit(e events.Event) (err error) {
 
 	if f.ReturnError {
 		f.ReturnError = false
@@ -30,7 +31,7 @@ func (f *FakeEmitter) Emit(e events.Event, origin events.Origin) (err error) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
-	f.Messages = append(f.Messages, envelope{e, origin})
+	f.Messages = append(f.Messages, envelope{e, f.origin})
 	return
 }
 
@@ -41,4 +42,8 @@ func (f *FakeEmitter) GetMessages() (messages []envelope) {
 	messages = make([]envelope, len(f.Messages))
 	copy(messages, f.Messages)
 	return
+}
+
+func (f *FakeEmitter) SetOrigin(origin *events.Origin) {
+	f.origin = origin
 }

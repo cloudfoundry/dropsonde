@@ -33,7 +33,7 @@ func HeartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatDataSource, 
 			timer.Reset(HeartbeatInterval)
 
 			data := dataSource.GetData()
-			e.Emit(data, events.Origin{}) //TODO remove origin from signature
+			e.Emit(data)
 		}
 	}
 }

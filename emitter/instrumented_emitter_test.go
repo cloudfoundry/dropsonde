@@ -22,21 +22,22 @@ var _ = Describe("InstrumentedUdpEmitter", func() {
 			instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
 			jobName := "testInstrumentedEmitter"
 			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+			instrumentedEmitter.SetOrigin(&origin)
 		})
 		It("calls the concrete emitter", func() {
 			Expect(fakeEmitter.Messages).To(HaveLen(0))
 
-			err := instrumentedEmitter.Emit(testEvent, origin)
+			err := instrumentedEmitter.Emit(testEvent)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(fakeEmitter.Messages).To(HaveLen(1))
 			Expect(fakeEmitter.Messages[0].Event).To(Equal(testEvent))
-			Expect(fakeEmitter.Messages[0].Origin).To(Equal(origin))
+			Expect(fakeEmitter.Messages[0].Origin).To(Equal(&origin))
 		})
 		It("increments the ReceivedMetricsCounter", func() {
 			Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 0))
 
-			err := instrumentedEmitter.Emit(testEvent, origin)
+			err := instrumentedEmitter.Emit(testEvent)
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 1))
@@ -45,7 +46,7 @@ var _ = Describe("InstrumentedUdpEmitter", func() {
 			It("increments the SentMetricsCounter", func() {
 				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 0))
 
-				err := instrumentedEmitter.Emit(testEvent, origin)
+				err := instrumentedEmitter.Emit(testEvent)
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 1))
@@ -60,7 +61,7 @@ var _ = Describe("InstrumentedUdpEmitter", func() {
 				Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 0))
 				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 0))
 
-				err := instrumentedEmitter.Emit(testEvent, origin)
+				err := instrumentedEmitter.Emit(testEvent)
 				Expect(err).To(HaveOccurred())
 
 				Expect(instrumentedEmitter.ErrorCounter).To(BeNumerically("==", 1))

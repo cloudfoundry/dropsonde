@@ -9,6 +9,7 @@ import (
 type udpEmitter struct {
 	udpAddr *net.UDPAddr
 	udpConn net.PacketConn
+	origin  *events.Origin
 }
 
 var DefaultAddress = "localhost:42420"
@@ -28,8 +29,8 @@ func NewUdpEmitter() (emitter Emitter, err error) {
 	return
 }
 
-func (e *udpEmitter) Emit(event events.Event, origin events.Origin) (err error) {
-	envelope, err := Wrap(event, &origin)
+func (e *udpEmitter) Emit(event events.Event) (err error) {
+	envelope, err := Wrap(event, e.origin)
 	if err != nil {
 		return
 	}
@@ -40,4 +41,8 @@ func (e *udpEmitter) Emit(event events.Event, origin events.Origin) (err error) 
 
 	_, err = e.udpConn.WriteTo(data, e.udpAddr)
 	return
+}
+
+func (e *udpEmitter) SetOrigin(origin *events.Origin) {
+	e.origin = origin
 }

@@ -14,12 +14,12 @@ type InstrumentedEmitter struct {
 	ErrorCounter           uint64
 }
 
-func (emitter *InstrumentedEmitter) Emit(event events.Event, origin events.Origin) (err error) {
+func (emitter *InstrumentedEmitter) Emit(event events.Event) (err error) {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
 
-	err = emitter.concreteEmitter.Emit(event, origin)
+	err = emitter.concreteEmitter.Emit(event)
 	if err != nil {
 		emitter.ErrorCounter++
 	} else {
@@ -37,4 +37,8 @@ func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter *InstrumentedEmitt
 
 	emitter = &InstrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
 	return
+}
+
+func (emitter *InstrumentedEmitter) SetOrigin(origin *events.Origin) {
+	emitter.concreteEmitter.SetOrigin(origin)
 }

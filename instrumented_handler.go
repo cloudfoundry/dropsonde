@@ -8,8 +8,7 @@ import (
 )
 
 type instrumentedHandler struct {
-	h      http.Handler
-	origin events.Origin
+	h http.Handler
 }
 
 /*
@@ -17,7 +16,9 @@ Helper for creating an Instrumented Handler which will delegate to the given htt
 */
 func InstrumentedHandler(h http.Handler, jobName string, jobIndex int32) http.Handler {
 	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-	return &instrumentedHandler{h, origin}
+
+	emitter.SetOrigin(&origin)
+	return &instrumentedHandler{h}
 }
 
 /*
@@ -36,7 +37,7 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	rw.Header().Set("X-CF-RequestID", requestId.String())
 
 	startEvent := events.NewHttpStart(req, events.PeerType_Server, requestId)
-	emitter.Emit(startEvent, ih.origin)
+	emitter.Emit(startEvent)
 
 	instrumentedWriter := &instrumentedResponseWriter{writer: rw, statusCode: 200}
 	ih.h.ServeHTTP(instrumentedWriter, req)
@@ -44,7 +45,7 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	stopEvent := events.NewHttpStop(instrumentedWriter.statusCode, instrumentedWriter.contentLength,
 		events.PeerType_Server, requestId)
 
-	emitter.Emit(stopEvent, ih.origin)
+	emitter.Emit(stopEvent)
 }
 
 type instrumentedResponseWriter struct {

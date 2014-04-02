@@ -7,28 +7,34 @@ import (
 )
 
 type Emitter interface {
-	Emit(events.Event, events.Origin) error
+	Emit(events.Event) error
+	SetOrigin(*events.Origin)
 }
 
 var DefaultEmitter Emitter
+var DefaultOrigin events.Origin
 
 func init() {
 	udpEmitter, err := NewUdpEmitter()
 	if err != nil {
 		log.Printf("WARNING: failed to create udpEmitter: %v\n", err)
 	}
+
 	DefaultEmitter, err = NewInstrumentedEmitter(udpEmitter)
 	if err != nil {
 		log.Printf("WARNING: failed to create instrumentedEmitter: %v\n", err)
 	}
-
-	//	HeartbeatEmiter, err = NewHeartbeatGenerator(tcpEmitter, DefaultEmitter)
-
 }
 
-func Emit(e events.Event, o events.Origin) error {
+func SetOrigin(origin *events.Origin) {
 	if DefaultEmitter != nil {
-		return DefaultEmitter.Emit(e, o)
+		DefaultEmitter.SetOrigin(origin)
+	}
+}
+
+func Emit(e events.Event) error {
+	if DefaultEmitter != nil {
+		return DefaultEmitter.Emit(e)
 	}
 
 	return errors.New("Default emitter not set")

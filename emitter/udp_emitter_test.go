@@ -23,6 +23,7 @@ var _ = Describe("UdpEmitter", func() {
 			udpEmitter, _ = emitter.NewUdpEmitter()
 			jobName = "testInstrumentedEmitter"
 			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+			udpEmitter.SetOrigin(&origin)
 		})
 
 		Context("when the agent is listening", func() {
@@ -38,7 +39,7 @@ var _ = Describe("UdpEmitter", func() {
 			})
 
 			It("should send the envelope as a []byte", func(done Done) {
-				err := udpEmitter.Emit(testEvent, origin)
+				err := udpEmitter.Emit(testEvent)
 				Expect(err).To(BeNil())
 				buffer := make([]byte, 4096)
 				readCount, _, err := agentListener.ReadFrom(buffer)
@@ -56,16 +57,16 @@ var _ = Describe("UdpEmitter", func() {
 
 		Context("when the agent is not listening", func() {
 			It("should attempt to send the envelope", func() {
-				err := udpEmitter.Emit(testEvent, origin)
+				err := udpEmitter.Emit(testEvent)
 				Expect(err).To(BeNil())
 			})
 			Context("then the agent starts Listening", func() {
 				It("should eventually send envelopes as a []byte", func(done Done) {
-					err := udpEmitter.Emit(testEvent, origin)
+					err := udpEmitter.Emit(testEvent)
 					Expect(err).To(BeNil())
 					agentListener, err := net.ListenPacket("udp", ":42420")
 					Expect(err).To(BeNil())
-					err = udpEmitter.Emit(testEvent, origin)
+					err = udpEmitter.Emit(testEvent)
 					Expect(err).To(BeNil())
 					buffer := make([]byte, 4096)
 					readCount, _, err := agentListener.ReadFrom(buffer)
