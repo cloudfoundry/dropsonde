@@ -1,9 +1,9 @@
 package emitter
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"sync"
-	"errors"
 )
 
 type InstrumentedEmitter struct {
