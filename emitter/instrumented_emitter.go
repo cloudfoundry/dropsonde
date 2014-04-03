@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type InstrumentedEmitter struct {
+type instrumentedEmitter struct {
 	concreteEmitter        Emitter
 	mutex                  *sync.RWMutex
 	ReceivedMetricsCounter uint64
@@ -14,7 +14,7 @@ type InstrumentedEmitter struct {
 	ErrorCounter           uint64
 }
 
-func (emitter *InstrumentedEmitter) Emit(event events.Event) (err error) {
+func (emitter *instrumentedEmitter) Emit(event events.Event) (err error) {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
@@ -29,24 +29,27 @@ func (emitter *InstrumentedEmitter) Emit(event events.Event) (err error) {
 	return
 }
 
-func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter *InstrumentedEmitter, err error) {
+func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter Emitter, err error) {
 	if concreteEmitter == nil {
 		err = errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
 		return
 	}
 
-	emitter = &InstrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
+	emitter = &instrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
 	return
 }
 
-func (emitter *InstrumentedEmitter) SetOrigin(origin *events.Origin) {
+func (emitter *instrumentedEmitter) SetOrigin(origin *events.Origin) {
 	emitter.concreteEmitter.SetOrigin(origin)
 }
 
-func (emitter *InstrumentedEmitter) Close() {
+func (emitter *instrumentedEmitter) Close() {
 	emitter.concreteEmitter.Close()
 }
 
-func (emitter *InstrumentedEmitter) GetData() events.Event {
-	return nil
+func (emitter *instrumentedEmitter) GetHeartbeatEvent() events.Event {
+	emitter.mutex.Lock()
+	defer emitter.mutex.Unlock()
+
+	return events.NewHeartbeat(emitter.SentMetricsCounter, emitter.ReceivedMetricsCounter, emitter.ErrorCounter)
 }

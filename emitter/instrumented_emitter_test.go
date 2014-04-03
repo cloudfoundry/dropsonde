@@ -1,7 +1,6 @@
 package emitter_test
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
@@ -10,15 +9,9 @@ import (
 )
 
 var _ = Describe("InstrumentedEmitter", func() {
-	It("implements HeartbeatDataSource", func() {
-		// will fail during compile time
-		var instrumentedEmitter heartbeat.HeartbeatDataSource = new(emitter.InstrumentedEmitter)
-		Expect(instrumentedEmitter).ToNot(BeNil())
-	})
-
 	Describe("Delegators", func() {
 		var fakeEmitter *emitter.FakeEmitter
-		var instrumentedEmitter *emitter.InstrumentedEmitter
+		var instrumentedEmitter emitter.Emitter
 
 		BeforeEach(func() {
 			fakeEmitter = emitter.NewFake()
@@ -38,14 +31,19 @@ var _ = Describe("InstrumentedEmitter", func() {
 	})
 
 	Describe("Emit()", func() {
-		var instrumentedEmitter *emitter.InstrumentedEmitter
-		var testEvent *events.DropsondeStatus
+		var instrumentedEmitter emitter.Emitter
+		var testEvent events.Event
 		var fakeEmitter *emitter.FakeEmitter
 		var origin events.Origin
 		var jobIndex int32
 
+		var getHeartbeatEvent = func(ie emitter.Emitter) *events.Heartbeat {
+			heartbeatEventSource := ie.(heartbeat.HeartbeatEventSource)
+			return heartbeatEventSource.GetHeartbeatEvent().(*events.Heartbeat)
+		}
+
 		BeforeEach(func() {
-			testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
+			testEvent = events.NewTestEvent(1)
 			fakeEmitter = emitter.NewFake()
 			instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
 			jobName := "testInstrumentedEmitter"
@@ -63,21 +61,21 @@ var _ = Describe("InstrumentedEmitter", func() {
 			Expect(fakeEmitter.Messages[0].Origin).To(Equal(&origin))
 		})
 		It("increments the ReceivedMetricsCounter", func() {
-			Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 0))
+			Expect(getHeartbeatEvent(instrumentedEmitter).GetReceivedCount()).To(BeNumerically("==", 0))
 
 			err := instrumentedEmitter.Emit(testEvent)
 			Expect(err).ToNot(HaveOccurred())
 
-			Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 1))
+			Expect(getHeartbeatEvent(instrumentedEmitter).GetReceivedCount()).To(BeNumerically("==", 1))
 		})
 		Context("when the concrete Emitter returns no error on Emit()", func() {
 			It("increments the SentMetricsCounter", func() {
-				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 0))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetSentCount()).To(BeNumerically("==", 0))
 
 				err := instrumentedEmitter.Emit(testEvent)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 1))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetSentCount()).To(BeNumerically("==", 1))
 			})
 		})
 		Context("when the concrete Emitter returns an error on Emit()", func() {
@@ -85,16 +83,16 @@ var _ = Describe("InstrumentedEmitter", func() {
 				fakeEmitter.ReturnError = true
 			})
 			It("increments the ErrorCounter", func() {
-				Expect(instrumentedEmitter.ErrorCounter).To(BeNumerically("==", 0))
-				Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 0))
-				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 0))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetErrorCount()).To(BeNumerically("==", 0))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetReceivedCount()).To(BeNumerically("==", 0))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetSentCount()).To(BeNumerically("==", 0))
 
 				err := instrumentedEmitter.Emit(testEvent)
 				Expect(err).To(HaveOccurred())
 
-				Expect(instrumentedEmitter.ErrorCounter).To(BeNumerically("==", 1))
-				Expect(instrumentedEmitter.ReceivedMetricsCounter).To(BeNumerically("==", 1))
-				Expect(instrumentedEmitter.SentMetricsCounter).To(BeNumerically("==", 0))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetErrorCount()).To(BeNumerically("==", 1))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetReceivedCount()).To(BeNumerically("==", 1))
+				Expect(getHeartbeatEvent(instrumentedEmitter).GetSentCount()).To(BeNumerically("==", 0))
 			})
 		})
 	})

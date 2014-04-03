@@ -42,7 +42,7 @@ var _ = Describe("Dropsonde", func() {
 				Expect(fakeEmitter.Origin).To(Equal(origin))
 			})
 
-			Context("when the DefaultEmitter is not a HeartbeatDataSource", func() {
+			Context("when the DefaultEmitter is not a HeartbeatEventSource", func() {
 				var fakeEmitter = emitter.NewFake()
 
 				BeforeEach(func() {
@@ -55,7 +55,7 @@ var _ = Describe("Dropsonde", func() {
 				})
 			})
 
-			Context("when the DefaultEmitter is a HeartbeatDataSource", func() {
+			Context("when the DefaultEmitter is a HeartbeatEventSource", func() {
 				var fakeEmitter *emitter.FakeEmitter
 
 				BeforeEach(func() {

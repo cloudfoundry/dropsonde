@@ -50,11 +50,11 @@ var _ = Describe("EventFormatter", func() {
 		})
 
 		It("should work with dropsonde status events", func() {
-			statusEvent := &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
+			statusEvent := &events.Heartbeat{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
 			envelope, err := emitter.Wrap(statusEvent, &origin)
 			Expect(err).To(BeNil())
-			Expect(envelope.GetEventType()).To(Equal(events.Envelope_DropsondeStatus))
-			Expect(envelope.GetDropsondeStatus()).To(Equal(statusEvent))
+			Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
+			Expect(envelope.GetHeartbeat()).To(Equal(statusEvent))
 		})
 
 		Context("with a known event type", func() {

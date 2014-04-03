@@ -2,6 +2,19 @@
 // source: envelope.proto
 // DO NOT EDIT!
 
+/*
+Package events is a generated protocol buffer package.
+
+It is generated from these files:
+	envelope.proto
+	fake_event.proto
+	heartbeat.proto
+	http.proto
+
+It has these top-level messages:
+	Origin
+	Envelope
+*/
 package events
 
 import proto "code.google.com/p/gogoprotobuf/proto"
@@ -16,20 +29,20 @@ var _ = math.Inf
 type Envelope_EventType int32
 
 const (
-	Envelope_DropsondeStatus Envelope_EventType = 1
-	Envelope_HttpStart       Envelope_EventType = 2
-	Envelope_HttpStop        Envelope_EventType = 3
+	Envelope_Heartbeat Envelope_EventType = 1
+	Envelope_HttpStart Envelope_EventType = 2
+	Envelope_HttpStop  Envelope_EventType = 3
 )
 
 var Envelope_EventType_name = map[int32]string{
-	1: "DropsondeStatus",
+	1: "Heartbeat",
 	2: "HttpStart",
 	3: "HttpStop",
 }
 var Envelope_EventType_value = map[string]int32{
-	"DropsondeStatus": 1,
-	"HttpStart":       2,
-	"HttpStop":        3,
+	"Heartbeat": 1,
+	"HttpStart": 2,
+	"HttpStop":  3,
 }
 
 func (x Envelope_EventType) Enum() *Envelope_EventType {
@@ -39,9 +52,6 @@ func (x Envelope_EventType) Enum() *Envelope_EventType {
 }
 func (x Envelope_EventType) String() string {
 	return proto.EnumName(Envelope_EventType_name, int32(x))
-}
-func (x Envelope_EventType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.String())
 }
 func (x *Envelope_EventType) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(Envelope_EventType_value, data, "Envelope_EventType")
@@ -79,7 +89,7 @@ func (m *Origin) GetJobInstanceId() int32 {
 type Envelope struct {
 	Origin           *Origin             `protobuf:"bytes,1,req,name=origin" json:"origin,omitempty"`
 	EventType        *Envelope_EventType `protobuf:"varint,2,req,name=eventType,enum=events.Envelope_EventType" json:"eventType,omitempty"`
-	DropsondeStatus  *DropsondeStatus    `protobuf:"bytes,3,opt,name=dropsondeStatus" json:"dropsondeStatus,omitempty"`
+	Heartbeat        *Heartbeat          `protobuf:"bytes,3,opt,name=heartbeat" json:"heartbeat,omitempty"`
 	HttpStart        *HttpStart          `protobuf:"bytes,4,opt,name=httpStart" json:"httpStart,omitempty"`
 	HttpStop         *HttpStop           `protobuf:"bytes,5,opt,name=httpStop" json:"httpStop,omitempty"`
 	XXX_unrecognized []byte              `json:"-"`
@@ -100,12 +110,12 @@ func (m *Envelope) GetEventType() Envelope_EventType {
 	if m != nil && m.EventType != nil {
 		return *m.EventType
 	}
-	return 0
+	return Envelope_Heartbeat
 }
 
-func (m *Envelope) GetDropsondeStatus() *DropsondeStatus {
+func (m *Envelope) GetHeartbeat() *Heartbeat {
 	if m != nil {
-		return m.DropsondeStatus
+		return m.Heartbeat
 	}
 	return nil
 }

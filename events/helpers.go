@@ -45,3 +45,15 @@ func NewHttpStop(statusCode int, contentLength int64, peerType PeerType, request
 		ContentLength: proto.Int64(contentLength),
 	}
 }
+
+func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *Heartbeat {
+	return &Heartbeat{
+		SentCount:     proto.Uint64(sentCount),
+		ReceivedCount: proto.Uint64(receivedCount),
+		ErrorCount:    proto.Uint64(errorCount),
+	}
+}
+
+func NewTestEvent(value uint64) Event {
+	return NewHeartbeat(value, 0, 0)
+}

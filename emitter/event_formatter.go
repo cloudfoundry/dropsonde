@@ -13,9 +13,9 @@ func Wrap(e events.Event, origin *events.Origin) (*events.Envelope, error) {
 	envelope := &events.Envelope{Origin: origin}
 
 	switch e.(type) {
-	case *events.DropsondeStatus:
-		envelope.EventType = events.Envelope_DropsondeStatus.Enum()
-		envelope.DropsondeStatus = e.(*events.DropsondeStatus)
+	case *events.Heartbeat:
+		envelope.EventType = events.Envelope_Heartbeat.Enum()
+		envelope.Heartbeat = e.(*events.Heartbeat)
 	case *events.HttpStart:
 		envelope.EventType = events.Envelope_HttpStart.Enum()
 		envelope.HttpStart = e.(*events.HttpStart)

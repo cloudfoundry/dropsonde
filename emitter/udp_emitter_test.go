@@ -14,7 +14,7 @@ var _ = Describe("UdpEmitter", func() {
 	var jobName = "testInstrumentedEmitter"
 	var jobIndex int32 = 42
 	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-	var testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
+	var testEvent = events.NewTestEvent(43)
 
 	Describe("Close()", func() {
 		It("closes the UDP connection", func() {
@@ -60,8 +60,8 @@ var _ = Describe("UdpEmitter", func() {
 				var envelope events.Envelope
 				err = proto.Unmarshal(buffer[:readCount], &envelope)
 				Expect(err).To(BeNil())
-				Expect(envelope.GetEventType()).To(Equal(events.Envelope_DropsondeStatus))
-				Expect(envelope.GetDropsondeStatus()).To(Equal(testEvent))
+				Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
+				Expect(envelope.GetHeartbeat()).To(Equal(testEvent))
 				Expect(envelope.GetOrigin().GetJobName()).To(Equal(jobName))
 				Expect(envelope.GetOrigin().GetJobInstanceId()).To(Equal(jobIndex))
 				close(done)
@@ -87,8 +87,8 @@ var _ = Describe("UdpEmitter", func() {
 					var envelope events.Envelope
 					err = proto.Unmarshal(buffer[:readCount], &envelope)
 					Expect(err).To(BeNil())
-					Expect(envelope.GetEventType()).To(Equal(events.Envelope_DropsondeStatus))
-					Expect(envelope.GetDropsondeStatus()).To(Equal(testEvent))
+					Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
+					Expect(envelope.GetHeartbeat()).To(Equal(testEvent))
 					close(done)
 				})
 			})

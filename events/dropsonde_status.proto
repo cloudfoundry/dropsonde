@@ -1,6 +1,0 @@
-package events;
-
-message DropsondeStatus {
-    required uint64 sentCount = 1;
-    required uint64 errorCount = 2;
-}

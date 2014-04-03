@@ -24,8 +24,8 @@ func Initialize(origin *events.Origin) {
 		return
 	}
 
-	if heartbeatDataSource, ok := emitter.DefaultEmitter.(heartbeat.HeartbeatDataSource); ok {
-		heartbeatState.stopChannel = heartbeat.BeginGeneration(heartbeatDataSource, origin)
+	if heartbeatEventSource, ok := emitter.DefaultEmitter.(heartbeat.HeartbeatEventSource); ok {
+		heartbeatState.stopChannel = heartbeat.BeginGeneration(heartbeatEventSource, origin)
 	}
 }
 

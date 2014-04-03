@@ -9,15 +9,15 @@ import (
 var HeartbeatInterval = 10 * time.Second
 var HeartbeatEmitter emitter.Emitter
 
-type HeartbeatDataSource interface {
-	GetData() events.Event
+type HeartbeatEventSource interface {
+	GetHeartbeatEvent() events.Event
 }
 
 func init() {
 	//HeartbeatEmitter = ... (use tcp emitter)
 }
 
-func BeginGeneration(dataSource HeartbeatDataSource, origin *events.Origin) chan<- interface{} {
+func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) chan<- interface{} {
 	if HeartbeatEmitter == nil {
 		return nil
 	}
@@ -32,7 +32,7 @@ func BeginGeneration(dataSource HeartbeatDataSource, origin *events.Origin) chan
 	Main heartbeat generation loop.
 	Most applications will not want to use this directly, use BeginGeneration instead.
 */
-func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatDataSource, stopChannel <-chan interface{}) {
+func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatEventSource, stopChannel <-chan interface{}) {
 	defer e.Close()
 
 	timer := time.NewTimer(HeartbeatInterval)
@@ -43,8 +43,8 @@ func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatDataSource, 
 		case <-timer.C:
 			timer.Reset(HeartbeatInterval)
 
-			data := dataSource.GetData()
-			e.Emit(data)
+			event := dataSource.GetHeartbeatEvent()
+			e.Emit(event)
 		}
 	}
 }
