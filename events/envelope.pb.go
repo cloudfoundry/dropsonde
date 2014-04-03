@@ -7,7 +7,6 @@ Package events is a generated protocol buffer package.
 
 It is generated from these files:
 	envelope.proto
-	fake_event.proto
 	heartbeat.proto
 	http.proto
 
