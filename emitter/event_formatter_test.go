@@ -57,8 +57,19 @@ var _ = Describe("EventFormatter", func() {
 			Expect(envelope.GetHeartbeat()).To(Equal(statusEvent))
 		})
 
-		Context("with a known event type", func() {
+		It("should check that jobName is non-empty", func() {
+			malformedJobName := ""
+			id, _ := uuid.NewV4()
+			malformedOrigin := events.Origin{JobName: &malformedJobName, JobInstanceId: &jobIndex}
+			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
+			envelope, err := emitter.Wrap(testEvent, &malformedOrigin)
 
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Event not emitted due to missing empty jobName information, check settings"))
+			Expect(envelope).To(BeNil())
+		})
+
+		Context("with a known event type", func() {
 			var testEvent events.Event
 
 			BeforeEach(func() {

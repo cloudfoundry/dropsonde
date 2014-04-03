@@ -10,6 +10,10 @@ func Wrap(e events.Event, origin *events.Origin) (*events.Envelope, error) {
 		return nil, errors.New("Event not emitted due to missing origin information")
 	}
 
+	if origin.GetJobName() == "" {
+		return nil, errors.New("Event not emitted due to missing empty jobName information, check settings")
+	}
+
 	envelope := &events.Envelope{Origin: origin}
 
 	switch e.(type) {
