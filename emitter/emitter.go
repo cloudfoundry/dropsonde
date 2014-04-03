@@ -9,10 +9,10 @@ import (
 type Emitter interface {
 	Emit(events.Event) error
 	SetOrigin(*events.Origin)
+	Close()
 }
 
 var DefaultEmitter Emitter
-var DefaultOrigin events.Origin
 
 func init() {
 	udpEmitter, err := NewUdpEmitter()
@@ -23,12 +23,6 @@ func init() {
 	DefaultEmitter, err = NewInstrumentedEmitter(udpEmitter)
 	if err != nil {
 		log.Printf("WARNING: failed to create instrumentedEmitter: %v\n", err)
-	}
-}
-
-func SetOrigin(origin *events.Origin) {
-	if DefaultEmitter != nil {
-		DefaultEmitter.SetOrigin(origin)
 	}
 }
 

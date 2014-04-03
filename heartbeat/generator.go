@@ -6,24 +6,35 @@ import (
 	"time"
 )
 
-var MessageOrigin events.Origin
 var HeartbeatInterval = 10 * time.Second
+var HeartbeatEmitter emitter.Emitter
 
 type HeartbeatDataSource interface {
 	GetData() events.Event
 }
 
-func BeginGeneration(e emitter.Emitter, dataSource HeartbeatDataSource) (stopChannel chan interface{}) {
-	stopChannel = make(chan interface{})
-	go HeartbeatGeneratingLoop(e, dataSource, stopChannel)
-	return
+func init() {
+	//HeartbeatEmitter = ... (use tcp emitter)
+}
+
+func BeginGeneration(dataSource HeartbeatDataSource, origin *events.Origin) chan<- interface{} {
+	if HeartbeatEmitter == nil {
+		return nil
+	}
+
+	HeartbeatEmitter.SetOrigin(origin)
+	stopChannel := make(chan interface{})
+	go heartbeatGeneratingLoop(HeartbeatEmitter, dataSource, stopChannel)
+	return stopChannel
 }
 
 /*
 	Main heartbeat generation loop.
 	Most applications will not want to use this directly, use BeginGeneration instead.
 */
-func HeartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatDataSource, stopChannel chan interface{}) {
+func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatDataSource, stopChannel <-chan interface{}) {
+	defer e.Close()
+
 	timer := time.NewTimer(HeartbeatInterval)
 	for {
 		select {

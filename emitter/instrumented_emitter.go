@@ -42,3 +42,11 @@ func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter *InstrumentedEmitt
 func (emitter *InstrumentedEmitter) SetOrigin(origin *events.Origin) {
 	emitter.concreteEmitter.SetOrigin(origin)
 }
+
+func (emitter *InstrumentedEmitter) Close() {
+	emitter.concreteEmitter.Close()
+}
+
+func (emitter *InstrumentedEmitter) GetData() events.Event {
+	return nil
+}

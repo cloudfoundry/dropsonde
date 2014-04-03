@@ -17,7 +17,7 @@ Helper for creating an Instrumented Handler which will delegate to the given htt
 func InstrumentedHandler(h http.Handler, jobName string, jobIndex int32) http.Handler {
 	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
 
-	emitter.SetOrigin(&origin)
+	Initialize(&origin)
 	return &instrumentedHandler{h}
 }
 

@@ -4,11 +4,39 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("InstrumentedUdpEmitter", func() {
+var _ = Describe("InstrumentedEmitter", func() {
+	It("implements HeartbeatDataSource", func() {
+		// will fail during compile time
+		var instrumentedEmitter heartbeat.HeartbeatDataSource = new(emitter.InstrumentedEmitter)
+		Expect(instrumentedEmitter).ToNot(BeNil())
+	})
+
+	Describe("Delegators", func() {
+		var fakeEmitter *emitter.FakeEmitter
+		var instrumentedEmitter *emitter.InstrumentedEmitter
+
+		BeforeEach(func() {
+			fakeEmitter = emitter.NewFake()
+			instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
+		})
+
+		It("delegates Close() to the concreteEmitter", func() {
+			instrumentedEmitter.Close()
+			Expect(fakeEmitter.IsClosed).To(BeTrue())
+		})
+
+		It("delegates SetOrigin() to the concreteEmitter", func() {
+			origin := new(events.Origin)
+			instrumentedEmitter.SetOrigin(origin)
+			Expect(fakeEmitter.Origin).To(Equal(origin))
+		})
+	})
+
 	Describe("Emit()", func() {
 		var instrumentedEmitter *emitter.InstrumentedEmitter
 		var testEvent *events.DropsondeStatus
@@ -83,4 +111,5 @@ var _ = Describe("InstrumentedUdpEmitter", func() {
 			})
 		})
 	})
+
 })

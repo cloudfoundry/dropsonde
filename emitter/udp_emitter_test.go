@@ -11,18 +11,31 @@ import (
 
 var _ = Describe("UdpEmitter", func() {
 
+	var jobName = "testInstrumentedEmitter"
+	var jobIndex int32 = 42
+	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+	var testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
+
+	Describe("Close()", func() {
+		It("closes the UDP connection", func() {
+
+			udpEmitter, _ := emitter.NewUdpEmitter()
+
+			udpEmitter.SetOrigin(&origin)
+			udpEmitter.Close()
+
+			err := udpEmitter.Emit(testEvent)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("use of closed network connection"))
+		})
+	})
+
 	Describe("Emit()", func() {
 		var udpEmitter emitter.Emitter
-		var testEvent *events.DropsondeStatus
-		var origin events.Origin
-		var jobName string
-		var jobIndex int32
 
 		BeforeEach(func() {
-			testEvent = &events.DropsondeStatus{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
 			udpEmitter, _ = emitter.NewUdpEmitter()
-			jobName = "testInstrumentedEmitter"
-			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+
 			udpEmitter.SetOrigin(&origin)
 		})
 

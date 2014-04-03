@@ -46,3 +46,7 @@ func (e *udpEmitter) Emit(event events.Event) (err error) {
 func (e *udpEmitter) SetOrigin(origin *events.Origin) {
 	e.origin = origin
 }
+
+func (e *udpEmitter) Close() {
+	e.udpConn.Close()
+}

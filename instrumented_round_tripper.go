@@ -16,7 +16,7 @@ Helper for creating an InstrumentedRoundTripper which will delegate to the given
 */
 func InstrumentedRoundTripper(rt http.RoundTripper, jobName string, jobIndex int32) http.RoundTripper {
 	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-	emitter.SetOrigin(&origin)
+	Initialize(&origin)
 	return &instrumentedRoundTripper{rt}
 }
 
