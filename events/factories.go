@@ -53,7 +53,3 @@ func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *Heartbeat {
 		ErrorCount:    proto.Uint64(errorCount),
 	}
 }
-
-func NewTestEvent(value uint64) Event {
-	return NewHeartbeat(value, 0, 0)
-}
