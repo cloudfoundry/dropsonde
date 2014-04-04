@@ -8,12 +8,14 @@ import (
 	"sync"
 )
 
+const DefaultHeartbeatEmitterRemoteAddr = "localhost:42420"
+
 var heartbeatState struct {
 	sync.Mutex
 	stopChannel chan<- interface{}
 }
 
-func Initialize(origin *events.Origin) {
+func Initialize(origin *events.Origin) (err error) {
 	if emitter.DefaultEmitter == nil {
 		udpEmitter, err := emitter.NewUdpEmitter()
 		if err != nil {
@@ -36,8 +38,20 @@ func Initialize(origin *events.Origin) {
 	}
 
 	if heartbeatEventSource, ok := emitter.DefaultEmitter.(heartbeat.HeartbeatEventSource); ok {
-		heartbeatState.stopChannel = heartbeat.BeginGeneration(heartbeatEventSource, origin)
+		if heartbeat.HeartbeatEmitter == nil {
+			heartbeat.HeartbeatEmitter, err = emitter.NewTcpEmitter(DefaultHeartbeatEmitterRemoteAddr)
+			if err != nil {
+				log.Fatalf("WARNING: failed to create tcpEmitter: %v\n", err)
+			}
+		}
+
+		heartbeatState.stopChannel, err = heartbeat.BeginGeneration(heartbeatEventSource, origin)
+		if err != nil {
+			log.Fatalf("WARNING: failed to start HeartbeatGenerator: %v\n", err)
+		}
 	}
+
+	return
 }
 
 func Cleanup() {

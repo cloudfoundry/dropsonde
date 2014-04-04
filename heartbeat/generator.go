@@ -1,6 +1,7 @@
 package heartbeat
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"time"
@@ -13,19 +14,15 @@ type HeartbeatEventSource interface {
 	GetHeartbeatEvent() events.Event
 }
 
-func init() {
-	//HeartbeatEmitter = ... (use tcp emitter)
-}
-
-func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) chan<- interface{} {
+func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) (chan<- interface{}, error) {
 	if HeartbeatEmitter == nil {
-		return nil
+		return nil, errors.New("HeartbeatEmitter not set")
 	}
 
 	HeartbeatEmitter.SetOrigin(origin)
 	stopChannel := make(chan interface{})
 	go heartbeatGeneratingLoop(HeartbeatEmitter, dataSource, stopChannel)
-	return stopChannel
+	return stopChannel, nil
 }
 
 /*

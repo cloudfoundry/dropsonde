@@ -18,30 +18,43 @@ func (fds *fakeDataSource) GetHeartbeatEvent() events.Event {
 
 var _ = Describe("HeartbeatGenerator", func() {
 	Describe("BeginGeneration", func() {
-		It("periodically emits heartbeats", func() {
-			fakeEmitter := emitter.NewFake()
-			heartbeatEventSource := &fakeDataSource{}
+		var (
+			fakeEmitter          *emitter.FakeEmitter
+			heartbeatEventSource = &fakeDataSource{}
+		)
 
+		BeforeEach(func() {
+			fakeEmitter = emitter.NewFake()
 			heartbeat.HeartbeatInterval = 10 * time.Millisecond
-
-			heartbeat.HeartbeatEmitter = fakeEmitter
-			stopChannel := heartbeat.BeginGeneration(heartbeatEventSource, nil)
-
-			Eventually(func() int { return len(fakeEmitter.GetMessages()) }).Should(BeNumerically(">=", 2))
-			close(stopChannel)
 		})
 
-		It("closes the emitter after the stopChannel is closed", func() {
-			fakeEmitter := emitter.NewFake()
-			heartbeatEventSource := &fakeDataSource{}
-
-			heartbeat.HeartbeatInterval = 10 * time.Millisecond
-
-			heartbeat.HeartbeatEmitter = fakeEmitter
-			stopChannel := heartbeat.BeginGeneration(heartbeatEventSource, nil)
-
-			close(stopChannel)
-			Eventually(func() bool { return fakeEmitter.IsClosed }).Should(BeTrue())
+		Context("when HeartbeatEmitter is not set", func() {
+			It("returns an error", func() {
+				heartbeat.HeartbeatEmitter = nil
+				_, err := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+				Expect(err).To(HaveOccurred())
+			})
 		})
+
+		Context("when HeartbeatEmitter is set", func() {
+			BeforeEach(func() {
+				heartbeat.HeartbeatEmitter = fakeEmitter
+			})
+
+			It("periodically emits heartbeats", func() {
+				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+				defer close(stopChannel)
+
+				Eventually(func() int { return len(fakeEmitter.GetMessages()) }).Should(BeNumerically(">=", 2))
+			})
+
+			It("closes the emitter after the stopChannel is closed", func() {
+				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+
+				close(stopChannel)
+				Eventually(func() bool { return fakeEmitter.IsClosed }).Should(BeTrue())
+			})
+		})
+
 	})
 })

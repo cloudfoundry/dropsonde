@@ -17,6 +17,7 @@ var _ = Describe("Dropsonde", func() {
 			It("does not panic", func() {
 				emitter.DefaultEmitter = nil
 				Expect(func() { dropsonde.Initialize(nil) }).ToNot(Panic())
+				dropsonde.Cleanup()
 			})
 		})
 
@@ -69,7 +70,6 @@ var _ = Describe("Dropsonde", func() {
 
 				Context("when called for the first time", func() {
 					It("starts the HeartbeatGenerator", func() {
-						Expect(heartbeatEmitter.GetMessages()).To(HaveLen(0))
 						dropsonde.Initialize(origin)
 						Expect(heartbeatEmitter.Origin).To(Equal(origin))
 
