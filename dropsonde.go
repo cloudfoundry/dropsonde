@@ -8,6 +8,7 @@ import (
 	"sync"
 )
 
+const DefaultEmitterRemoteAddr = "localhost:42420"
 const DefaultHeartbeatEmitterRemoteAddr = "localhost:42420"
 
 var heartbeatState struct {
@@ -17,7 +18,7 @@ var heartbeatState struct {
 
 func Initialize(origin *events.Origin) (err error) {
 	if emitter.DefaultEmitter == nil {
-		udpEmitter, err := emitter.NewUdpEmitter()
+		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr)
 		if err != nil {
 			log.Fatalf("WARNING: failed to create udpEmitter: %v\n", err)
 		}

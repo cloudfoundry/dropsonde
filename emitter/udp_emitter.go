@@ -12,10 +12,8 @@ type udpEmitter struct {
 	origin  *events.Origin
 }
 
-var DefaultAddress = "localhost:42420"
-
-func NewUdpEmitter() (emitter Emitter, err error) {
-	addr, err := net.ResolveUDPAddr("udp", DefaultAddress)
+func NewUdpEmitter(remoteAddr string) (emitter Emitter, err error) {
+	addr, err := net.ResolveUDPAddr("udp", remoteAddr)
 	if err != nil {
 		return
 	}

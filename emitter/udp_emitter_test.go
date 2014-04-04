@@ -15,11 +15,12 @@ var _ = Describe("UdpEmitter", func() {
 	var jobIndex int32 = 42
 	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
 	var testEvent = events.NewTestEvent(43)
+	var remoteAddr = "localhost:12345"
 
 	Describe("Close()", func() {
 		It("closes the UDP connection", func() {
 
-			udpEmitter, _ := emitter.NewUdpEmitter()
+			udpEmitter, _ := emitter.NewUdpEmitter(remoteAddr)
 
 			udpEmitter.SetOrigin(&origin)
 			udpEmitter.Close()
@@ -34,7 +35,7 @@ var _ = Describe("UdpEmitter", func() {
 		var udpEmitter emitter.Emitter
 
 		BeforeEach(func() {
-			udpEmitter, _ = emitter.NewUdpEmitter()
+			udpEmitter, _ = emitter.NewUdpEmitter(remoteAddr)
 
 			udpEmitter.SetOrigin(&origin)
 		})
@@ -44,7 +45,7 @@ var _ = Describe("UdpEmitter", func() {
 			var agentListener net.PacketConn
 
 			BeforeEach(func() {
-				agentListener, _ = net.ListenPacket("udp", ":42420")
+				agentListener, _ = net.ListenPacket("udp", ":12345")
 			})
 
 			AfterEach(func() {
@@ -77,7 +78,7 @@ var _ = Describe("UdpEmitter", func() {
 				It("should eventually send envelopes as a []byte", func(done Done) {
 					err := udpEmitter.Emit(testEvent)
 					Expect(err).To(BeNil())
-					agentListener, err := net.ListenPacket("udp", ":42420")
+					agentListener, err := net.ListenPacket("udp", ":12345")
 					Expect(err).To(BeNil())
 					err = udpEmitter.Emit(testEvent)
 					Expect(err).To(BeNil())
@@ -97,19 +98,8 @@ var _ = Describe("UdpEmitter", func() {
 
 	Describe("NewUdpEmitter()", func() {
 		Context("when ResolveUDPAddr fails", func() {
-			var originalDefaultAddress string
-
-			BeforeEach(func() {
-				originalDefaultAddress = emitter.DefaultAddress
-				emitter.DefaultAddress = "invalid-address:"
-			})
-
-			AfterEach(func() {
-				emitter.DefaultAddress = originalDefaultAddress
-			})
-
 			It("returns an error", func() {
-				emitter, err := emitter.NewUdpEmitter()
+				emitter, err := emitter.NewUdpEmitter("invalid-address:")
 				Expect(emitter).To(BeNil())
 				Expect(err).ToNot(BeNil())
 			})
@@ -117,7 +107,7 @@ var _ = Describe("UdpEmitter", func() {
 
 		Context("when all is good", func() {
 			It("creates an emitter", func() {
-				emitter, err := emitter.NewUdpEmitter()
+				emitter, err := emitter.NewUdpEmitter("localhost:123")
 				Expect(emitter).ToNot(BeNil())
 				Expect(err).To(BeNil())
 			})
