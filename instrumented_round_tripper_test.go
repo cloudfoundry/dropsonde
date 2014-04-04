@@ -25,76 +25,100 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	var req *http.Request
 	var fake *emitter.FakeEmitter
 
-	BeforeEach(func() {
-		var err error
-		fake = emitter.NewFake()
-		emitter.DefaultEmitter = fake
-
-		fakeRoundTripper = new(FakeRoundTripper)
-		rt = dropsonde.InstrumentedRoundTripper(fakeRoundTripper, "testRoundtripper", 42)
-
-		req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
-		Expect(err).To(BeNil())
-		req.RemoteAddr = "127.0.0.1"
-		req.Header.Set("User-Agent", "our-testing-client")
-
-	})
-
-	Describe("request ID", func() {
-		It("should generate a new request ID", func() {
-			rt.RoundTrip(req)
-			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+	Context("when dropsonde.Initialize fails", func() {
+		var originalAddr string
+		BeforeEach(func() {
+			emitter.DefaultEmitter = nil
+			originalAddr = dropsonde.DefaultEmitterRemoteAddr
+			dropsonde.DefaultEmitterRemoteAddr = "invalid-address:"
 		})
 
-	})
-
-	Context("event emission", func() {
-
-		It("should emit a start event", func() {
-			rt.RoundTrip(req)
-			Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-			Expect(fake.Messages[0].Origin.GetJobName()).To(Equal("testRoundtripper"))
-			Expect(fake.Messages[0].Origin.GetJobInstanceId()).To(BeNumerically("==", 42))
+		AfterEach(func() {
+			dropsonde.DefaultEmitterRemoteAddr = originalAddr
 		})
 
-		Context("if request ID already exists", func() {
-			var existingRequestId *uuid.UUID
-
-			BeforeEach(func() {
-				existingRequestId, _ = uuid.NewV4()
-				req.Header.Set("X-CF-RequestID", existingRequestId.String())
-			})
-
-			It("should emit the existing request ID as the parent request ID", func() {
-				rt.RoundTrip(req)
-				startEvent := fake.Messages[0].Event.(*events.HttpStart)
-				Expect(startEvent.GetParentRequestId()).To(Equal(events.NewUUID(existingRequestId)))
-			})
-		})
-
-		Context("if round tripper returns an error", func() {
-			It("should emit a stop event with blank response fields", func() {
-				fakeRoundTripper.FakeError = errors.New("fake error")
-				rt.RoundTrip(req)
-
-				Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-
-				stopEvent := fake.Messages[1].Event.(*events.HttpStop)
-				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 0))
-				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 0))
-			})
-		})
-
-		Context("if round tripper does not return an error", func() {
-			It("should emit a stop event with the round tripper's response", func() {
-				rt.RoundTrip(req)
-
-				Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-
-				stopEvent := fake.Messages[1].Event.(*events.HttpStop)
-				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
-				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 1234))
-			})
+		It("returns an error", func() {
+			fakeRoundTripper = new(FakeRoundTripper)
+			rt, err := dropsonde.InstrumentedRoundTripper(fakeRoundTripper, "testRoundtripper", 42)
+			Expect(err).To(HaveOccurred())
+			Expect(rt).To(BeNil())
 		})
 	})
+
+	Context("when dropsonde.Initialize succeeds", func() {
+		BeforeEach(func() {
+			var err error
+			fake = emitter.NewFake()
+			emitter.DefaultEmitter = fake
+
+			fakeRoundTripper = new(FakeRoundTripper)
+			rt, err = dropsonde.InstrumentedRoundTripper(fakeRoundTripper, "testRoundtripper", 42)
+			Expect(err).ToNot(HaveOccurred())
+
+			req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
+			Expect(err).ToNot(HaveOccurred())
+			req.RemoteAddr = "127.0.0.1"
+			req.Header.Set("User-Agent", "our-testing-client")
+
+		})
+
+		Describe("request ID", func() {
+			It("should generate a new request ID", func() {
+				rt.RoundTrip(req)
+				Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+			})
+
+		})
+
+		Context("event emission", func() {
+
+			It("should emit a start event", func() {
+				rt.RoundTrip(req)
+				Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
+				Expect(fake.Messages[0].Origin.GetJobName()).To(Equal("testRoundtripper"))
+				Expect(fake.Messages[0].Origin.GetJobInstanceId()).To(BeNumerically("==", 42))
+			})
+
+			Context("if request ID already exists", func() {
+				var existingRequestId *uuid.UUID
+
+				BeforeEach(func() {
+					existingRequestId, _ = uuid.NewV4()
+					req.Header.Set("X-CF-RequestID", existingRequestId.String())
+				})
+
+				It("should emit the existing request ID as the parent request ID", func() {
+					rt.RoundTrip(req)
+					startEvent := fake.Messages[0].Event.(*events.HttpStart)
+					Expect(startEvent.GetParentRequestId()).To(Equal(events.NewUUID(existingRequestId)))
+				})
+			})
+
+			Context("if round tripper returns an error", func() {
+				It("should emit a stop event with blank response fields", func() {
+					fakeRoundTripper.FakeError = errors.New("fake error")
+					rt.RoundTrip(req)
+
+					Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
+
+					stopEvent := fake.Messages[1].Event.(*events.HttpStop)
+					Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 0))
+					Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 0))
+				})
+			})
+
+			Context("if round tripper does not return an error", func() {
+				It("should emit a stop event with the round tripper's response", func() {
+					rt.RoundTrip(req)
+
+					Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
+
+					stopEvent := fake.Messages[1].Event.(*events.HttpStop)
+					Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+					Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 1234))
+				})
+			})
+		})
+	})
+
 })

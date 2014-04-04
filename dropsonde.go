@@ -4,28 +4,27 @@ import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
-	"log"
 	"sync"
 )
 
-const DefaultEmitterRemoteAddr = "localhost:42420"
-const DefaultHeartbeatEmitterRemoteAddr = "localhost:42420"
+var DefaultEmitterRemoteAddr = "localhost:42420"
+var HeartbeatEmitterRemoteAddr = "localhost:42421"
 
 var heartbeatState struct {
 	sync.Mutex
 	stopChannel chan<- interface{}
 }
 
-func Initialize(origin *events.Origin) (err error) {
+func Initialize(origin *events.Origin) error {
 	if emitter.DefaultEmitter == nil {
 		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr)
 		if err != nil {
-			log.Fatalf("WARNING: failed to create udpEmitter: %v\n", err)
+			return err
 		}
 
 		emitter.DefaultEmitter, err = emitter.NewInstrumentedEmitter(udpEmitter)
 		if err != nil {
-			log.Fatalf("WARNING: failed to create instrumentedEmitter: %v\n", err)
+			return err
 		}
 	}
 
@@ -35,24 +34,25 @@ func Initialize(origin *events.Origin) (err error) {
 	defer heartbeatState.Unlock()
 
 	if heartbeatState.stopChannel != nil {
-		return
+		return nil
 	}
 
 	if heartbeatEventSource, ok := emitter.DefaultEmitter.(heartbeat.HeartbeatEventSource); ok {
+		var err error
 		if heartbeat.HeartbeatEmitter == nil {
-			heartbeat.HeartbeatEmitter, err = emitter.NewTcpEmitter(DefaultHeartbeatEmitterRemoteAddr)
+			heartbeat.HeartbeatEmitter, err = emitter.NewTcpEmitter(HeartbeatEmitterRemoteAddr)
 			if err != nil {
-				log.Fatalf("WARNING: failed to create tcpEmitter: %v\n", err)
+				return err
 			}
 		}
 
 		heartbeatState.stopChannel, err = heartbeat.BeginGeneration(heartbeatEventSource, origin)
 		if err != nil {
-			log.Fatalf("WARNING: failed to start HeartbeatGenerator: %v\n", err)
+			return err
 		}
 	}
 
-	return
+	return nil
 }
 
 func Cleanup() {

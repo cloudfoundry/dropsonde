@@ -14,10 +14,13 @@ type instrumentedRoundTripper struct {
 /*
 Helper for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
 */
-func InstrumentedRoundTripper(rt http.RoundTripper, jobName string, jobIndex int32) http.RoundTripper {
+func InstrumentedRoundTripper(rt http.RoundTripper, jobName string, jobIndex int32) (http.RoundTripper, error) {
 	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-	Initialize(&origin)
-	return &instrumentedRoundTripper{rt}
+	err := Initialize(&origin)
+	if err != nil {
+		return nil, err
+	}
+	return &instrumentedRoundTripper{rt}, nil
 }
 
 /*

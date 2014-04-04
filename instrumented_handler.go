@@ -14,11 +14,13 @@ type instrumentedHandler struct {
 /*
 Helper for creating an Instrumented Handler which will delegate to the given http.Handler.
 */
-func InstrumentedHandler(h http.Handler, jobName string, jobIndex int32) http.Handler {
+func InstrumentedHandler(h http.Handler, jobName string, jobIndex int32) (http.Handler, error) {
 	origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-
-	Initialize(&origin)
-	return &instrumentedHandler{h}
+	err := Initialize(&origin)
+	if err != nil {
+		return nil, err
+	}
+	return &instrumentedHandler{h}, nil
 }
 
 /*
