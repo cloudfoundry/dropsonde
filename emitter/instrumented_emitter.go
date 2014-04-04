@@ -6,6 +6,11 @@ import (
 	"sync"
 )
 
+type InstrumentedEmitter interface {
+	Emitter
+	GetHeartbeatEvent() events.Event
+}
+
 type instrumentedEmitter struct {
 	concreteEmitter        Emitter
 	mutex                  *sync.RWMutex
@@ -29,7 +34,7 @@ func (emitter *instrumentedEmitter) Emit(event events.Event) (err error) {
 	return
 }
 
-func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter Emitter, err error) {
+func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter InstrumentedEmitter, err error) {
 	if concreteEmitter == nil {
 		err = errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
 		return

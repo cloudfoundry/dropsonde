@@ -3,10 +3,13 @@ package emitter_test
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
-	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
+
+func getHeartbeatEvent(ie emitter.InstrumentedEmitter) *events.Heartbeat {
+	return ie.GetHeartbeatEvent().(*events.Heartbeat)
+}
 
 var _ = Describe("InstrumentedEmitter", func() {
 	Describe("Delegators", func() {
@@ -31,16 +34,11 @@ var _ = Describe("InstrumentedEmitter", func() {
 	})
 
 	Describe("Emit()", func() {
-		var instrumentedEmitter emitter.Emitter
+		var instrumentedEmitter emitter.InstrumentedEmitter
 		var testEvent events.Event
 		var fakeEmitter *emitter.FakeEmitter
 		var origin events.Origin
 		var jobIndex int32
-
-		var getHeartbeatEvent = func(ie emitter.Emitter) *events.Heartbeat {
-			heartbeatEventSource := ie.(heartbeat.HeartbeatEventSource)
-			return heartbeatEventSource.GetHeartbeatEvent().(*events.Heartbeat)
-		}
 
 		BeforeEach(func() {
 			testEvent = events.NewTestEvent(1)
