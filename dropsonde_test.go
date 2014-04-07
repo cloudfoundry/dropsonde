@@ -11,8 +11,13 @@ import (
 )
 
 var _ = Describe("Dropsonde", func() {
-	Describe("Initialize", func() {
+	var (
+		jobName           = "awesome-job-name"
+		jobInstance int32 = 42
+		origin            = &events.Origin{JobName: &jobName, JobInstanceId: &jobInstance}
+	)
 
+	Describe("Initialize", func() {
 		Context("when there is no DefaultEmitter", func() {
 			It("does not panic", func() {
 				emitter.DefaultEmitter = nil
@@ -23,20 +28,17 @@ var _ = Describe("Dropsonde", func() {
 
 		Context("when there is a DefaultEmitter", func() {
 			var (
-				jobName                = "awesome-job-name"
-				jobInstance      int32 = 42
-				origin                 = &events.Origin{JobName: &jobName, JobInstanceId: &jobInstance}
 				heartbeatEmitter *emitter.FakeEmitter
 			)
 
 			BeforeEach(func() {
-				heartbeatEmitter = emitter.NewFake()
+				heartbeatEmitter = emitter.NewFake(origin)
 				heartbeat.HeartbeatEmitter = heartbeatEmitter
 				heartbeat.HeartbeatInterval = 10 * time.Millisecond
 			})
 
 			It("Sets the origin information on emitter.DefaultEmitter", func() {
-				fakeEmitter := emitter.NewFake()
+				fakeEmitter := emitter.NewFake(origin)
 				emitter.DefaultEmitter = fakeEmitter
 
 				dropsonde.Initialize(origin)
@@ -44,15 +46,16 @@ var _ = Describe("Dropsonde", func() {
 			})
 
 			Context("when the DefaultEmitter is not a HeartbeatEventSource", func() {
-				var fakeEmitter = emitter.NewFake()
+				var fakeEmitter = emitter.NewFake(origin)
 
 				BeforeEach(func() {
 					emitter.DefaultEmitter = fakeEmitter
+
 				})
 
 				It("does not start the HeartbeatGenerator", func() {
 					dropsonde.Initialize(origin)
-					Expect(heartbeatEmitter.Origin).To(BeNil())
+					Expect(heartbeat.HeartbeatEmitter).To(BeNil())
 				})
 			})
 
@@ -60,7 +63,7 @@ var _ = Describe("Dropsonde", func() {
 				var fakeEmitter *emitter.FakeEmitter
 
 				BeforeEach(func() {
-					fakeEmitter = emitter.NewFake()
+					fakeEmitter = emitter.NewFake(origin)
 					emitter.DefaultEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
 				})
 
@@ -79,9 +82,10 @@ var _ = Describe("Dropsonde", func() {
 
 				Context("when subsequently called", func() {
 					It("does not create a new HeartbeatGenerator", func() {
+						var oldHeartbeatEmitter = heartbeat.HeartbeatEmitter
 						dropsonde.Initialize(origin)
 						dropsonde.Initialize(origin)
-						Expect(heartbeatEmitter.SetOriginCount).To(Equal(1))
+						Expect(heartbeat.HeartbeatEmitter).To(Equal(oldHeartbeatEmitter))
 					})
 				})
 			})
@@ -97,9 +101,9 @@ var _ = Describe("Dropsonde", func() {
 
 		Context("when the HeartbeatGenerator is running", func() {
 			It("stops the HeartbeatGenerator", func() {
-				fakeEmitter := emitter.NewFake()
+				fakeEmitter := emitter.NewFake(origin)
 				emitter.DefaultEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
-				heartbeatEmitter := emitter.NewFake()
+				heartbeatEmitter := emitter.NewFake(origin)
 				heartbeat.HeartbeatEmitter = heartbeatEmitter
 				dropsonde.Initialize(nil)
 

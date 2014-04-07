@@ -17,7 +17,7 @@ var heartbeatState struct {
 
 func Initialize(origin *events.Origin) error {
 	if emitter.DefaultEmitter == nil {
-		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr)
+		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr, origin)
 		if err != nil {
 			return err
 		}
@@ -27,8 +27,6 @@ func Initialize(origin *events.Origin) error {
 			return err
 		}
 	}
-
-	emitter.DefaultEmitter.SetOrigin(origin)
 
 	heartbeatState.Lock()
 	defer heartbeatState.Unlock()
@@ -40,7 +38,7 @@ func Initialize(origin *events.Origin) error {
 	if heartbeatEventSource, ok := emitter.DefaultEmitter.(heartbeat.HeartbeatEventSource); ok {
 		var err error
 		if heartbeat.HeartbeatEmitter == nil {
-			heartbeat.HeartbeatEmitter, err = emitter.NewTcpEmitter(HeartbeatEmitterRemoteAddr)
+			heartbeat.HeartbeatEmitter, err = emitter.NewTcpEmitter(HeartbeatEmitterRemoteAddr, origin)
 			if err != nil {
 				return err
 			}
@@ -50,6 +48,8 @@ func Initialize(origin *events.Origin) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		heartbeat.HeartbeatEmitter = nil
 	}
 
 	return nil

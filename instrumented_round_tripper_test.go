@@ -25,6 +25,10 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	var req *http.Request
 	var fake *emitter.FakeEmitter
 
+	var jobName = "testRoundtripper"
+	var jobIndex int32 = 42
+	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+
 	Context("when dropsonde.Initialize fails", func() {
 		var originalAddr string
 		BeforeEach(func() {
@@ -48,7 +52,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	Context("when dropsonde.Initialize succeeds", func() {
 		BeforeEach(func() {
 			var err error
-			fake = emitter.NewFake()
+			fake = emitter.NewFake(&origin)
 			emitter.DefaultEmitter = fake
 
 			fakeRoundTripper = new(FakeRoundTripper)

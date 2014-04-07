@@ -12,42 +12,34 @@ func getHeartbeatEvent(ie emitter.InstrumentedEmitter) *events.Heartbeat {
 }
 
 var _ = Describe("InstrumentedEmitter", func() {
-	Describe("Delegators", func() {
-		var fakeEmitter *emitter.FakeEmitter
-		var instrumentedEmitter emitter.Emitter
+	var fakeEmitter *emitter.FakeEmitter
+	var instrumentedEmitter emitter.InstrumentedEmitter
 
-		BeforeEach(func() {
-			fakeEmitter = emitter.NewFake()
-			instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
-		})
+	BeforeEach(func() {
+		jobName := "testInstrumentedEmitter"
+		var jobIndex int32
+
+		origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+
+		fakeEmitter = emitter.NewFake(&origin)
+		instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
+	})
+
+	Describe("Delegators", func() {
 
 		It("delegates Close() to the concreteEmitter", func() {
 			instrumentedEmitter.Close()
 			Expect(fakeEmitter.IsClosed).To(BeTrue())
 		})
-
-		It("delegates SetOrigin() to the concreteEmitter", func() {
-			origin := new(events.Origin)
-			instrumentedEmitter.SetOrigin(origin)
-			Expect(fakeEmitter.Origin).To(Equal(origin))
-		})
 	})
 
 	Describe("Emit()", func() {
-		var instrumentedEmitter emitter.InstrumentedEmitter
 		var testEvent events.Event
-		var fakeEmitter *emitter.FakeEmitter
-		var origin events.Origin
-		var jobIndex int32
 
 		BeforeEach(func() {
 			testEvent = events.NewTestEvent(1)
-			fakeEmitter = emitter.NewFake()
-			instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
-			jobName := "testInstrumentedEmitter"
-			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
-			instrumentedEmitter.SetOrigin(&origin)
 		})
+
 		It("calls the concrete emitter", func() {
 			Expect(fakeEmitter.Messages).To(HaveLen(0))
 
@@ -56,7 +48,6 @@ var _ = Describe("InstrumentedEmitter", func() {
 
 			Expect(fakeEmitter.Messages).To(HaveLen(1))
 			Expect(fakeEmitter.Messages[0].Event).To(Equal(testEvent))
-			Expect(fakeEmitter.Messages[0].Origin).To(Equal(&origin))
 		})
 		It("increments the ReceivedMetricsCounter", func() {
 			Expect(getHeartbeatEvent(instrumentedEmitter).GetReceivedCount()).To(BeNumerically("==", 0))

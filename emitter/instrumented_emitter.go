@@ -44,10 +44,6 @@ func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter InstrumentedEmitte
 	return
 }
 
-func (emitter *instrumentedEmitter) SetOrigin(origin *events.Origin) {
-	emitter.concreteEmitter.SetOrigin(origin)
-}
-
 func (emitter *instrumentedEmitter) Close() {
 	emitter.concreteEmitter.Close()
 }

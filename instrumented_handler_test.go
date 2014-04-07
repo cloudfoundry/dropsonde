@@ -23,6 +23,10 @@ var _ = Describe("InstrumentedHandler", func() {
 	var h http.Handler
 	var req *http.Request
 
+	var jobName = "testHandler"
+	var jobIndex int32 = 41
+	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+
 	Context("when dropsonde.Initialize fails", func() {
 		var originalAddr string
 		BeforeEach(func() {
@@ -45,7 +49,7 @@ var _ = Describe("InstrumentedHandler", func() {
 
 	Context("when dropsonde.Initialize doesn't fail", func() {
 		BeforeEach(func() {
-			fake = emitter.NewFake()
+			fake = emitter.NewFake(&origin)
 			emitter.DefaultEmitter = fake
 
 			var err error

@@ -24,7 +24,12 @@ var _ = Describe("HeartbeatGenerator", func() {
 		)
 
 		BeforeEach(func() {
-			fakeEmitter = emitter.NewFake()
+			jobName := "testHeartbeatEmitter"
+			var jobIndex int32
+
+			origin := events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+			fakeEmitter = emitter.NewFake(&origin)
+
 			heartbeat.HeartbeatInterval = 10 * time.Millisecond
 		})
 

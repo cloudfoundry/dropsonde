@@ -11,18 +11,14 @@ type tcpEmitter struct {
 	origin  *events.Origin
 }
 
-func NewTcpEmitter(remoteAddress string) (e Emitter, err error) {
+func NewTcpEmitter(remoteAddress string, origin *events.Origin) (e Emitter, err error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", remoteAddress)
 	if err != nil {
 		return
 	}
 
-	e = &tcpEmitter{tcpAddr: tcpAddr}
+	e = &tcpEmitter{tcpAddr: tcpAddr, origin: origin}
 	return
-}
-
-func (e *tcpEmitter) SetOrigin(origin *events.Origin) {
-	e.origin = origin
 }
 
 func (e *tcpEmitter) Emit(event events.Event) (err error) {

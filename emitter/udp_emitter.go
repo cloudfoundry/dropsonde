@@ -12,7 +12,7 @@ type udpEmitter struct {
 	origin  *events.Origin
 }
 
-func NewUdpEmitter(remoteAddr string) (emitter Emitter, err error) {
+func NewUdpEmitter(remoteAddr string, origin *events.Origin) (emitter Emitter, err error) {
 	addr, err := net.ResolveUDPAddr("udp", remoteAddr)
 	if err != nil {
 		return
@@ -23,7 +23,7 @@ func NewUdpEmitter(remoteAddr string) (emitter Emitter, err error) {
 		return
 	}
 
-	emitter = &udpEmitter{udpAddr: addr, udpConn: conn}
+	emitter = &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
 	return
 }
 
@@ -39,10 +39,6 @@ func (e *udpEmitter) Emit(event events.Event) (err error) {
 
 	_, err = e.udpConn.WriteTo(data, e.udpAddr)
 	return
-}
-
-func (e *udpEmitter) SetOrigin(origin *events.Origin) {
-	e.origin = origin
 }
 
 func (e *udpEmitter) Close() {

@@ -39,10 +39,12 @@ func createTestListener() (net.Listener, <-chan *events.Envelope) {
 }
 
 var _ = Describe("TcpEmitter", func() {
+	var origin = &events.Origin{JobName: proto.String("job-name"), JobInstanceId: proto.Int(42)}
+
 	Describe("NewTcpEmitter()", func() {
 		Context("when remoteAddress is parseable", func() {
 			It("returns an emitter", func() {
-				tcpEmitter, err := emitter.NewTcpEmitter("localhost:123")
+				tcpEmitter, err := emitter.NewTcpEmitter("localhost:123", origin)
 				Expect(tcpEmitter).ToNot(BeNil())
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -50,7 +52,7 @@ var _ = Describe("TcpEmitter", func() {
 
 		Context("when remoteAddress is not parseable", func() {
 			It("returns an error", func() {
-				tcpEmitter, err := emitter.NewTcpEmitter("$#&^bad-address!!!:")
+				tcpEmitter, err := emitter.NewTcpEmitter("$#&^bad-address!!!:", origin)
 				Expect(tcpEmitter).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
@@ -60,7 +62,6 @@ var _ = Describe("TcpEmitter", func() {
 	Describe("Emit()", func() {
 		var (
 			tcpEmitter emitter.Emitter
-			origin     = &events.Origin{JobName: proto.String("job-name"), JobInstanceId: proto.Int(42)}
 			testEvent  = events.NewHeartbeat(123, 0, 0)
 		)
 
@@ -72,8 +73,7 @@ var _ = Describe("TcpEmitter", func() {
 
 			BeforeEach(func() {
 				testListener, msgChan = createTestListener()
-				tcpEmitter, _ = emitter.NewTcpEmitter(testListener.Addr().String())
-				tcpEmitter.SetOrigin(origin)
+				tcpEmitter, _ = emitter.NewTcpEmitter(testListener.Addr().String(), origin)
 			})
 
 			AfterEach(func() {
@@ -96,8 +96,7 @@ var _ = Describe("TcpEmitter", func() {
 
 		Context("when the agent is not listening", func() {
 			BeforeEach(func() {
-				tcpEmitter, _ = emitter.NewTcpEmitter("localhost:123")
-				tcpEmitter.SetOrigin(origin)
+				tcpEmitter, _ = emitter.NewTcpEmitter("localhost:123", origin)
 			})
 
 			It("returns an error", func() {

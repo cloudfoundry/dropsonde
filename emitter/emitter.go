@@ -7,7 +7,6 @@ import (
 
 type Emitter interface {
 	Emit(events.Event) error
-	SetOrigin(*events.Origin)
 	Close()
 }
 

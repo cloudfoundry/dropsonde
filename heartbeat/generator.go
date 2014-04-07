@@ -19,7 +19,6 @@ func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) (ch
 		return nil, errors.New("HeartbeatEmitter not set")
 	}
 
-	HeartbeatEmitter.SetOrigin(origin)
 	stopChannel := make(chan interface{})
 	go heartbeatGeneratingLoop(HeartbeatEmitter, dataSource, stopChannel)
 	return stopChannel, nil
