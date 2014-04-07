@@ -4,10 +4,12 @@ import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"sync"
 	"time"
 )
 
-var HeartbeatInterval = 10 * time.Second
+var heartbeatInterval = 10 * time.Second
+var heartbeatIntervalLock = sync.RWMutex{}
 var HeartbeatEmitter emitter.Emitter
 
 type HeartbeatEventSource interface {
@@ -31,16 +33,30 @@ func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) (ch
 func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatEventSource, stopChannel <-chan interface{}) {
 	defer e.Close()
 
-	timer := time.NewTimer(HeartbeatInterval)
+	timer := time.NewTimer(HeartbeatInterval())
 	for {
 		select {
 		case <-stopChannel:
 			return
 		case <-timer.C:
-			timer.Reset(HeartbeatInterval)
+			timer.Reset(HeartbeatInterval())
 
 			event := dataSource.GetHeartbeatEvent()
 			e.Emit(event)
 		}
 	}
+}
+
+func SetHeartbeatInterval(interval time.Duration) {
+	heartbeatIntervalLock.Lock()
+	defer heartbeatIntervalLock.Unlock()
+
+	heartbeatInterval = interval
+}
+
+func HeartbeatInterval() time.Duration {
+	heartbeatIntervalLock.RLock()
+	defer heartbeatIntervalLock.RUnlock()
+
+	return heartbeatInterval
 }

@@ -26,7 +26,7 @@ var _ = Describe("InstrumentedEmitter", func() {
 
 		It("delegates Close() to the concreteEmitter", func() {
 			instrumentedEmitter.Close()
-			Expect(fakeEmitter.IsClosed).To(BeTrue())
+			Eventually(fakeEmitter.IsClosed).Should(BeTrue())
 		})
 	})
 

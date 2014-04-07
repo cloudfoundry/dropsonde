@@ -16,7 +16,7 @@ type FakeEmitter struct {
 	Messages    []envelope
 	mutex       *sync.RWMutex
 	Origin      *events.Origin
-	IsClosed    bool
+	isClosed    bool
 }
 
 func NewFake(origin *events.Origin) *FakeEmitter {
@@ -46,5 +46,13 @@ func (f *FakeEmitter) GetMessages() (messages []envelope) {
 }
 
 func (f *FakeEmitter) Close() {
-	f.IsClosed = true
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
+	f.isClosed = true
+}
+
+func (f *FakeEmitter) IsClosed() bool {
+	f.mutex.RLock()
+	defer f.mutex.RUnlock()
+	return f.isClosed
 }

@@ -27,13 +27,15 @@ var _ = Describe("HeartbeatGenerator", func() {
 			origin := events.NewOrigin("testHeartbeatEmitter", 0)
 			fakeEmitter = emitter.NewFake(origin)
 
-			heartbeat.HeartbeatInterval = 10 * time.Millisecond
+			heartbeat.SetHeartbeatInterval(10 * time.Millisecond)
 		})
 
 		Context("when HeartbeatEmitter is not set", func() {
 			It("returns an error", func() {
 				heartbeat.HeartbeatEmitter = nil
-				_, err := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+				stopChan, err := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+
+				Expect(stopChan).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 		})
@@ -54,7 +56,7 @@ var _ = Describe("HeartbeatGenerator", func() {
 				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource, nil)
 
 				close(stopChannel)
-				Eventually(func() bool { return fakeEmitter.IsClosed }).Should(BeTrue())
+				Eventually(fakeEmitter.IsClosed).Should(BeTrue())
 			})
 		})
 
