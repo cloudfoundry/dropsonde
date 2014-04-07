@@ -52,8 +52,6 @@ func Initialize(origin *events.Origin) error {
 		if err != nil {
 			return err
 		}
-	} else {
-		heartbeat.HeartbeatEmitter = nil
 	}
 
 	return nil

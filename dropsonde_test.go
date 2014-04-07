@@ -58,6 +58,7 @@ var _ = Describe("Dropsonde", func() {
 				})
 
 				It("does not start the HeartbeatGenerator", func() {
+					heartbeat.HeartbeatEmitter = nil
 					dropsonde.Initialize(origin)
 					Expect(heartbeat.HeartbeatEmitter).To(BeNil())
 				})
