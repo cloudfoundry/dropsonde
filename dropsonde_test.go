@@ -14,6 +14,14 @@ var _ = Describe("Dropsonde", func() {
 	var origin = events.NewOrigin("awesome-job-name", 42)
 
 	Describe("Initialize", func() {
+		It("errors if passed an origin with empty job name", func() {
+			malformedOrigin := events.NewOrigin("", 0)
+
+			err := dropsonde.Initialize(malformedOrigin)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(Equal("Cannot initialze dropsonde without a job name"))
+		})
+
 		Context("when there is no DefaultEmitter", func() {
 			It("does not panic", func() {
 				emitter.DefaultEmitter = nil
@@ -101,7 +109,7 @@ var _ = Describe("Dropsonde", func() {
 				emitter.DefaultEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)
 				heartbeatEmitter := emitter.NewFake(origin)
 				heartbeat.HeartbeatEmitter = heartbeatEmitter
-				dropsonde.Initialize(nil)
+				dropsonde.Initialize(origin)
 
 				dropsonde.Cleanup()
 

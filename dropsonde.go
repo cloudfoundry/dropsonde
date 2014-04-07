@@ -1,6 +1,7 @@
 package dropsonde
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
@@ -16,6 +17,9 @@ var heartbeatState struct {
 }
 
 func Initialize(origin *events.Origin) error {
+	if origin.GetJobName() == "" {
+		return errors.New("Cannot initialze dropsonde without a job name")
+	}
 	if emitter.DefaultEmitter == nil {
 		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr, origin)
 		if err != nil {
