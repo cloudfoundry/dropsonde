@@ -27,7 +27,7 @@ var _ = Describe("HeartbeatGenerator", func() {
 			origin := events.NewOrigin("testHeartbeatEmitter", 0)
 			fakeEmitter = emitter.NewFake(origin)
 
-			heartbeat.SetHeartbeatInterval(10 * time.Millisecond)
+			heartbeat.HeartbeatInterval = 10 * time.Millisecond
 		})
 
 		Context("when HeartbeatEmitter is not set", func() {
@@ -45,15 +45,10 @@ var _ = Describe("HeartbeatGenerator", func() {
 				heartbeat.HeartbeatEmitter = fakeEmitter
 			})
 
-			It("periodically emits heartbeats", func() {
-				defer close(stopChannel)
+			It("periodically emits heartbeats, and the emitter can be closed properly", func() {
 				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource)
 
 				Eventually(func() int { return len(fakeEmitter.GetMessages()) }).Should(BeNumerically(">=", 2))
-			})
-
-			It("closes the emitter after the stopChannel is closed", func() {
-				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource)
 
 				close(stopChannel)
 				Eventually(fakeEmitter.IsClosed).Should(BeTrue())

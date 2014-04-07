@@ -23,10 +23,16 @@ var _ = Describe("Dropsonde", func() {
 		})
 
 		Context("when there is no DefaultEmitter", func() {
-			It("does not panic", func() {
+			It("creates a DefaultEmitter and starts generating heartbeats", func() {
+				heartbeatEmitter := emitter.NewFake(origin)
+				heartbeat.HeartbeatEmitter = heartbeatEmitter
+
 				emitter.DefaultEmitter = nil
-				Expect(func() { dropsonde.Initialize(nil) }).ToNot(Panic())
+				err := dropsonde.Initialize(origin)
+				Expect(err).ToNot(HaveOccurred())
+
 				dropsonde.Cleanup()
+				Eventually(heartbeatEmitter.IsClosed).Should(BeTrue())
 			})
 		})
 
@@ -38,7 +44,7 @@ var _ = Describe("Dropsonde", func() {
 			BeforeEach(func() {
 				heartbeatEmitter = emitter.NewFake(origin)
 				heartbeat.HeartbeatEmitter = heartbeatEmitter
-				heartbeat.SetHeartbeatInterval(10 * time.Millisecond)
+				heartbeat.HeartbeatInterval = 10 * time.Millisecond
 			})
 
 			It("Sets the origin information on emitter.DefaultEmitter", func() {
@@ -54,7 +60,6 @@ var _ = Describe("Dropsonde", func() {
 
 				BeforeEach(func() {
 					emitter.DefaultEmitter = fakeEmitter
-
 				})
 
 				It("does not start the HeartbeatGenerator", func() {
@@ -74,6 +79,7 @@ var _ = Describe("Dropsonde", func() {
 
 				AfterEach(func() {
 					dropsonde.Cleanup()
+					Eventually(heartbeatEmitter.IsClosed).Should(BeTrue())
 				})
 
 				Context("when called for the first time", func() {
