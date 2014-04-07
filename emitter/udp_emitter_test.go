@@ -13,14 +13,14 @@ var _ = Describe("UdpEmitter", func() {
 
 	var jobName = "testInstrumentedEmitter"
 	var jobIndex int32 = 42
-	var origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+	var origin = events.NewOrigin(jobName, jobIndex)
 	var testEvent = events.NewTestEvent(43)
 	var remoteAddr = "localhost:12345"
 
 	Describe("Close()", func() {
 		It("closes the UDP connection", func() {
 
-			udpEmitter, _ := emitter.NewUdpEmitter(remoteAddr, &origin)
+			udpEmitter, _ := emitter.NewUdpEmitter(remoteAddr, origin)
 
 			udpEmitter.Close()
 
@@ -34,7 +34,7 @@ var _ = Describe("UdpEmitter", func() {
 		var udpEmitter emitter.Emitter
 
 		BeforeEach(func() {
-			udpEmitter, _ = emitter.NewUdpEmitter(remoteAddr, &origin)
+			udpEmitter, _ = emitter.NewUdpEmitter(remoteAddr, origin)
 		})
 
 		Context("when the agent is listening", func() {
@@ -96,7 +96,7 @@ var _ = Describe("UdpEmitter", func() {
 	Describe("NewUdpEmitter()", func() {
 		Context("when ResolveUDPAddr fails", func() {
 			It("returns an error", func() {
-				emitter, err := emitter.NewUdpEmitter("invalid-address:", &origin)
+				emitter, err := emitter.NewUdpEmitter("invalid-address:", origin)
 				Expect(emitter).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
@@ -104,7 +104,7 @@ var _ = Describe("UdpEmitter", func() {
 
 		Context("when all is good", func() {
 			It("creates an emitter", func() {
-				emitter, err := emitter.NewUdpEmitter("localhost:123", &origin)
+				emitter, err := emitter.NewUdpEmitter("localhost:123", origin)
 				Expect(emitter).ToNot(BeNil())
 				Expect(err).ToNot(HaveOccurred())
 			})

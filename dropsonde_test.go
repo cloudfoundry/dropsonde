@@ -11,11 +11,7 @@ import (
 )
 
 var _ = Describe("Dropsonde", func() {
-	var (
-		jobName           = "awesome-job-name"
-		jobInstance int32 = 42
-		origin            = &events.Origin{JobName: &jobName, JobInstanceId: &jobInstance}
-	)
+	var origin = events.NewOrigin("awesome-job-name", 42)
 
 	Describe("Initialize", func() {
 		Context("when there is no DefaultEmitter", func() {

@@ -15,19 +15,17 @@ func (*unknownEvent) ProtoMessage() {}
 
 var _ = Describe("EventFormatter", func() {
 	Describe("wrap", func() {
-		var origin events.Origin
-		var jobIndex int32 = 42
+		var origin *events.Origin
 
 		BeforeEach(func() {
-			jobName := "testEventFormatter"
-			origin = events.Origin{JobName: &jobName, JobInstanceId: &jobIndex}
+			origin = events.NewOrigin("testEventFormatter", 42)
 		})
 
 		It("should work with HttpStart events", func() {
 			id, _ := uuid.NewV4()
 			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
 
-			envelope, err := emitter.Wrap(testEvent, &origin)
+			envelope, err := emitter.Wrap(testEvent, origin)
 			Expect(err).To(BeNil())
 			Expect(envelope.GetEventType()).To(Equal(events.Envelope_HttpStart))
 			Expect(envelope.GetHttpStart()).To(Equal(testEvent))
@@ -37,32 +35,31 @@ var _ = Describe("EventFormatter", func() {
 			id, _ := uuid.NewV4()
 			testEvent := &events.HttpStop{RequestId: events.NewUUID(id)}
 
-			envelope, err := emitter.Wrap(testEvent, &origin)
+			envelope, err := emitter.Wrap(testEvent, origin)
 			Expect(err).To(BeNil())
 			Expect(envelope.GetEventType()).To(Equal(events.Envelope_HttpStop))
 			Expect(envelope.GetHttpStop()).To(Equal(testEvent))
 		})
 
 		It("should error with unknown events", func() {
-			envelope, err := emitter.Wrap(new(unknownEvent), &origin)
+			envelope, err := emitter.Wrap(new(unknownEvent), origin)
 			Expect(envelope).To(BeNil())
 			Expect(err).ToNot(BeNil())
 		})
 
 		It("should work with dropsonde status events", func() {
 			statusEvent := &events.Heartbeat{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
-			envelope, err := emitter.Wrap(statusEvent, &origin)
+			envelope, err := emitter.Wrap(statusEvent, origin)
 			Expect(err).To(BeNil())
 			Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
 			Expect(envelope.GetHeartbeat()).To(Equal(statusEvent))
 		})
 
 		It("should check that jobName is non-empty", func() {
-			malformedJobName := ""
 			id, _ := uuid.NewV4()
-			malformedOrigin := events.Origin{JobName: &malformedJobName, JobInstanceId: &jobIndex}
+			malformedOrigin := events.NewOrigin("", 42)
 			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
-			envelope, err := emitter.Wrap(testEvent, &malformedOrigin)
+			envelope, err := emitter.Wrap(testEvent, malformedOrigin)
 
 			Expect(err).To(HaveOccurred())
 			Expect(err.Error()).To(Equal("Event not emitted due to missing empty jobName information, check settings"))
@@ -78,12 +75,12 @@ var _ = Describe("EventFormatter", func() {
 			})
 
 			It("should contain the jobName in the origin", func() {
-				envelope, _ := emitter.Wrap(testEvent, &origin)
+				envelope, _ := emitter.Wrap(testEvent, origin)
 				Expect(envelope.GetOrigin().GetJobName()).To(Equal("testEventFormatter"))
 			})
 
 			It("should contain the jobIndex in the origin", func() {
-				envelope, _ := emitter.Wrap(testEvent, &origin)
+				envelope, _ := emitter.Wrap(testEvent, origin)
 				Expect(envelope.GetOrigin().GetJobInstanceId()).To(BeNumerically("==", 42))
 			})
 
