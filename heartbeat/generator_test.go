@@ -33,7 +33,7 @@ var _ = Describe("HeartbeatGenerator", func() {
 		Context("when HeartbeatEmitter is not set", func() {
 			It("returns an error", func() {
 				heartbeat.HeartbeatEmitter = nil
-				stopChan, err := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+				stopChan, err := heartbeat.BeginGeneration(heartbeatEventSource)
 
 				Expect(stopChan).To(BeNil())
 				Expect(err).To(HaveOccurred())
@@ -46,14 +46,14 @@ var _ = Describe("HeartbeatGenerator", func() {
 			})
 
 			It("periodically emits heartbeats", func() {
-				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource, nil)
 				defer close(stopChannel)
+				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource)
 
 				Eventually(func() int { return len(fakeEmitter.GetMessages()) }).Should(BeNumerically(">=", 2))
 			})
 
 			It("closes the emitter after the stopChannel is closed", func() {
-				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource, nil)
+				stopChannel, _ := heartbeat.BeginGeneration(heartbeatEventSource)
 
 				close(stopChannel)
 				Eventually(fakeEmitter.IsClosed).Should(BeTrue())

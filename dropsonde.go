@@ -48,7 +48,7 @@ func Initialize(origin *events.Origin) error {
 			}
 		}
 
-		heartbeatState.stopChannel, err = heartbeat.BeginGeneration(heartbeatEventSource, origin)
+		heartbeatState.stopChannel, err = heartbeat.BeginGeneration(heartbeatEventSource)
 		if err != nil {
 			return err
 		}

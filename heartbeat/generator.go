@@ -16,7 +16,7 @@ type HeartbeatEventSource interface {
 	GetHeartbeatEvent() events.Event
 }
 
-func BeginGeneration(dataSource HeartbeatEventSource, origin *events.Origin) (chan<- interface{}, error) {
+func BeginGeneration(dataSource HeartbeatEventSource) (chan<- interface{}, error) {
 	if HeartbeatEmitter == nil {
 		return nil, errors.New("HeartbeatEmitter not set")
 	}
