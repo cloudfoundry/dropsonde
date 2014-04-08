@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"log"
 	"time"
 )
 
@@ -36,7 +37,10 @@ func heartbeatGeneratingLoop(e emitter.Emitter, dataSource HeartbeatEventSource,
 			timer.Reset(HeartbeatInterval)
 
 			event := dataSource.GetHeartbeatEvent()
-			e.Emit(event)
+			err := e.Emit(event)
+			if err != nil {
+				log.Printf("Problem while emitting event: %v/n", err)
+			}
 		}
 	}
 }
