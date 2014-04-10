@@ -15,7 +15,7 @@ after_success:
 install:
 - go get -d -v -t ./...
 
-script: PATH=$HOME/gopath/bin:$PATH ginkgo -r  --randomizeAllSpecs --failOnPending --skipMeasurements --cover
+script: PATH=$HOME/gopath/bin:$PATH ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover
 
 go:
 - 1.2.1
