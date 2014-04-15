@@ -10,10 +10,7 @@ import (
 )
 
 var _ = Describe("UdpEmitter", func() {
-
-	var jobName = "testInstrumentedEmitter"
-	var jobIndex int32 = 42
-	var origin = events.NewOrigin(jobName, jobIndex)
+	var origin = "testInstrumentedEmitter/42"
 	var testEvent = events.NewTestEvent(43)
 	var remoteAddr = "localhost:12345"
 
@@ -60,8 +57,7 @@ var _ = Describe("UdpEmitter", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
 				Expect(envelope.GetHeartbeat()).To(Equal(testEvent))
-				Expect(envelope.GetOrigin().GetJobName()).To(Equal(jobName))
-				Expect(envelope.GetOrigin().GetJobInstanceId()).To(Equal(jobIndex))
+				Expect(envelope.GetOrigin()).To(Equal("testInstrumentedEmitter/42"))
 				close(done)
 			})
 		})

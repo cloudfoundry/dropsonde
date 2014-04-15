@@ -15,10 +15,10 @@ func (*unknownEvent) ProtoMessage() {}
 
 var _ = Describe("EventFormatter", func() {
 	Describe("wrap", func() {
-		var origin *events.Origin
+		var origin string
 
 		BeforeEach(func() {
-			origin = events.NewOrigin("testEventFormatter", 42)
+			origin = "testEventFormatter/42"
 		})
 
 		It("should work with HttpStart events", func() {
@@ -55,14 +55,14 @@ var _ = Describe("EventFormatter", func() {
 			Expect(envelope.GetHeartbeat()).To(Equal(statusEvent))
 		})
 
-		It("should check that jobName is non-empty", func() {
+		It("should check that origin is non-empty", func() {
 			id, _ := uuid.NewV4()
-			malformedOrigin := events.NewOrigin("", 42)
+			malformedOrigin := ""
 			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
 			envelope, err := emitter.Wrap(testEvent, malformedOrigin)
 
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Event not emitted due to missing empty jobName information, check settings"))
+			Expect(err.Error()).To(Equal("Event not emitted due to missing origin information"))
 			Expect(envelope).To(BeNil())
 		})
 
@@ -74,19 +74,14 @@ var _ = Describe("EventFormatter", func() {
 				testEvent = &events.HttpStop{RequestId: events.NewUUID(id)}
 			})
 
-			It("should contain the jobName in the origin", func() {
+			It("should contain the origin", func() {
 				envelope, _ := emitter.Wrap(testEvent, origin)
-				Expect(envelope.GetOrigin().GetJobName()).To(Equal("testEventFormatter"))
+				Expect(envelope.GetOrigin()).To(Equal("testEventFormatter/42"))
 			})
 
-			It("should contain the jobIndex in the origin", func() {
-				envelope, _ := emitter.Wrap(testEvent, origin)
-				Expect(envelope.GetOrigin().GetJobInstanceId()).To(BeNumerically("==", 42))
-			})
-
-			Context("when the origin is nil", func() {
+			Context("when the origin is empty", func() {
 				It("should error with a helpful message", func() {
-					envelope, err := emitter.Wrap(testEvent, nil)
+					envelope, err := emitter.Wrap(testEvent, "")
 					Expect(envelope).To(BeNil())
 					Expect(err.Error()).To(Equal("Event not emitted due to missing origin information"))
 				})

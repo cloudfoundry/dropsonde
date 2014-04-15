@@ -3,7 +3,6 @@ package dropsonde_test
 import (
 	"github.com/cloudfoundry-incubator/dropsonde"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,15 +10,15 @@ import (
 )
 
 var _ = Describe("Dropsonde", func() {
-	var origin = events.NewOrigin("awesome-job-name", 42)
+	var origin = "awesome-job-name/42"
 
 	Describe("Initialize", func() {
 		It("errors if passed an origin with empty job name", func() {
-			malformedOrigin := events.NewOrigin("", 0)
+			malformedOriginString := ""
 
-			err := dropsonde.Initialize(malformedOrigin)
+			err := dropsonde.Initialize(malformedOriginString)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Cannot initialze dropsonde without a job name"))
+			Expect(err.Error()).To(Equal("Cannot initialize dropsonde without an origin"))
 		})
 
 		Context("when there is no DefaultEmitter", func() {

@@ -11,7 +11,6 @@ It is generated from these files:
 	http.proto
 
 It has these top-level messages:
-	Origin
 	Envelope
 */
 package events
@@ -61,32 +60,8 @@ func (x *Envelope_EventType) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type Origin struct {
-	JobName          *string `protobuf:"bytes,1,req,name=jobName" json:"jobName,omitempty"`
-	JobInstanceId    *int32  `protobuf:"varint,2,req,name=jobInstanceId" json:"jobInstanceId,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *Origin) Reset()         { *m = Origin{} }
-func (m *Origin) String() string { return proto.CompactTextString(m) }
-func (*Origin) ProtoMessage()    {}
-
-func (m *Origin) GetJobName() string {
-	if m != nil && m.JobName != nil {
-		return *m.JobName
-	}
-	return ""
-}
-
-func (m *Origin) GetJobInstanceId() int32 {
-	if m != nil && m.JobInstanceId != nil {
-		return *m.JobInstanceId
-	}
-	return 0
-}
-
 type Envelope struct {
-	Origin           *Origin             `protobuf:"bytes,1,req,name=origin" json:"origin,omitempty"`
+	Origin           *string             `protobuf:"bytes,1,req,name=origin" json:"origin,omitempty"`
 	EventType        *Envelope_EventType `protobuf:"varint,2,req,name=eventType,enum=events.Envelope_EventType" json:"eventType,omitempty"`
 	Heartbeat        *Heartbeat          `protobuf:"bytes,3,opt,name=heartbeat" json:"heartbeat,omitempty"`
 	HttpStart        *HttpStart          `protobuf:"bytes,4,opt,name=httpStart" json:"httpStart,omitempty"`
@@ -98,11 +73,11 @@ func (m *Envelope) Reset()         { *m = Envelope{} }
 func (m *Envelope) String() string { return proto.CompactTextString(m) }
 func (*Envelope) ProtoMessage()    {}
 
-func (m *Envelope) GetOrigin() *Origin {
-	if m != nil {
-		return m.Origin
+func (m *Envelope) GetOrigin() string {
+	if m != nil && m.Origin != nil {
+		return *m.Origin
 	}
-	return nil
+	return ""
 }
 
 func (m *Envelope) GetEventType() Envelope_EventType {

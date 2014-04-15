@@ -39,7 +39,7 @@ func createTestListener() (net.Listener, <-chan *events.Envelope) {
 }
 
 var _ = Describe("TcpEmitter", func() {
-	var origin = events.NewOrigin("job-name", 42)
+	var origin = "job-name/42"
 
 	Describe("NewTcpEmitter()", func() {
 		Context("when remoteAddress is parseable", func() {

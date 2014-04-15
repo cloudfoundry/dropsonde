@@ -16,7 +16,7 @@ var _ = Describe("InstrumentedEmitter", func() {
 	var instrumentedEmitter emitter.InstrumentedEmitter
 
 	BeforeEach(func() {
-		origin := events.NewOrigin("testInstrumentedEmitter", 0)
+		origin := "testInstrumentedEmitter/0"
 
 		fakeEmitter = emitter.NewFake(origin)
 		instrumentedEmitter, _ = emitter.NewInstrumentedEmitter(fakeEmitter)

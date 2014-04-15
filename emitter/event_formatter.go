@@ -3,18 +3,15 @@ package emitter
 import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"code.google.com/p/gogoprotobuf/proto"
 )
 
-func Wrap(e events.Event, origin *events.Origin) (*events.Envelope, error) {
-	if origin == nil {
+func Wrap(e events.Event, origin string) (*events.Envelope, error) {
+	if origin == "" {
 		return nil, errors.New("Event not emitted due to missing origin information")
 	}
 
-	if origin.GetJobName() == "" {
-		return nil, errors.New("Event not emitted due to missing empty jobName information, check settings")
-	}
-
-	envelope := &events.Envelope{Origin: origin}
+	envelope := &events.Envelope{Origin: proto.String(origin)}
 
 	switch e.(type) {
 	case *events.Heartbeat:

@@ -24,7 +24,7 @@ var _ = Describe("HeartbeatGenerator", func() {
 		)
 
 		BeforeEach(func() {
-			origin := events.NewOrigin("testHeartbeatEmitter", 0)
+			origin := "testHeartbeatEmitter/0"
 			fakeEmitter = emitter.NewFake(origin)
 
 			heartbeat.HeartbeatInterval = 10 * time.Millisecond

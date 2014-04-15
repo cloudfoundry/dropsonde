@@ -25,27 +25,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	var req *http.Request
 	var fake *emitter.FakeEmitter
 
-	var origin = events.NewOrigin("testRoundtripper", 42)
-
-	Context("when dropsonde.Initialize fails", func() {
-		var originalAddr string
-		BeforeEach(func() {
-			emitter.DefaultEmitter = nil
-			originalAddr = dropsonde.DefaultEmitterRemoteAddr
-			dropsonde.DefaultEmitterRemoteAddr = "invalid-address:"
-		})
-
-		AfterEach(func() {
-			dropsonde.DefaultEmitterRemoteAddr = originalAddr
-		})
-
-		It("returns an error", func() {
-			fakeRoundTripper = new(FakeRoundTripper)
-			rt, err := dropsonde.InstrumentedRoundTripper(fakeRoundTripper, "testRoundtripper", 42)
-			Expect(err).To(HaveOccurred())
-			Expect(rt).To(BeNil())
-		})
-	})
+	var origin = "testRoundtripper/42"
 
 	Context("when dropsonde.Initialize succeeds", func() {
 		BeforeEach(func() {
@@ -54,7 +34,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 			emitter.DefaultEmitter = fake
 
 			fakeRoundTripper = new(FakeRoundTripper)
-			rt, err = dropsonde.InstrumentedRoundTripper(fakeRoundTripper, "testRoundtripper", 42)
+			rt, err = dropsonde.InstrumentedRoundTripper(fakeRoundTripper)
 			Expect(err).ToNot(HaveOccurred())
 
 			req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
@@ -77,8 +57,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 			It("should emit a start event", func() {
 				rt.RoundTrip(req)
 				Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-				Expect(fake.Messages[0].Origin.GetJobName()).To(Equal("testRoundtripper"))
-				Expect(fake.Messages[0].Origin.GetJobInstanceId()).To(BeNumerically("==", 42))
+				Expect(fake.Messages[0].Origin).To(Equal("testRoundtripper/42"))
 			})
 
 			Context("if request ID already exists", func() {

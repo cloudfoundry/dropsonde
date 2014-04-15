@@ -3,7 +3,6 @@ package dropsonde
 import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/heartbeat"
 	"sync"
 )
@@ -16,10 +15,11 @@ var heartbeatState struct {
 	stopChannel chan<- interface{}
 }
 
-func Initialize(origin *events.Origin) error {
-	if origin.GetJobName() == "" {
-		return errors.New("Cannot initialze dropsonde without a job name")
+func Initialize(origin string) error {
+	if len(origin) == 0 {
+		return errors.New("Cannot initialize dropsonde without an origin")
 	}
+
 	if emitter.DefaultEmitter == nil {
 		udpEmitter, err := emitter.NewUdpEmitter(DefaultEmitterRemoteAddr, origin)
 		if err != nil {

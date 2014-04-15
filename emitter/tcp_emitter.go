@@ -8,10 +8,10 @@ import (
 
 type tcpEmitter struct {
 	tcpAddr *net.TCPAddr
-	origin  *events.Origin
+	origin  string
 }
 
-func NewTcpEmitter(remoteAddress string, origin *events.Origin) (e Emitter, err error) {
+func NewTcpEmitter(remoteAddress string, origin string) (e Emitter, err error) {
 	tcpAddr, err := net.ResolveTCPAddr("tcp", remoteAddress)
 	if err != nil {
 		return

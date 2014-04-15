@@ -9,10 +9,10 @@ import (
 type udpEmitter struct {
 	udpAddr *net.UDPAddr
 	udpConn net.PacketConn
-	origin  *events.Origin
+	origin  string
 }
 
-func NewUdpEmitter(remoteAddr string, origin *events.Origin) (emitter Emitter, err error) {
+func NewUdpEmitter(remoteAddr string, origin string) (emitter Emitter, err error) {
 	addr, err := net.ResolveUDPAddr("udp", remoteAddr)
 	if err != nil {
 		return

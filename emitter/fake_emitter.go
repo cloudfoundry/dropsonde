@@ -8,18 +8,18 @@ import (
 
 type envelope struct {
 	Event  events.Event
-	Origin *events.Origin
+	Origin string
 }
 
 type FakeEmitter struct {
 	ReturnError bool
 	Messages    []envelope
 	mutex       *sync.RWMutex
-	Origin      *events.Origin
+	Origin      string
 	isClosed    bool
 }
 
-func NewFake(origin *events.Origin) *FakeEmitter {
+func NewFake(origin string) *FakeEmitter {
 	return &FakeEmitter{mutex: new(sync.RWMutex), Origin: origin}
 }
 func (f *FakeEmitter) Emit(e events.Event) (err error) {

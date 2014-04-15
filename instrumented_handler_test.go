@@ -23,27 +23,7 @@ var _ = Describe("InstrumentedHandler", func() {
 	var h http.Handler
 	var req *http.Request
 
-	var origin = events.NewOrigin("testHandler", 41)
-
-	Context("when dropsonde.Initialize fails", func() {
-		var originalAddr string
-		BeforeEach(func() {
-			emitter.DefaultEmitter = nil
-			originalAddr = dropsonde.DefaultEmitterRemoteAddr
-			dropsonde.DefaultEmitterRemoteAddr = "invalid-address:"
-		})
-
-		AfterEach(func() {
-			dropsonde.DefaultEmitterRemoteAddr = originalAddr
-		})
-
-		It("returns an error", func() {
-			fh := FakeHandler{}
-			h, err := dropsonde.InstrumentedHandler(fh, "job-name", 41)
-			Expect(err).To(HaveOccurred())
-			Expect(h).To(BeNil())
-		})
-	})
+	var origin = "testHandler/41"
 
 	Context("when dropsonde.Initialize doesn't fail", func() {
 		BeforeEach(func() {
@@ -52,7 +32,7 @@ var _ = Describe("InstrumentedHandler", func() {
 
 			var err error
 			fh := FakeHandler{}
-			h, err = dropsonde.InstrumentedHandler(fh, "testHandler", 41)
+			h, err = dropsonde.InstrumentedHandler(fh)
 			Expect(err).ToNot(HaveOccurred())
 			req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
 			Expect(err).ToNot(HaveOccurred())
@@ -104,8 +84,7 @@ var _ = Describe("InstrumentedHandler", func() {
 
 				It("should emit a start event with the right origin", func() {
 					Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-					Expect(fake.Messages[0].Origin.GetJobName()).To(Equal("testHandler"))
-					Expect(fake.Messages[0].Origin.GetJobInstanceId()).To(BeNumerically("==", 41))
+					Expect(fake.Messages[0].Origin).To(Equal("testHandler/41"))
 				})
 
 				It("should emit a stop event", func() {
