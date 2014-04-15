@@ -12,33 +12,33 @@ type udpEmitter struct {
 	origin  string
 }
 
-func NewUdpEmitter(remoteAddr string, origin string) (emitter Emitter, err error) {
-	addr, err := net.ResolveUDPAddr("udp", remoteAddr)
+func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
+	addr, err := net.ResolveUDPAddr("udp4", remoteAddr)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	conn, err := net.ListenPacket("udp", "")
+	conn, err := net.ListenPacket("udp4", "")
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	emitter = &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
-	return
+	emitter := &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
+	return emitter, nil
 }
 
-func (e *udpEmitter) Emit(event events.Event) (err error) {
+func (e *udpEmitter) Emit(event events.Event) (error) {
 	envelope, err := Wrap(event, e.origin)
 	if err != nil {
-		return
+		return err
 	}
 	data, err := proto.Marshal(envelope)
 	if err != nil {
-		return
+		return err
 	}
 
 	_, err = e.udpConn.WriteTo(data, e.udpAddr)
-	return
+	return err
 }
 
 func (e *udpEmitter) Close() {

@@ -19,29 +19,29 @@ type instrumentedEmitter struct {
 	ErrorCounter           uint64
 }
 
-func (emitter *instrumentedEmitter) Emit(event events.Event) (err error) {
+func (emitter *instrumentedEmitter) Emit(event events.Event) (error) {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
 
-	err = emitter.concreteEmitter.Emit(event)
+	err := emitter.concreteEmitter.Emit(event)
 	if err != nil {
 		emitter.ErrorCounter++
 	} else {
 		emitter.SentMetricsCounter++
 	}
 
-	return
+	return err
 }
 
-func NewInstrumentedEmitter(concreteEmitter Emitter) (emitter InstrumentedEmitter, err error) {
+func NewInstrumentedEmitter(concreteEmitter Emitter) (InstrumentedEmitter, error) {
 	if concreteEmitter == nil {
-		err = errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
-		return
+		err := errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
+		return nil, err
 	}
 
-	emitter = &instrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
-	return
+	emitter := &instrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
+	return emitter, nil
 }
 
 func (emitter *instrumentedEmitter) Close() {
