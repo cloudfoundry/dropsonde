@@ -3,6 +3,7 @@ package dropsonde
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
 	"net/http"
 )
@@ -30,11 +31,11 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 		panic(err)
 	}
 
-	httpStart := events.NewHttpStart(req, events.PeerType_Client, requestId)
+	httpStart := factories.NewHttpStart(req, events.PeerType_Client, requestId)
 
 	parentRequestId, err := uuid.ParseHex(req.Header.Get("X-CF-RequestID"))
 	if err == nil {
-		httpStart.ParentRequestId = events.NewUUID(parentRequestId)
+		httpStart.ParentRequestId = factories.NewUUID(parentRequestId)
 	}
 
 	req.Header.Set("X-CF-RequestID", requestId.String())
@@ -45,9 +46,9 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 
 	var httpStop *events.HttpStop
 	if err != nil {
-		httpStop = events.NewHttpStop(0, 0, events.PeerType_Client, requestId)
+		httpStop = factories.NewHttpStop(0, 0, events.PeerType_Client, requestId)
 	} else {
-		httpStop = events.NewHttpStop(resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
+		httpStop = factories.NewHttpStop(resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
 	}
 
 	emitter.Emit(httpStop)

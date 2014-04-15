@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -23,7 +24,7 @@ var _ = Describe("EventFormatter", func() {
 
 		It("should work with HttpStart events", func() {
 			id, _ := uuid.NewV4()
-			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
+			testEvent := &events.HttpStart{RequestId: factories.NewUUID(id)}
 
 			envelope, err := emitter.Wrap(testEvent, origin)
 			Expect(err).To(BeNil())
@@ -33,7 +34,7 @@ var _ = Describe("EventFormatter", func() {
 
 		It("should work with HttpStop events", func() {
 			id, _ := uuid.NewV4()
-			testEvent := &events.HttpStop{RequestId: events.NewUUID(id)}
+			testEvent := &events.HttpStop{RequestId: factories.NewUUID(id)}
 
 			envelope, err := emitter.Wrap(testEvent, origin)
 			Expect(err).To(BeNil())
@@ -58,7 +59,7 @@ var _ = Describe("EventFormatter", func() {
 		It("should check that origin is non-empty", func() {
 			id, _ := uuid.NewV4()
 			malformedOrigin := ""
-			testEvent := &events.HttpStart{RequestId: events.NewUUID(id)}
+			testEvent := &events.HttpStart{RequestId: factories.NewUUID(id)}
 			envelope, err := emitter.Wrap(testEvent, malformedOrigin)
 
 			Expect(err).To(HaveOccurred())
@@ -71,7 +72,7 @@ var _ = Describe("EventFormatter", func() {
 
 			BeforeEach(func() {
 				id, _ := uuid.NewV4()
-				testEvent = &events.HttpStop{RequestId: events.NewUUID(id)}
+				testEvent = &events.HttpStop{RequestId: factories.NewUUID(id)}
 			})
 
 			It("should contain the origin", func() {

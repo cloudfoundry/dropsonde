@@ -3,6 +3,7 @@ package emitter_test
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"time"
@@ -12,7 +13,7 @@ type fakeDataSource struct {
 }
 
 func (fds *fakeDataSource) GetHeartbeatEvent() events.Event {
-	return events.NewTestEvent(42)
+	return factories.NewHeartbeat(uint64(42), uint64(0), uint64(0))
 }
 
 var _ = Describe("HeartbeatGenerator", func() {

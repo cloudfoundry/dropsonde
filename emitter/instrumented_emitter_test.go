@@ -3,6 +3,7 @@ package emitter_test
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -34,7 +35,8 @@ var _ = Describe("InstrumentedEmitter", func() {
 		var testEvent events.Event
 
 		BeforeEach(func() {
-			testEvent = events.NewTestEvent(1)
+			value := uint64(1)
+			testEvent = factories.NewHeartbeat(value, value, value)
 		})
 
 		It("calls the concrete emitter", func() {

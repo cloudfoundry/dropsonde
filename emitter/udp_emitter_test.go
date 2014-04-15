@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
@@ -11,7 +12,7 @@ import (
 
 var _ = Describe("UdpEmitter", func() {
 	var origin = "testInstrumentedEmitter/42"
-	var testEvent = events.NewTestEvent(43)
+	var testEvent = factories.NewHeartbeat(uint64(43), uint64(43), uint64(43))
 
 	Describe("Close()", func() {
 		It("closes the UDP connection", func() {

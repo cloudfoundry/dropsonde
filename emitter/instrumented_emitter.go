@@ -3,6 +3,7 @@ package emitter
 import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	"sync"
 )
 
@@ -52,5 +53,5 @@ func (emitter *instrumentedEmitter) GetHeartbeatEvent() events.Event {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 
-	return events.NewHeartbeat(emitter.SentMetricsCounter, emitter.ReceivedMetricsCounter, emitter.ErrorCounter)
+	return factories.NewHeartbeat(emitter.SentMetricsCounter, emitter.ReceivedMetricsCounter, emitter.ErrorCounter)
 }

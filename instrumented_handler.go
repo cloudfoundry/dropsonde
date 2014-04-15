@@ -3,6 +3,7 @@ package dropsonde
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
 	"net/http"
 )
@@ -33,13 +34,13 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	}
 	rw.Header().Set("X-CF-RequestID", requestId.String())
 
-	startEvent := events.NewHttpStart(req, events.PeerType_Server, requestId)
+	startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
 	emitter.Emit(startEvent)
 
 	instrumentedWriter := &instrumentedResponseWriter{writer: rw, statusCode: 200}
 	ih.h.ServeHTTP(instrumentedWriter, req)
 
-	stopEvent := events.NewHttpStop(instrumentedWriter.statusCode, instrumentedWriter.contentLength,
+	stopEvent := factories.NewHttpStop(instrumentedWriter.statusCode, instrumentedWriter.contentLength,
 		events.PeerType_Server, requestId)
 
 	emitter.Emit(stopEvent)

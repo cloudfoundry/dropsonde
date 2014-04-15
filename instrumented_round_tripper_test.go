@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/dropsonde"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -69,7 +70,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 			It("should emit the existing request ID as the parent request ID", func() {
 				rt.RoundTrip(req)
 				startEvent := fake.Messages[0].Event.(*events.HttpStart)
-				Expect(startEvent.GetParentRequestId()).To(Equal(events.NewUUID(existingRequestId)))
+				Expect(startEvent.GetParentRequestId()).To(Equal(factories.NewUUID(existingRequestId)))
 			})
 		})
 
