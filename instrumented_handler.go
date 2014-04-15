@@ -14,8 +14,8 @@ type instrumentedHandler struct {
 /*
 Helper for creating an Instrumented Handler which will delegate to the given http.Handler.
 */
-func InstrumentedHandler(h http.Handler) (http.Handler, error) {
-	return &instrumentedHandler{h}, nil
+func InstrumentedHandler(h http.Handler) http.Handler {
+	return &instrumentedHandler{h}
 }
 
 /*

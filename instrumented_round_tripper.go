@@ -14,8 +14,8 @@ type instrumentedRoundTripper struct {
 /*
 Helper for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
 */
-func InstrumentedRoundTripper(rt http.RoundTripper) (http.RoundTripper, error) {
-	return &instrumentedRoundTripper{rt}, nil
+func InstrumentedRoundTripper(rt http.RoundTripper) http.RoundTripper {
+	return &instrumentedRoundTripper{rt}
 }
 
 /*

@@ -1,7 +1,0 @@
-package events;
-
-message Heartbeat {
-    required uint64 sentCount = 1;
-    required uint64 receivedCount = 2;
-    required uint64 errorCount = 3;
-}

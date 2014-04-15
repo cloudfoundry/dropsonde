@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"net"
+	"runtime"
 )
 
 type udpEmitter struct {
@@ -23,11 +24,19 @@ func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
 		return nil, err
 	}
 
-	emitter := &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
-	return emitter, nil
+	rawEmitter := &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
+	emitter, err := NewInstrumentedEmitter(rawEmitter)
+
+	stopChannel, err := BeginGeneration(emitter, rawEmitter)
+	if err != nil {
+		return nil, err
+	}
+	runtime.SetFinalizer(emitter, func(e Emitter) { close(stopChannel) })
+
+	return emitter, err
 }
 
-func (e *udpEmitter) Emit(event events.Event) (error) {
+func (e *udpEmitter) Emit(event events.Event) error {
 	envelope, err := Wrap(event, e.origin)
 	if err != nil {
 		return err

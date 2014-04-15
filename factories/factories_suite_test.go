@@ -1,4 +1,4 @@
-package events_test
+package factories_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestEvents(t *testing.T) {
+func TestFactories(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Events Suite")
+	RunSpecs(t, "Factories Suite")
 }

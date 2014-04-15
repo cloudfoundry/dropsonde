@@ -25,76 +25,72 @@ var _ = Describe("InstrumentedHandler", func() {
 
 	var origin = "testHandler/41"
 
-	Context("when dropsonde.Initialize doesn't fail", func() {
-		BeforeEach(func() {
-			fake = emitter.NewFake(origin)
-			emitter.DefaultEmitter = fake
+	BeforeEach(func() {
+		fake = emitter.NewFake(origin)
+		emitter.DefaultEmitter = fake
 
-			var err error
-			fh := FakeHandler{}
-			h, err = dropsonde.InstrumentedHandler(fh)
-			Expect(err).ToNot(HaveOccurred())
-			req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
-			Expect(err).ToNot(HaveOccurred())
-			req.RemoteAddr = "127.0.0.1"
-			req.Header.Set("User-Agent", "our-testing-client")
+		var err error
+		fh := FakeHandler{}
+		h = dropsonde.InstrumentedHandler(fh)
+		req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
+		Expect(err).ToNot(HaveOccurred())
+		req.RemoteAddr = "127.0.0.1"
+		req.Header.Set("User-Agent", "our-testing-client")
+	})
+
+	Describe("request ID", func() {
+		It("should add it to the request", func() {
+			h.ServeHTTP(httptest.NewRecorder(), req)
+			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
 		})
 
-		Describe("request ID", func() {
-			It("should add it to the request", func() {
-				h.ServeHTTP(httptest.NewRecorder(), req)
-				Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
-			})
-
-			It("should not add it to the request if it's already there", func() {
-				id, _ := uuid.NewV4()
-				req.Header.Set("X-CF-RequestID", id.String())
-				h.ServeHTTP(httptest.NewRecorder(), req)
-				Expect(req.Header.Get("X-CF-RequestID")).To(Equal(id.String()))
-			})
-
-			It("should create a valid one if it's given an invalid one", func() {
-				req.Header.Set("X-CF-RequestID", "invalid")
-				h.ServeHTTP(httptest.NewRecorder(), req)
-				Expect(req.Header.Get("X-CF-RequestID")).ToNot(Equal("invalid"))
-				Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
-			})
-
-			It("should add it to the response", func() {
-				id, _ := uuid.NewV4()
-				req.Header.Set("X-CF-RequestID", id.String())
-				response := httptest.NewRecorder()
-				h.ServeHTTP(response, req)
-				Expect(response.Header().Get("X-CF-RequestID")).To(Equal(id.String()))
-			})
+		It("should not add it to the request if it's already there", func() {
+			id, _ := uuid.NewV4()
+			req.Header.Set("X-CF-RequestID", id.String())
+			h.ServeHTTP(httptest.NewRecorder(), req)
+			Expect(req.Header.Get("X-CF-RequestID")).To(Equal(id.String()))
 		})
 
-		Describe("event emission", func() {
-			var requestId *uuid.UUID
+		It("should create a valid one if it's given an invalid one", func() {
+			req.Header.Set("X-CF-RequestID", "invalid")
+			h.ServeHTTP(httptest.NewRecorder(), req)
+			Expect(req.Header.Get("X-CF-RequestID")).ToNot(Equal("invalid"))
+			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+		})
 
-			BeforeEach(func() {
-				requestId, _ = uuid.NewV4()
-				req.Header.Set("X-CF-RequestID", requestId.String())
-			})
-
-			Context("without an application ID or instanceIndex", func() {
-				BeforeEach(func() {
-					h.ServeHTTP(httptest.NewRecorder(), req)
-				})
-
-				It("should emit a start event with the right origin", func() {
-					Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-					Expect(fake.Messages[0].Origin).To(Equal("testHandler/41"))
-				})
-
-				It("should emit a stop event", func() {
-					Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-					stopEvent := fake.Messages[1].Event.(*events.HttpStop)
-					Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
-					Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 12))
-				})
-			})
+		It("should add it to the response", func() {
+			id, _ := uuid.NewV4()
+			req.Header.Set("X-CF-RequestID", id.String())
+			response := httptest.NewRecorder()
+			h.ServeHTTP(response, req)
+			Expect(response.Header().Get("X-CF-RequestID")).To(Equal(id.String()))
 		})
 	})
 
+	Describe("event emission", func() {
+		var requestId *uuid.UUID
+
+		BeforeEach(func() {
+			requestId, _ = uuid.NewV4()
+			req.Header.Set("X-CF-RequestID", requestId.String())
+		})
+
+		Context("without an application ID or instanceIndex", func() {
+			BeforeEach(func() {
+				h.ServeHTTP(httptest.NewRecorder(), req)
+			})
+
+			It("should emit a start event with the right origin", func() {
+				Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
+				Expect(fake.Messages[0].Origin).To(Equal("testHandler/41"))
+			})
+
+			It("should emit a stop event", func() {
+				Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
+				stopEvent := fake.Messages[1].Event.(*events.HttpStop)
+				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 12))
+			})
+		})
+	})
 })

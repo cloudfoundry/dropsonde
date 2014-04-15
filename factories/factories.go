@@ -1,7 +1,8 @@
-package events
+package factories
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"encoding/binary"
 	"fmt"
 	uuid "github.com/nu7hatch/gouuid"
@@ -10,16 +11,16 @@ import (
 	"time"
 )
 
-func NewUUID(id *uuid.UUID) *UUID {
-	return &UUID{Low: proto.Uint64(binary.LittleEndian.Uint64(id[:8])), High: proto.Uint64(binary.LittleEndian.Uint64(id[8:]))}
+func NewUUID(id *uuid.UUID) *events.UUID {
+	return &events.UUID{Low: proto.Uint64(binary.LittleEndian.Uint64(id[:8])), High: proto.Uint64(binary.LittleEndian.Uint64(id[8:]))}
 }
 
-func NewHttpStart(req *http.Request, peerType PeerType, requestId *uuid.UUID) *HttpStart {
-	httpStart := &HttpStart{
+func NewHttpStart(req *http.Request, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStart {
+	httpStart := &events.HttpStart{
 		Timestamp:     proto.Int64(time.Now().UnixNano()),
 		RequestId:     NewUUID(requestId),
 		PeerType:      &peerType,
-		Method:        HttpStart_Method(HttpStart_Method_value[req.Method]).Enum(),
+		Method:        events.HttpStart_Method(events.HttpStart_Method_value[req.Method]).Enum(),
 		Uri:           proto.String(fmt.Sprintf("%s%s", req.URL.Host, req.URL.Path)),
 		RemoteAddress: proto.String(req.RemoteAddr),
 		UserAgent:     proto.String(req.UserAgent()),
@@ -36,8 +37,8 @@ func NewHttpStart(req *http.Request, peerType PeerType, requestId *uuid.UUID) *H
 	return httpStart
 }
 
-func NewHttpStop(statusCode int, contentLength int64, peerType PeerType, requestId *uuid.UUID) *HttpStop {
-	return &HttpStop{
+func NewHttpStop(statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStop {
+	return &events.HttpStop{
 		Timestamp:     proto.Int64(time.Now().UnixNano()),
 		RequestId:     NewUUID(requestId),
 		PeerType:      &peerType,
@@ -46,8 +47,8 @@ func NewHttpStop(statusCode int, contentLength int64, peerType PeerType, request
 	}
 }
 
-func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *Heartbeat {
-	return &Heartbeat{
+func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *events.Heartbeat {
+	return &events.Heartbeat{
 		SentCount:     proto.Uint64(sentCount),
 		ReceivedCount: proto.Uint64(receivedCount),
 		ErrorCount:    proto.Uint64(errorCount),

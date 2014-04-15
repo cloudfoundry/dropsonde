@@ -1,4 +1,4 @@
-package events_test
+package factories_test
 
 import (
 	uuid "github.com/nu7hatch/gouuid"
@@ -7,6 +7,7 @@ import (
 
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	"net/http"
 )
 
@@ -33,7 +34,7 @@ var _ = Describe("HTTP event creation", func() {
 
 			It("should set appropriate fields", func() {
 				expectedStartEvent := &events.HttpStart{
-					RequestId:     events.NewUUID(requestId),
+					RequestId:     factories.NewUUID(requestId),
 					PeerType:      events.PeerType_Server.Enum(),
 					Method:        events.HttpStart_GET.Enum(),
 					Uri:           proto.String("foo.example.com/"),
@@ -41,7 +42,7 @@ var _ = Describe("HTTP event creation", func() {
 					UserAgent:     proto.String("our-testing-client"),
 				}
 
-				startEvent := events.NewHttpStart(req, events.PeerType_Server, requestId)
+				startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
 
 				Expect(startEvent.GetTimestamp()).ToNot(BeZero())
 				startEvent.Timestamp = nil
@@ -55,9 +56,9 @@ var _ = Describe("HTTP event creation", func() {
 				applicationId, _ := uuid.NewV4()
 				req.Header.Set("X-CF-ApplicationID", applicationId.String())
 
-				startEvent := events.NewHttpStart(req, events.PeerType_Server, requestId)
+				startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
 
-				Expect(startEvent.GetApplicationId()).To(Equal(events.NewUUID(applicationId)))
+				Expect(startEvent.GetApplicationId()).To(Equal(factories.NewUUID(applicationId)))
 			})
 		})
 
@@ -65,7 +66,7 @@ var _ = Describe("HTTP event creation", func() {
 			It("should include it in the start event", func() {
 				req.Header.Set("X-CF-InstanceIndex", "1")
 
-				startEvent := events.NewHttpStart(req, events.PeerType_Server, requestId)
+				startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
 
 				Expect(startEvent.GetInstanceIndex()).To(BeNumerically("==", 1))
 			})
@@ -75,13 +76,13 @@ var _ = Describe("HTTP event creation", func() {
 	Describe("NewHttpStop", func() {
 		It("should set appropriate fields", func() {
 			expectedStopEvent := &events.HttpStop{
-				RequestId:     events.NewUUID(requestId),
+				RequestId:     factories.NewUUID(requestId),
 				PeerType:      events.PeerType_Server.Enum(),
 				StatusCode:    proto.Int32(200),
 				ContentLength: proto.Int64(12),
 			}
 
-			stopEvent := events.NewHttpStop(200, 12, events.PeerType_Server, requestId)
+			stopEvent := factories.NewHttpStop(200, 12, events.PeerType_Server, requestId)
 
 			Expect(stopEvent.GetTimestamp()).ToNot(BeZero())
 			stopEvent.Timestamp = nil
