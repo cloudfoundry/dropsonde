@@ -16,6 +16,10 @@ func (fds *fakeDataSource) GetHeartbeatEvent() events.Event {
 	return factories.NewHeartbeat(uint64(42), uint64(0), uint64(0))
 }
 
+func init() {
+	emitter.HeartbeatInterval = 10 * time.Millisecond
+}
+
 var _ = Describe("HeartbeatGenerator", func() {
 	Describe("BeginGeneration", func() {
 		var (
@@ -26,8 +30,6 @@ var _ = Describe("HeartbeatGenerator", func() {
 		BeforeEach(func() {
 			origin := "testHeartbeatEmitter/0"
 			fakeEmitter = emitter.NewFake(origin)
-
-			emitter.HeartbeatInterval = 10 * time.Millisecond
 		})
 
 		It("periodically emits heartbeats, and the emitter can be closed properly", func() {

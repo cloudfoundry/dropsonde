@@ -18,6 +18,10 @@ var _ = Describe("Dropsonde", func() {
 			emitter.HeartbeatInterval = 10 * time.Millisecond
 		})
 
+		AfterEach(func(){
+			emitter.DefaultEmitter.Close()
+		})
+
 		It("errors if passed an origin with empty job name", func() {
 			malformedOriginString := ""
 

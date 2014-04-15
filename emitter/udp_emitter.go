@@ -9,8 +9,9 @@ import (
 
 type udpEmitter struct {
 	udpAddr *net.UDPAddr
-	udpConn net.PacketConn
-	origin  string
+	udpConn     net.PacketConn
+	origin      string
+	stopChannel chan struct{}
 }
 
 func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
@@ -28,10 +29,11 @@ func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
 	emitter, err := NewInstrumentedEmitter(rawEmitter)
 
 	stopChannel, err := BeginGeneration(emitter, rawEmitter)
+	rawEmitter.stopChannel = stopChannel
 	if err != nil {
 		return nil, err
 	}
-	runtime.SetFinalizer(emitter, func(e Emitter) { close(stopChannel) })
+	runtime.SetFinalizer(emitter, func(e Emitter) { e.Close() })
 
 	return emitter, err
 }
@@ -51,5 +53,11 @@ func (e *udpEmitter) Emit(event events.Event) error {
 }
 
 func (e *udpEmitter) Close() {
+	select {
+	case <-e.stopChannel:
+	default:
+		close(e.stopChannel)
+	}
+
 	e.udpConn.Close()
 }
