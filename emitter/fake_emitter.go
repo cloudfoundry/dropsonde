@@ -1,7 +1,6 @@
 package emitter
 
 import (
-	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"sync"
 )
@@ -12,7 +11,7 @@ type envelope struct {
 }
 
 type FakeEmitter struct {
-	ReturnError bool
+	ReturnError error
 	Messages    []envelope
 	mutex       *sync.RWMutex
 	Origin      string
@@ -24,9 +23,10 @@ func NewFake(origin string) *FakeEmitter {
 }
 func (f *FakeEmitter) Emit(e events.Event) (err error) {
 
-	if f.ReturnError {
-		f.ReturnError = false
-		return errors.New("Returning error as requested")
+	if f.ReturnError != nil {
+		err = f.ReturnError
+		f.ReturnError = nil
+		return
 	}
 
 	f.mutex.Lock()

@@ -1,6 +1,7 @@
 package emitter_test
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/factories"
@@ -68,7 +69,7 @@ var _ = Describe("InstrumentedEmitter", func() {
 		})
 		Context("when the concrete Emitter returns an error on Emit()", func() {
 			BeforeEach(func() {
-				fakeEmitter.ReturnError = true
+				fakeEmitter.ReturnError = errors.New("fake error")
 			})
 			It("increments the ErrorCounter", func() {
 				Expect(getHeartbeatEvent(instrumentedEmitter).GetErrorCount()).To(BeNumerically("==", 0))

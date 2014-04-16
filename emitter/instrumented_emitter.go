@@ -13,7 +13,7 @@ type InstrumentedEmitter interface {
 }
 
 type instrumentedEmitter struct {
-	concreteEmitter        Emitter
+	wrappedEmitter         Emitter
 	mutex                  *sync.RWMutex
 	ReceivedMetricsCounter uint64
 	SentMetricsCounter     uint64
@@ -25,7 +25,7 @@ func (emitter *instrumentedEmitter) Emit(event events.Event) error {
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
 
-	err := emitter.concreteEmitter.Emit(event)
+	err := emitter.wrappedEmitter.Emit(event)
 	if err != nil {
 		emitter.ErrorCounter++
 	} else {
@@ -35,18 +35,17 @@ func (emitter *instrumentedEmitter) Emit(event events.Event) error {
 	return err
 }
 
-func NewInstrumentedEmitter(concreteEmitter Emitter) (InstrumentedEmitter, error) {
-	if concreteEmitter == nil {
-		err := errors.New("Unable to create InstrumentedEmitter from nil emitter implementation")
-		return nil, err
+func NewInstrumentedEmitter(wrappedEmitter Emitter) (InstrumentedEmitter, error) {
+	if wrappedEmitter == nil {
+		return nil, errors.New("wrappedEmitter is nil")
 	}
 
-	emitter := &instrumentedEmitter{concreteEmitter: concreteEmitter, mutex: &sync.RWMutex{}}
+	emitter := &instrumentedEmitter{wrappedEmitter: wrappedEmitter, mutex: &sync.RWMutex{}}
 	return emitter, nil
 }
 
 func (emitter *instrumentedEmitter) Close() {
-	emitter.concreteEmitter.Close()
+	emitter.wrappedEmitter.Close()
 }
 
 func (emitter *instrumentedEmitter) GetHeartbeatEvent() events.Event {
