@@ -9,14 +9,15 @@ import (
 )
 
 type instrumentedHandler struct {
-	h http.Handler
+	handler http.Handler
+	emitter emitter.Emitter
 }
 
 /*
 Helper for creating an Instrumented Handler which will delegate to the given http.Handler.
 */
-func InstrumentedHandler(h http.Handler) http.Handler {
-	return &instrumentedHandler{h}
+func InstrumentedHandler(handler http.Handler, emitter emitter.Emitter) http.Handler {
+	return &instrumentedHandler{handler, emitter}
 }
 
 /*
@@ -35,15 +36,15 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	rw.Header().Set("X-CF-RequestID", requestId.String())
 
 	startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
-	emitter.Emit(startEvent)
+	ih.emitter.Emit(startEvent)
 
 	instrumentedWriter := &instrumentedResponseWriter{writer: rw, statusCode: 200}
-	ih.h.ServeHTTP(instrumentedWriter, req)
+	ih.handler.ServeHTTP(instrumentedWriter, req)
 
 	stopEvent := factories.NewHttpStop(instrumentedWriter.statusCode, instrumentedWriter.contentLength,
 		events.PeerType_Server, requestId)
 
-	emitter.Emit(stopEvent)
+	ih.emitter.Emit(stopEvent)
 }
 
 type instrumentedResponseWriter struct {

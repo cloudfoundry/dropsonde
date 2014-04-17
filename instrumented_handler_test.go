@@ -19,19 +19,18 @@ func (fh FakeHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 var _ = Describe("InstrumentedHandler", func() {
-	var fake *emitter.FakeEmitter
+	var fakeEmitter *emitter.FakeEmitter
 	var h http.Handler
 	var req *http.Request
 
 	var origin = "testHandler/41"
 
 	BeforeEach(func() {
-		fake = emitter.NewFake(origin)
-		emitter.DefaultEmitter = fake
+		fakeEmitter = emitter.NewFake(origin)
 
 		var err error
 		fh := FakeHandler{}
-		h = dropsonde.InstrumentedHandler(fh)
+		h = dropsonde.InstrumentedHandler(fh, fakeEmitter)
 		req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
 		Expect(err).ToNot(HaveOccurred())
 		req.RemoteAddr = "127.0.0.1"
@@ -81,13 +80,13 @@ var _ = Describe("InstrumentedHandler", func() {
 			})
 
 			It("should emit a start event with the right origin", func() {
-				Expect(fake.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-				Expect(fake.Messages[0].Origin).To(Equal("testHandler/41"))
+				Expect(fakeEmitter.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
+				Expect(fakeEmitter.Messages[0].Origin).To(Equal("testHandler/41"))
 			})
 
 			It("should emit a stop event", func() {
-				Expect(fake.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-				stopEvent := fake.Messages[1].Event.(*events.HttpStop)
+				Expect(fakeEmitter.Messages[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
+				stopEvent := fakeEmitter.Messages[1].Event.(*events.HttpStop)
 				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
 				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 12))
 			})
