@@ -24,7 +24,7 @@ func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
 	}
 
 	emitter := &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
-	return emitter, err
+	return emitter, nil
 }
 
 func (e *udpEmitter) Emit(event events.Event) error {

@@ -2,4 +2,6 @@ set -e
 cd `dirname $0`
 go fmt ./...
 go vet ./...
-ginkgo -r -race -cover
+ginkgo -r -race -cover -skipPackage integration_test
+DROPSONDE_ORIGIN="test" ginkgo -r -race -focus 'Autowire End-to-End with DROPSONDE_ORIGIN set' integration_test
+DROPSONDE_ORIGIN="" ginkgo -r -race -focus 'Autowire End-to-End with DROPSONDE_ORIGIN missing' integration_test
