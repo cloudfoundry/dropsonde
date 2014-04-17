@@ -17,7 +17,12 @@ func Initialize(origin string) error {
 		return err
 	}
 
-	emitter.DefaultEmitter = udpEmitter
+	e, err := emitter.NewHeartbeatEmitter(udpEmitter)
+	if err != nil {
+		return err
+	}
+
+	emitter.DefaultEmitter = e
 
 	return nil
 }

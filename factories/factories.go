@@ -2,9 +2,9 @@ package factories
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"encoding/binary"
 	"fmt"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 	uuid "github.com/nu7hatch/gouuid"
 	"net/http"
 	"strconv"
