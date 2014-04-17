@@ -2,7 +2,7 @@ set -e
 cd `dirname $0`
 go fmt ./...
 go vet ./...
-GINKGO=ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements
+GINKGO="ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements"
 $GINKGO -skipPackage integration_test
 DROPSONDE_ORIGIN="test" $GINKGO 'Autowire End-to-End with DROPSONDE_ORIGIN set' integration_test
 DROPSONDE_ORIGIN="" $GINKGO 'Autowire End-to-End with DROPSONDE_ORIGIN missing' integration_test
