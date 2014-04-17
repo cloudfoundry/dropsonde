@@ -4,6 +4,7 @@ notifications:
   - cf-lamb@pivotallabs.com
 before_install:
 - go get code.google.com/p/go.tools/cmd/cover
+- go get code.google.com/p/go.tools/cmd/vet
 - go get github.com/mattn/goveralls
 - go get github.com/onsi/ginkgo/ginkgo
 
@@ -15,7 +16,7 @@ after_success:
 install:
 - go get -d -v -t ./...
 
-script: PATH=$HOME/gopath/bin:$PATH ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements --cover
+script: PATH=$HOME/gopath/bin:$PATH ./test
 
 go:
 - 1.2.1
