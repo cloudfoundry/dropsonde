@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"sync"
 	"time"
 )
 
@@ -68,12 +69,50 @@ var _ = Describe("Autowire End-to-End", func() {
 			defer udpListener.Close()
 			udpDataChan := make(chan []byte, 16)
 
+			receivedEvents := make(map[string]bool)
+			lock := sync.RWMutex{}
+			origin := os.Getenv("DROPSONDE_ORIGIN")
+
 			go func() {
 				defer close(udpDataChan)
 				for {
 					buffer := make([]byte, 1024)
-					n, _, _ := udpListener.ReadFrom(buffer)
-					udpDataChan <- buffer[0:n]
+					n, _, err := udpListener.ReadFrom(buffer)
+					if err != nil {
+						return
+					}
+
+					if n == 0 {
+						panic("Received empty packet")
+					}
+					envelope := new(events.Envelope)
+					err = proto.Unmarshal(buffer[0:n], envelope)
+					if err != nil {
+						panic(err)
+					}
+
+					var eventId = envelope.GetEventType().String()
+
+					switch envelope.GetEventType() {
+					case events.Envelope_HttpStart:
+						eventId += envelope.GetHttpStart().GetPeerType().String()
+					case events.Envelope_HttpStop:
+						eventId += envelope.GetHttpStop().GetPeerType().String()
+					case events.Envelope_Heartbeat:
+					default:
+						panic("Unexpected message type")
+
+					}
+
+					if envelope.GetOrigin() != origin {
+						panic("origin not as expected")
+					}
+
+					func() {
+						lock.Lock()
+						defer lock.Unlock()
+						receivedEvents[eventId] = true
+					}()
 				}
 			}()
 
@@ -86,39 +125,24 @@ var _ = Describe("Autowire End-to-End", func() {
 			_, err = http.Get("http://" + httpListener.Addr().String())
 			Expect(err).ToNot(HaveOccurred())
 
-			expectedEvents := map[string]bool{
-				"HttpStartClient": true,
-				"HttpStopClient":  true,
-				"HttpStartServer": true,
-				"HttpStopServer":  true,
-				"Heartbeat":       true,
+			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient"}
+
+			for _, eventType := range expectedEventTypes {
+				Eventually(func() bool {
+					lock.RLock()
+					defer lock.RUnlock()
+					_, ok := receivedEvents[eventType]
+					return ok
+				}).Should(BeTrue())
 			}
 
-			for len(expectedEvents) > 0 {
-				data := <-udpDataChan
-				envelope := new(events.Envelope)
-				err = proto.Unmarshal(data, envelope)
-				Expect(err).ToNot(HaveOccurred())
-
-				origin := os.Getenv("DROPSONDE_ORIGIN")
-				Expect(envelope.GetOrigin()).To(Equal(origin))
-				var eventId = envelope.GetEventType().String()
-
-				switch envelope.GetEventType() {
-				case events.Envelope_HttpStart:
-					eventId += envelope.GetHttpStart().GetPeerType().String()
-				case events.Envelope_HttpStop:
-					eventId += envelope.GetHttpStop().GetPeerType().String()
-				case events.Envelope_Heartbeat:
-				default:
-					panic("Unexpected message type")
-
-				}
-
-				delete(expectedEvents, eventId)
-			}
-
-		}, float64(emitter.HeartbeatInterval/time.Second)+1)
+			Eventually(func() bool {
+				lock.RLock()
+				defer lock.RUnlock()
+				_, ok := receivedEvents["Heartbeat"]
+				return ok
+			}, float64(emitter.HeartbeatInterval/time.Second)*2).Should(BeTrue())
+		}, float64(emitter.HeartbeatInterval/time.Second)*2+1)
 	})
 })
 
