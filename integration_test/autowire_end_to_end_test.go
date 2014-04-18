@@ -5,7 +5,6 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
 	"github.com/cloudfoundry-incubator/dropsonde/autowire"
-	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 
 	. "github.com/onsi/ginkgo"
@@ -15,8 +14,8 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strconv"
 	"sync"
-	"time"
 )
 
 // these tests need to be invoked individually from an external script,
@@ -25,6 +24,9 @@ var _ = Describe("Autowire End-to-End", func() {
 	Context("with DROPSONDE_ORIGIN missing", func() {
 		var logWriter *bytes.Buffer
 		BeforeEach(func() {
+			if os.Getenv("DROPSONDE_ORIGIN") != "" {
+				Fail("DROPSONDE_ORIGIN must be unset before running this test")
+			}
 			logWriter = new(bytes.Buffer)
 			log.SetOutput(logWriter)
 		})
@@ -62,6 +64,17 @@ var _ = Describe("Autowire End-to-End", func() {
 	})
 
 	Context("with DROPSONDE_ORIGIN set", func() {
+		BeforeEach(func() {
+			if os.Getenv("DROPSONDE_ORIGIN") == "" {
+				Fail("DROPSONDE_ORIGIN must be set before running this test")
+			}
+
+			interval, err := strconv.ParseFloat(os.Getenv("DROPSONDE_HEARTBEAT_INTERVAL_SECS"), 64)
+			if err != nil || interval > 0.5 {
+				Fail("DROPSONDE_HEARTBEAT_INTERVAL_SECS must be set to something below 0.5 to make this test pass")
+			}
+		})
+
 		It("emits HTTP client/server events and heartbeats", func(done Done) {
 			defer close(done)
 			udpListener, err := net.ListenPacket("udp4", ":42420")
@@ -141,8 +154,8 @@ var _ = Describe("Autowire End-to-End", func() {
 				defer lock.RUnlock()
 				_, ok := receivedEvents["Heartbeat"]
 				return ok
-			}, float64(emitter.HeartbeatInterval/time.Second)*2).Should(BeTrue())
-		}, float64(emitter.HeartbeatInterval/time.Second)*2+1)
+			}).Should(BeTrue())
+		})
 	})
 })
 

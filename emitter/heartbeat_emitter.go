@@ -3,12 +3,21 @@ package emitter
 import (
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"log"
+	"os"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 )
 
 var HeartbeatInterval = 10 * time.Second
+
+func init() {
+	intervalOverride, err := strconv.ParseFloat(os.Getenv("DROPSONDE_HEARTBEAT_INTERVAL_SECS"), 64)
+	if err == nil {
+		HeartbeatInterval = time.Duration(intervalOverride*1000) * time.Millisecond
+	}
+}
 
 type heartbeatEmitter struct {
 	instrumentedEmitter InstrumentedEmitter
