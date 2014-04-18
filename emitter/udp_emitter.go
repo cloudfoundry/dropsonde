@@ -12,7 +12,7 @@ type udpEmitter struct {
 	origin  string
 }
 
-func NewUdpEmitter(remoteAddr string, origin string) (Emitter, error) {
+func NewUdpEmitter(remoteAddr string, origin string) (*udpEmitter, error) {
 	addr, err := net.ResolveUDPAddr("udp4", remoteAddr)
 	if err != nil {
 		return nil, err
