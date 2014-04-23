@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var HeartbeatInterval = 10 * time.Second
+var HeartbeatInterval = 1 * time.Second
 
 func init() {
 	intervalOverride, err := strconv.ParseFloat(os.Getenv("DROPSONDE_HEARTBEAT_INTERVAL_SECS"), 64)
