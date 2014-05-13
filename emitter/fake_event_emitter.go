@@ -10,7 +10,7 @@ type envelope struct {
 	Origin string
 }
 
-type FakeEmitter struct {
+type FakeEventEmitter struct {
 	ReturnError error
 	Messages    []envelope
 	mutex       *sync.RWMutex
@@ -18,10 +18,10 @@ type FakeEmitter struct {
 	isClosed    bool
 }
 
-func NewFake(origin string) *FakeEmitter {
-	return &FakeEmitter{mutex: new(sync.RWMutex), Origin: origin}
+func NewFakeEventEmitter(origin string) *FakeEventEmitter {
+	return &FakeEventEmitter{mutex: new(sync.RWMutex), Origin: origin}
 }
-func (f *FakeEmitter) Emit(e events.Event) (err error) {
+func (f *FakeEventEmitter) Emit(e events.Event) (err error) {
 
 	if f.ReturnError != nil {
 		err = f.ReturnError
@@ -36,7 +36,7 @@ func (f *FakeEmitter) Emit(e events.Event) (err error) {
 	return
 }
 
-func (f *FakeEmitter) GetMessages() (messages []envelope) {
+func (f *FakeEventEmitter) GetMessages() (messages []envelope) {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -45,13 +45,13 @@ func (f *FakeEmitter) GetMessages() (messages []envelope) {
 	return
 }
 
-func (f *FakeEmitter) Close() {
+func (f *FakeEventEmitter) Close() {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 	f.isClosed = true
 }
 
-func (f *FakeEmitter) IsClosed() bool {
+func (f *FakeEventEmitter) IsClosed() bool {
 	f.mutex.RLock()
 	defer f.mutex.RUnlock()
 	return f.isClosed

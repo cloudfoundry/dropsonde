@@ -8,24 +8,24 @@ import (
 )
 
 type InstrumentedEmitter interface {
-	Emitter
+	ByteEmitter
 	GetHeartbeatEvent() events.Event
 }
 
 type instrumentedEmitter struct {
-	wrappedEmitter         Emitter
+	wrappedEmitter         ByteEmitter
 	mutex                  *sync.RWMutex
 	ReceivedMetricsCounter uint64
 	SentMetricsCounter     uint64
 	ErrorCounter           uint64
 }
 
-func (emitter *instrumentedEmitter) Emit(event events.Event) error {
+func (emitter *instrumentedEmitter) Emit(data []byte) error {
 	emitter.mutex.Lock()
 	defer emitter.mutex.Unlock()
 	emitter.ReceivedMetricsCounter++
 
-	err := emitter.wrappedEmitter.Emit(event)
+	err := emitter.wrappedEmitter.Emit(data)
 	if err != nil {
 		emitter.ErrorCounter++
 	} else {
@@ -35,7 +35,7 @@ func (emitter *instrumentedEmitter) Emit(event events.Event) error {
 	return err
 }
 
-func NewInstrumentedEmitter(wrappedEmitter Emitter) (InstrumentedEmitter, error) {
+func NewInstrumentedEmitter(wrappedEmitter ByteEmitter) (InstrumentedEmitter, error) {
 	if wrappedEmitter == nil {
 		return nil, errors.New("wrappedEmitter is nil")
 	}

@@ -19,14 +19,14 @@ func (fh FakeHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 var _ = Describe("InstrumentedHandler", func() {
-	var fakeEmitter *emitter.FakeEmitter
+	var fakeEmitter *emitter.FakeEventEmitter
 	var h http.Handler
 	var req *http.Request
 
 	var origin = "testHandler/41"
 
 	BeforeEach(func() {
-		fakeEmitter = emitter.NewFake(origin)
+		fakeEmitter = emitter.NewFakeEventEmitter(origin)
 
 		var err error
 		fh := FakeHandler{}

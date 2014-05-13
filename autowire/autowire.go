@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-var autowiredEmitter emitter.Emitter
+var autowiredEmitter emitter.EventEmitter
 
 const autowiredEmitterRemoteAddr = "localhost:42420"
 
@@ -19,17 +19,19 @@ func init() {
 		return
 	}
 
-	udpEmitter, err := emitter.NewUdpEmitter(autowiredEmitterRemoteAddr, origin)
+	udpEmitter, err := emitter.NewUdpEmitter(autowiredEmitterRemoteAddr)
 	if err != nil {
 		log.Printf("Failed to auto-initialize dropsonde: %v\n", err)
 		return
 	}
 
-	autowiredEmitter, err = emitter.NewHeartbeatEmitter(udpEmitter)
+	hbEmitter, err := emitter.NewHeartbeatEmitter(udpEmitter, origin)
 	if err != nil {
 		log.Printf("Failed to auto-initialize dropsonde: %v\n", err)
 		return
 	}
+
+	autowiredEmitter = emitter.NewEventEmitter(hbEmitter, origin)
 
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }

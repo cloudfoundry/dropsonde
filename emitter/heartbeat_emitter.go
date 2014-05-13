@@ -1,7 +1,7 @@
 package emitter
 
 import (
-	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"code.google.com/p/gogoprotobuf/proto"
 	"log"
 	"os"
 	"runtime"
@@ -21,13 +21,14 @@ func init() {
 
 type heartbeatEmitter struct {
 	instrumentedEmitter InstrumentedEmitter
-	innerHbEmitter      Emitter
+	innerHbEmitter      ByteEmitter
 	stopChan            chan struct{}
+	origin              string
 	sync.Mutex
 	closed bool
 }
 
-func NewHeartbeatEmitter(emitter Emitter) (Emitter, error) {
+func NewHeartbeatEmitter(emitter ByteEmitter, origin string) (ByteEmitter, error) {
 	instrumentedEmitter, err := NewInstrumentedEmitter(emitter)
 	if err != nil {
 		return nil, err
@@ -36,6 +37,7 @@ func NewHeartbeatEmitter(emitter Emitter) (Emitter, error) {
 	hbEmitter := &heartbeatEmitter{
 		instrumentedEmitter: instrumentedEmitter,
 		innerHbEmitter:      emitter,
+		origin:              origin,
 		stopChan:            make(chan struct{}),
 	}
 
@@ -45,8 +47,8 @@ func NewHeartbeatEmitter(emitter Emitter) (Emitter, error) {
 	return hbEmitter, nil
 }
 
-func (e *heartbeatEmitter) Emit(event events.Event) error {
-	return e.instrumentedEmitter.Emit(event)
+func (e *heartbeatEmitter) Emit(data []byte) error {
+	return e.instrumentedEmitter.Emit(data)
 }
 
 func (e *heartbeatEmitter) Close() {
@@ -72,10 +74,22 @@ func (e *heartbeatEmitter) generateHeartbeats(heartbeatInterval time.Duration) {
 		case <-timer.C:
 			timer.Reset(heartbeatInterval)
 
-			event := e.instrumentedEmitter.GetHeartbeatEvent()
-			err := e.innerHbEmitter.Emit(event)
+			hbEvent := e.instrumentedEmitter.GetHeartbeatEvent()
+			hbEnvelope, err := Wrap(hbEvent, e.origin)
 			if err != nil {
-				log.Printf("Problem while emitting heartbeat event: %v\n", err)
+				log.Printf("Failed to wrap heartbeat event: %v\n", err)
+				break
+			}
+
+			hbData, err := proto.Marshal(hbEnvelope)
+			if err != nil {
+				log.Printf("Failed to marshal heartbeat event: %v\n", err)
+				break
+			}
+
+			err = e.innerHbEmitter.Emit(hbData)
+			if err != nil {
+				log.Printf("Problem while emitting heartbeat data: %v\n", err)
 			}
 		}
 	}

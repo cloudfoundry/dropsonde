@@ -1,18 +1,15 @@
 package emitter
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"net"
 )
 
 type udpEmitter struct {
 	udpAddr *net.UDPAddr
 	udpConn net.PacketConn
-	origin  string
 }
 
-func NewUdpEmitter(remoteAddr string, origin string) (*udpEmitter, error) {
+func NewUdpEmitter(remoteAddr string) (*udpEmitter, error) {
 	addr, err := net.ResolveUDPAddr("udp4", remoteAddr)
 	if err != nil {
 		return nil, err
@@ -23,21 +20,12 @@ func NewUdpEmitter(remoteAddr string, origin string) (*udpEmitter, error) {
 		return nil, err
 	}
 
-	emitter := &udpEmitter{udpAddr: addr, udpConn: conn, origin: origin}
+	emitter := &udpEmitter{udpAddr: addr, udpConn: conn}
 	return emitter, nil
 }
 
-func (e *udpEmitter) Emit(event events.Event) error {
-	envelope, err := Wrap(event, e.origin)
-	if err != nil {
-		return err
-	}
-	data, err := proto.Marshal(envelope)
-	if err != nil {
-		return err
-	}
-
-	_, err = e.udpConn.WriteTo(data, e.udpAddr)
+func (e *udpEmitter) Emit(data []byte) error {
+	_, err := e.udpConn.WriteTo(data, e.udpAddr)
 	return err
 }
 

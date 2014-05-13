@@ -10,13 +10,13 @@ import (
 
 type instrumentedHandler struct {
 	handler http.Handler
-	emitter emitter.Emitter
+	emitter emitter.EventEmitter
 }
 
 /*
 Helper for creating an Instrumented Handler which will delegate to the given http.Handler.
 */
-func InstrumentedHandler(handler http.Handler, emitter emitter.Emitter) http.Handler {
+func InstrumentedHandler(handler http.Handler, emitter emitter.EventEmitter) http.Handler {
 	return &instrumentedHandler{handler, emitter}
 }
 

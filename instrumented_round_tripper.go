@@ -10,13 +10,13 @@ import (
 
 type instrumentedRoundTripper struct {
 	roundTripper http.RoundTripper
-	emitter      emitter.Emitter
+	emitter      emitter.EventEmitter
 }
 
 /*
 Helper for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
 */
-func InstrumentedRoundTripper(roundTripper http.RoundTripper, emitter emitter.Emitter) http.RoundTripper {
+func InstrumentedRoundTripper(roundTripper http.RoundTripper, emitter emitter.EventEmitter) http.RoundTripper {
 	return &instrumentedRoundTripper{roundTripper, emitter}
 }
 

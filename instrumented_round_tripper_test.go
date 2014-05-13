@@ -24,13 +24,13 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	var fakeRoundTripper *FakeRoundTripper
 	var rt http.RoundTripper
 	var req *http.Request
-	var fakeEmitter *emitter.FakeEmitter
+	var fakeEmitter *emitter.FakeEventEmitter
 
 	var origin = "testRoundtripper/42"
 
 	BeforeEach(func() {
 		var err error
-		fakeEmitter = emitter.NewFake(origin)
+		fakeEmitter = emitter.NewFakeEventEmitter(origin)
 
 		fakeRoundTripper = new(FakeRoundTripper)
 		rt = dropsonde.InstrumentedRoundTripper(fakeRoundTripper, fakeEmitter)
