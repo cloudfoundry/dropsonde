@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
+	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	"github.com/cloudfoundry-incubator/dropsonde/autowire"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

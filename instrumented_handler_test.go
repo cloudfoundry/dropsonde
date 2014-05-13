@@ -2,8 +2,8 @@ package dropsonde_test
 
 import (
 	"github.com/cloudfoundry-incubator/dropsonde"
-	"github.com/cloudfoundry-incubator/dropsonde/emitter"
-	"github.com/cloudfoundry-incubator/dropsonde/events"
+	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
+	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
