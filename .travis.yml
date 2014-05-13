@@ -9,7 +9,7 @@ before_install:
 - go get github.com/onsi/ginkgo/ginkgo
 
 after_success:
-- 'echo "mode: set" > all.coverprofile'
+- 'echo "mode: atomic" > all.coverprofile'
 - 'find . -name "*.coverprofile" -exec grep -v mode: {} >> all.coverprofile \;'
 - PATH=$HOME/gopath/bin:$PATH goveralls -coverprofile=all.coverprofile -repotoken=$COVERALLS_TOKEN
 
