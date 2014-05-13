@@ -2,7 +2,7 @@ package dropsonde_test
 
 import (
 	"github.com/cloudfoundry-incubator/dropsonde"
-	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
+	"github.com/cloudfoundry-incubator/dropsonde-common/emitter/fake"
 	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
@@ -19,14 +19,14 @@ func (fh FakeHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 var _ = Describe("InstrumentedHandler", func() {
-	var fakeEmitter *emitter.FakeEventEmitter
+	var fakeEmitter *fake.FakeEventEmitter
 	var h http.Handler
 	var req *http.Request
 
 	var origin = "testHandler/41"
 
 	BeforeEach(func() {
-		fakeEmitter = emitter.NewFakeEventEmitter(origin)
+		fakeEmitter = fake.NewFakeEventEmitter(origin)
 
 		var err error
 		fh := FakeHandler{}

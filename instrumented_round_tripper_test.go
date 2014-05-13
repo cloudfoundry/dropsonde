@@ -3,7 +3,7 @@ package dropsonde_test
 import (
 	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde"
-	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
+	"github.com/cloudfoundry-incubator/dropsonde-common/emitter/fake"
 	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	"github.com/cloudfoundry-incubator/dropsonde-common/factories"
 	uuid "github.com/nu7hatch/gouuid"
@@ -24,13 +24,13 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	var fakeRoundTripper *FakeRoundTripper
 	var rt http.RoundTripper
 	var req *http.Request
-	var fakeEmitter *emitter.FakeEventEmitter
+	var fakeEmitter *fake.FakeEventEmitter
 
 	var origin = "testRoundtripper/42"
 
 	BeforeEach(func() {
 		var err error
-		fakeEmitter = emitter.NewFakeEventEmitter(origin)
+		fakeEmitter = fake.NewFakeEventEmitter(origin)
 
 		fakeRoundTripper = new(FakeRoundTripper)
 		rt = dropsonde.InstrumentedRoundTripper(fakeRoundTripper, fakeEmitter)
