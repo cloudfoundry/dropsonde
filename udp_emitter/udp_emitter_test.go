@@ -1,8 +1,8 @@
-package udpemitter_test
+package udp_emitter_test
 
 import (
 	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
-	"github.com/cloudfoundry-incubator/dropsonde/udpemitter"
+	"github.com/cloudfoundry-incubator/dropsonde/udp_emitter"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"net"
@@ -14,7 +14,7 @@ var _ = Describe("UdpEmitter", func() {
 	Describe("Close()", func() {
 		It("closes the UDP connection", func() {
 
-			udpEmitter, _ := udpemitter.NewUdpEmitter("localhost:42420")
+			udpEmitter, _ := udp_emitter.NewUdpEmitter("localhost:42420")
 
 			udpEmitter.Close()
 
@@ -36,7 +36,7 @@ var _ = Describe("UdpEmitter", func() {
 				agentListener, err = net.ListenPacket("udp4", "")
 				Expect(err).ToNot(HaveOccurred())
 
-				udpEmitter, err = udpemitter.NewUdpEmitter(agentListener.LocalAddr().String())
+				udpEmitter, err = udp_emitter.NewUdpEmitter(agentListener.LocalAddr().String())
 				Expect(err).ToNot(HaveOccurred())
 			})
 
@@ -59,7 +59,7 @@ var _ = Describe("UdpEmitter", func() {
 
 		Context("when the agent is not listening", func() {
 			BeforeEach(func() {
-				udpEmitter, _ = udpemitter.NewUdpEmitter("localhost:12345")
+				udpEmitter, _ = udp_emitter.NewUdpEmitter("localhost:12345")
 			})
 
 			It("should attempt to send the data", func() {
@@ -92,7 +92,7 @@ var _ = Describe("UdpEmitter", func() {
 	Describe("NewUdpEmitter()", func() {
 		Context("when ResolveUDPAddr fails", func() {
 			It("returns an error", func() {
-				emitter, err := udpemitter.NewUdpEmitter("invalid-address:")
+				emitter, err := udp_emitter.NewUdpEmitter("invalid-address:")
 				Expect(emitter).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
@@ -100,7 +100,7 @@ var _ = Describe("UdpEmitter", func() {
 
 		Context("when all is good", func() {
 			It("creates an emitter", func() {
-				emitter, err := udpemitter.NewUdpEmitter("localhost:123")
+				emitter, err := udp_emitter.NewUdpEmitter("localhost:123")
 				Expect(emitter).ToNot(BeNil())
 				Expect(err).ToNot(HaveOccurred())
 			})

@@ -1,4 +1,4 @@
-package udpemitter_test
+package udp_emitter_test
 
 import (
 	. "github.com/onsi/ginkgo"
