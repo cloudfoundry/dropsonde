@@ -67,3 +67,13 @@ func (irw *instrumentedResponseWriter) WriteHeader(statusCode int) {
 	irw.statusCode = statusCode
 	irw.writer.WriteHeader(statusCode)
 }
+
+func (irw *instrumentedResponseWriter) Flush() {
+	flusher, ok := irw.writer.(http.Flusher)
+
+	if !ok {
+		panic("Called Flush on an InstrumentedResponseWriter that wraps a non-Flushable writer.")
+	}
+
+	flusher.Flush()
+}
