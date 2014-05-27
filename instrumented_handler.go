@@ -1,11 +1,14 @@
 package dropsonde
 
 import (
+	"bufio"
+	"net"
+	"net/http"
+
 	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
 	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	"github.com/cloudfoundry-incubator/dropsonde-common/factories"
 	uuid "github.com/nu7hatch/gouuid"
-	"net/http"
 )
 
 type instrumentedHandler struct {
@@ -76,4 +79,14 @@ func (irw *instrumentedResponseWriter) Flush() {
 	}
 
 	flusher.Flush()
+}
+
+func (irw *instrumentedResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hijacker, ok := irw.writer.(http.Hijacker)
+
+	if !ok {
+		panic("Called Hijack on an InstrumentedResponseWriter that wraps a non-Hijackable writer")
+	}
+
+	return hijacker.Hijack()
 }
