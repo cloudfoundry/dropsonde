@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
-	"github.com/cloudfoundry-incubator/dropsonde-common/events"
 	"github.com/cloudfoundry-incubator/dropsonde/autowire"
+	"github.com/cloudfoundry-incubator/dropsonde/events"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,7 +25,7 @@ var _ = Describe("Autowire End-to-End", func() {
 		var logWriter *bytes.Buffer
 		BeforeEach(func() {
 			if os.Getenv("DROPSONDE_ORIGIN") != "" {
-				Fail("DROPSONDE_ORIGIN must be unset before running this test")
+				Fail("DROPSONDE_ORIGIN must be unset before ruest")
 			}
 			logWriter = new(bytes.Buffer)
 			log.SetOutput(logWriter)

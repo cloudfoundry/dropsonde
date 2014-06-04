@@ -2,8 +2,7 @@ package autowire
 
 import (
 	"github.com/cloudfoundry-incubator/dropsonde"
-	"github.com/cloudfoundry-incubator/dropsonde-common/emitter"
-	"github.com/cloudfoundry-incubator/dropsonde/udp_emitter"
+	"github.com/cloudfoundry-incubator/dropsonde/emitter"
 	"log"
 	"net/http"
 	"os"
@@ -20,7 +19,7 @@ func init() {
 		return
 	}
 
-	udpEmitter, err := udp_emitter.NewUdpEmitter(autowiredEmitterRemoteAddr)
+	udpEmitter, err := emitter.NewUdpEmitter(autowiredEmitterRemoteAddr)
 	if err != nil {
 		log.Printf("Failed to auto-initialize dropsonde: %v\n", err)
 		return

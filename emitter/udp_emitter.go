@@ -1,4 +1,4 @@
-package udp_emitter
+package emitter
 
 import (
 	"net"

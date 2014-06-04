@@ -1,4 +1,4 @@
-package udp_emitter_test
+package factories_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUdpemitter(t *testing.T) {
+func TestFactories(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Udpemitter Suite")
+	RunSpecs(t, "Factories Suite")
 }
