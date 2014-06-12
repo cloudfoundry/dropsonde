@@ -47,9 +47,9 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 
 	var httpStop *events.HttpStop
 	if err != nil {
-		httpStop = factories.NewHttpStop(0, 0, events.PeerType_Client, requestId)
+		httpStop = factories.NewHttpStop(req, 0, 0, events.PeerType_Client, requestId)
 	} else {
-		httpStop = factories.NewHttpStop(resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
+		httpStop = factories.NewHttpStop(req, resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
 	}
 
 	irt.emitter.Emit(httpStop)

@@ -44,14 +44,21 @@ func NewHttpStart(req *http.Request, peerType events.PeerType, requestId *uuid.U
 	return httpStart
 }
 
-func NewHttpStop(statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStop {
-	return &events.HttpStop{
+func NewHttpStop(req *http.Request, statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStop {
+	httpStop := &events.HttpStop{
 		Timestamp:     proto.Int64(time.Now().UnixNano()),
+		Uri:           proto.String(fmt.Sprintf("%s%s", req.Host, req.URL.Path)),
 		RequestId:     NewUUID(requestId),
 		PeerType:      &peerType,
 		StatusCode:    proto.Int(statusCode),
 		ContentLength: proto.Int64(contentLength),
 	}
+
+	if applicationId, err := uuid.ParseHex(req.Header.Get("X-CF-ApplicationID")); err == nil {
+		httpStop.ApplicationId = NewUUID(applicationId)
+	}
+
+	return httpStop
 }
 
 func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *events.Heartbeat {

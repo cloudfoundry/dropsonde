@@ -12,23 +12,20 @@ import (
 )
 
 var _ = Describe("HTTP event creation", func() {
+	var applicationId *uuid.UUID
 	var requestId *uuid.UUID
+	var req *http.Request
+
 	BeforeEach(func() {
+		applicationId, _ = uuid.NewV4()
 		requestId, _ = uuid.NewV4()
+		req, _ = http.NewRequest("GET", "http://foo.example.com/", nil)
+
+		req.RemoteAddr = "127.0.0.1"
+		req.Header.Set("User-Agent", "our-testing-client")
 	})
 
 	Describe("NewHttpStart", func() {
-		var req *http.Request
-
-		BeforeEach(func() {
-			var err error
-
-			req, err = http.NewRequest("GET", "http://foo.example.com/", nil)
-			Expect(err).To(BeNil())
-
-			req.RemoteAddr = "127.0.0.1"
-			req.Header.Set("User-Agent", "our-testing-client")
-		})
 
 		Context("without an application ID or instanceIndex", func() {
 
@@ -74,15 +71,21 @@ var _ = Describe("HTTP event creation", func() {
 	})
 
 	Describe("NewHttpStop", func() {
+		BeforeEach(func() {
+			req.Header.Set("X-CF-ApplicationID", applicationId.String())
+		})
+
 		It("should set appropriate fields", func() {
 			expectedStopEvent := &events.HttpStop{
+				ApplicationId: factories.NewUUID(applicationId),
 				RequestId:     factories.NewUUID(requestId),
+				Uri:           proto.String("foo.example.com/"),
 				PeerType:      events.PeerType_Server.Enum(),
 				StatusCode:    proto.Int32(200),
-				ContentLength: proto.Int64(12),
+				ContentLength: proto.Int64(3),
 			}
 
-			stopEvent := factories.NewHttpStop(200, 12, events.PeerType_Server, requestId)
+			stopEvent := factories.NewHttpStop(req, 200, 3, events.PeerType_Server, requestId)
 
 			Expect(stopEvent.GetTimestamp()).ToNot(BeZero())
 			stopEvent.Timestamp = nil

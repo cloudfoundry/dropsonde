@@ -44,8 +44,7 @@ func (ih *instrumentedHandler) ServeHTTP(rw http.ResponseWriter, req *http.Reque
 	instrumentedWriter := &instrumentedResponseWriter{writer: rw, statusCode: 200}
 	ih.handler.ServeHTTP(instrumentedWriter, req)
 
-	stopEvent := factories.NewHttpStop(instrumentedWriter.statusCode, instrumentedWriter.contentLength,
-		events.PeerType_Server, requestId)
+	stopEvent := factories.NewHttpStop(req, instrumentedWriter.statusCode, instrumentedWriter.contentLength, events.PeerType_Server, requestId)
 
 	ih.emitter.Emit(stopEvent)
 }

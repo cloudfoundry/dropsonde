@@ -202,10 +202,12 @@ func (m *HttpStart) GetInstanceIndex() int32 {
 
 type HttpStop struct {
 	Timestamp        *int64    `protobuf:"varint,1,req,name=timestamp" json:"timestamp,omitempty"`
-	RequestId        *UUID     `protobuf:"bytes,2,req,name=requestId" json:"requestId,omitempty"`
-	PeerType         *PeerType `protobuf:"varint,3,req,name=peerType,enum=events.PeerType" json:"peerType,omitempty"`
-	StatusCode       *int32    `protobuf:"varint,4,req,name=statusCode" json:"statusCode,omitempty"`
-	ContentLength    *int64    `protobuf:"varint,5,req,name=contentLength" json:"contentLength,omitempty"`
+	Uri              *string   `protobuf:"bytes,2,req,name=uri" json:"uri,omitempty"`
+	RequestId        *UUID     `protobuf:"bytes,3,req,name=requestId" json:"requestId,omitempty"`
+	PeerType         *PeerType `protobuf:"varint,4,req,name=peerType,enum=events.PeerType" json:"peerType,omitempty"`
+	StatusCode       *int32    `protobuf:"varint,5,req,name=statusCode" json:"statusCode,omitempty"`
+	ContentLength    *int64    `protobuf:"varint,6,req,name=contentLength" json:"contentLength,omitempty"`
+	ApplicationId    *UUID     `protobuf:"bytes,7,opt,name=applicationId" json:"applicationId,omitempty"`
 	XXX_unrecognized []byte    `json:"-"`
 }
 
@@ -218,6 +220,13 @@ func (m *HttpStop) GetTimestamp() int64 {
 		return *m.Timestamp
 	}
 	return 0
+}
+
+func (m *HttpStop) GetUri() string {
+	if m != nil && m.Uri != nil {
+		return *m.Uri
+	}
+	return ""
 }
 
 func (m *HttpStop) GetRequestId() *UUID {
@@ -246,6 +255,13 @@ func (m *HttpStop) GetContentLength() int64 {
 		return *m.ContentLength
 	}
 	return 0
+}
+
+func (m *HttpStop) GetApplicationId() *UUID {
+	if m != nil {
+		return m.ApplicationId
+	}
+	return nil
 }
 
 func init() {
