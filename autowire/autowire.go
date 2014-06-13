@@ -38,7 +38,6 @@ func init() {
 
 func InstrumentedHandler(handler http.Handler) http.Handler {
 	if autowiredEmitter == nil {
-		log.Printf("Failed to instrument Handler; no emitter configured\n")
 		return handler
 	}
 
@@ -47,7 +46,6 @@ func InstrumentedHandler(handler http.Handler) http.Handler {
 
 func InstrumentedRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
 	if autowiredEmitter == nil {
-		log.Printf("Failed to instrument RoundTripper; no emitter configured\n")
 		return roundTripper
 	}
 
