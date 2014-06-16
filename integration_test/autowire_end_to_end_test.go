@@ -1,7 +1,6 @@
 package integration_test
 
 import (
-	"bytes"
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
 	"github.com/cloudfoundry-incubator/dropsonde/autowire"
@@ -9,74 +8,29 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"log"
 	"net"
 	"net/http"
 	"os"
-	"reflect"
-	"strconv"
 	"sync"
 )
 
 // these tests need to be invoked individually from an external script,
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
-	Context("with DROPSONDE_ORIGIN missing", func() {
-		var logWriter *bytes.Buffer
-		BeforeEach(func() {
-			if os.Getenv("DROPSONDE_ORIGIN") != "" {
-				Fail("DROPSONDE_ORIGIN must be unset before ruest")
-			}
-			logWriter = new(bytes.Buffer)
-			log.SetOutput(logWriter)
-		})
-
-		Describe("init", func() {
-			It("does not instrument http.DefaultTransport", func() {
-				Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("Transport"))
-			})
-		})
-
-		Describe("InstrumentedHandler", func() {
-			It("returns the given Handler with no changes and logs an error", func() {
-				fake := FakeHandler{}
-
-				Expect(autowire.InstrumentedHandler(fake)).To(Equal(fake))
-
-				loggedText := string(logWriter.Bytes())
-
-				expectedText := "Failed to instrument Handler; no emitter configured\n"
-				Expect(loggedText).To(ContainSubstring(expectedText))
-			})
-		})
-
-		Describe("InstrumentedRoundTripper", func() {
-			It("returns the given RoundTripper with no changes and logs an error", func() {
-				fake := FakeRoundTripper{}
-				Expect(autowire.InstrumentedRoundTripper(fake)).To(Equal(fake))
-
-				loggedText := string(logWriter.Bytes())
-
-				expectedText := "Failed to instrument RoundTripper; no emitter configured\n"
-				Expect(loggedText).To(ContainSubstring(expectedText))
-			})
-		})
-	})
-
 	Context("with DROPSONDE_ORIGIN set", func() {
-		BeforeEach(func() {
-			if os.Getenv("DROPSONDE_ORIGIN") == "" {
-				Fail("DROPSONDE_ORIGIN must be set before running this test")
-			}
+		var oldEnv string
 
-			interval, err := strconv.ParseFloat(os.Getenv("DROPSONDE_HEARTBEAT_INTERVAL_SECS"), 64)
-			if err != nil || interval > 0.5 {
-				Fail("DROPSONDE_HEARTBEAT_INTERVAL_SECS must be set to something below 0.5 to make this test pass")
-			}
+		BeforeEach(func() {
+			oldEnv = os.Getenv("DROPSONDE_ORIGIN")
+			os.Setenv("DROPSONDE_ORIGIN", "test-origin")
+			autowire.Initialize()
 		})
 
-		It("emits HTTP client/server events and heartbeats", func(done Done) {
-			defer close(done)
+		AfterEach(func() {
+			os.Setenv("DROPSONDE_ORIGIN", oldEnv)
+		})
+
+		It("emits HTTP client/server events and heartbeats", func() {
 			udpListener, err := net.ListenPacket("udp4", ":42420")
 			Expect(err).ToNot(HaveOccurred())
 			defer udpListener.Close()

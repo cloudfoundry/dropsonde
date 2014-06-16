@@ -3,7 +3,5 @@ cd `dirname $0`
 go fmt ./...
 go vet ./...
 GINKGO="ginkgo -r --race --randomizeAllSpecs --failOnPending --skipMeasurements"
-$GINKGO -cover -skipPackage integration_test
 export DROPSONDE_HEARTBEAT_INTERVAL_SECS=0.375
-DROPSONDE_ORIGIN="test" $GINKGO -focus 'Autowire End-to-End with DROPSONDE_ORIGIN set' integration_test
-DROPSONDE_ORIGIN="" $GINKGO -focus 'Autowire End-to-End with DROPSONDE_ORIGIN missing' integration_test
+$GINKGO -cover
