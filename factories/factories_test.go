@@ -68,6 +68,16 @@ var _ = Describe("HTTP event creation", func() {
 				Expect(startEvent.GetInstanceIndex()).To(BeNumerically("==", 1))
 			})
 		})
+
+		Context("with an application instance ID", func() {
+			It("should include it in the start event", func() {
+				req.Header.Set("X-CF-InstanceID", "fake-id")
+
+				startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
+
+				Expect(startEvent.GetInstanceId()).To(Equal("fake-id"))
+			})
+		})
 	})
 
 	Describe("NewHttpStop", func() {

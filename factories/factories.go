@@ -41,6 +41,10 @@ func NewHttpStart(req *http.Request, peerType events.PeerType, requestId *uuid.U
 		httpStart.InstanceIndex = proto.Int(instanceIndex)
 	}
 
+	if instanceId := req.Header.Get("X-CF-InstanceID"); instanceId != "" {
+		httpStart.InstanceId = &instanceId
+	}
+
 	return httpStart
 }
 

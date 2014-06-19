@@ -123,6 +123,7 @@ type HttpStart struct {
 	ParentRequestId  *UUID             `protobuf:"bytes,8,opt,name=parentRequestId" json:"parentRequestId,omitempty"`
 	ApplicationId    *UUID             `protobuf:"bytes,9,opt,name=applicationId" json:"applicationId,omitempty"`
 	InstanceIndex    *int32            `protobuf:"varint,10,opt,name=instanceIndex" json:"instanceIndex,omitempty"`
+	InstanceId       *string           `protobuf:"bytes,11,opt,name=instanceId" json:"instanceId,omitempty"`
 	XXX_unrecognized []byte            `json:"-"`
 }
 
@@ -198,6 +199,13 @@ func (m *HttpStart) GetInstanceIndex() int32 {
 		return *m.InstanceIndex
 	}
 	return 0
+}
+
+func (m *HttpStart) GetInstanceId() string {
+	if m != nil && m.InstanceId != nil {
+		return *m.InstanceId
+	}
+	return ""
 }
 
 type HttpStop struct {
