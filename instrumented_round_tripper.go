@@ -48,10 +48,10 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 		log.Printf("failed to emit start event: %v\n", err)
 	}
 
-	resp, err := irt.roundTripper.RoundTrip(req)
+	resp, roundTripErr := irt.roundTripper.RoundTrip(req)
 
 	var httpStop *events.HttpStop
-	if err != nil {
+	if roundTripErr != nil {
 		httpStop = factories.NewHttpStop(req, 0, 0, events.PeerType_Client, requestId)
 	} else {
 		httpStop = factories.NewHttpStop(req, resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
@@ -62,5 +62,5 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 		log.Printf("failed to emit stop event: %v\n", err)
 	}
 
-	return resp, err
+	return resp, roundTripErr
 }
