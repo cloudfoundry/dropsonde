@@ -48,10 +48,24 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
 		})
 
+		Context("if request ID can't be generated", func() {
+			BeforeEach(func() {
+				dropsonde.GenerateUuid = func() (u *uuid.UUID, err error) {
+					return nil, errors.New("test error")
+				}
+			})
+			AfterEach(func() {
+				dropsonde.GenerateUuid = uuid.NewV4
+			})
+
+			It("defaults to an empty request ID", func() {
+				rt.RoundTrip(req)
+				Expect(req.Header.Get("X-CF-RequestID")).To(Equal("00000000-0000-0000-0000-000000000000"))
+			})
+		})
 	})
 
 	Context("event emission", func() {
-
 		It("should emit a start event", func() {
 			rt.RoundTrip(req)
 			Expect(fakeEmitter.Messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))

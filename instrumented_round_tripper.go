@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry-incubator/dropsonde/events"
 	"github.com/cloudfoundry-incubator/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
+	"log"
 	"net/http"
 )
 
@@ -27,9 +28,10 @@ Callers of RoundTrip are responsible for setting the ‘X-CF-RequestID’ field 
 Callers are also responsible for setting the ‘X-CF-ApplicationID’ and ‘X-CF-InstanceIndex’ fields in the request header if they are known.
 */
 func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	requestId, err := uuid.NewV4()
+	requestId, err := GenerateUuid()
 	if err != nil {
-		panic(err)
+		log.Printf("failed to generated request ID: %v\n", err)
+		requestId = &uuid.UUID{}
 	}
 
 	httpStart := factories.NewHttpStart(req, events.PeerType_Client, requestId)
@@ -41,7 +43,10 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 
 	req.Header.Set("X-CF-RequestID", requestId.String())
 
-	irt.emitter.Emit(httpStart)
+	err = irt.emitter.Emit(httpStart)
+	if err != nil {
+		log.Printf("failed to emit start event: %v\n", err)
+	}
 
 	resp, err := irt.roundTripper.RoundTrip(req)
 
@@ -52,7 +57,10 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 		httpStop = factories.NewHttpStop(req, resp.StatusCode, resp.ContentLength, events.PeerType_Client, requestId)
 	}
 
-	irt.emitter.Emit(httpStop)
+	err = irt.emitter.Emit(httpStop)
+	if err != nil {
+		log.Printf("failed to emit stop event: %v\n", err)
+	}
 
 	return resp, err
 }

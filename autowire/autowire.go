@@ -44,7 +44,7 @@ func Initialize() {
 
 	origin := os.Getenv("DROPSONDE_ORIGIN")
 	if len(origin) == 0 {
-		log.Printf("Failed to auto-initialize dropsonde: DROPSONDE_ORIGIN environment variable not set\n")
+		log.Println("Failed to auto-initialize dropsonde: DROPSONDE_ORIGIN environment variable not set")
 		return
 	}
 

@@ -1,6 +1,7 @@
 package dropsonde_test
 
 import (
+	"errors"
 	"github.com/cloudfoundry-incubator/dropsonde"
 	"github.com/cloudfoundry-incubator/dropsonde/emitter/fake"
 	"github.com/cloudfoundry-incubator/dropsonde/events"
@@ -37,6 +38,10 @@ var _ = Describe("InstrumentedHandler", func() {
 		req.Header.Set("User-Agent", "our-testing-client")
 	})
 
+	AfterEach(func() {
+		dropsonde.GenerateUuid = uuid.NewV4
+	})
+
 	Describe("request ID", func() {
 		It("should add it to the request", func() {
 			h.ServeHTTP(httptest.NewRecorder(), req)
@@ -63,6 +68,14 @@ var _ = Describe("InstrumentedHandler", func() {
 			response := httptest.NewRecorder()
 			h.ServeHTTP(response, req)
 			Expect(response.Header().Get("X-CF-RequestID")).To(Equal(id.String()))
+		})
+
+		It("should use an empty request ID if generating a new one fails", func() {
+			dropsonde.GenerateUuid = func() (u *uuid.UUID, err error) {
+				return nil, errors.New("test error")
+			}
+			h.ServeHTTP(httptest.NewRecorder(), req)
+			Expect(req.Header.Get("X-CF-RequestID")).To(Equal("00000000-0000-0000-0000-000000000000"))
 		})
 	})
 
