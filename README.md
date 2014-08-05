@@ -1,6 +1,6 @@
-# Dropsonde 
+# Dropsonde
 
-[![Build Status](https://travis-ci.org/cloudfoundry-incubator/dropsonde.svg?branch=master)](https://travis-ci.org/cloudfoundry-incubator/dropsonde) [![Coverage Status](https://coveralls.io/repos/cloudfoundry-incubator/dropsonde/badge.png)](https://coveralls.io/r/cloudfoundry-incubator/dropsonde)
+[![Build Status](https://travis-ci.org/cloudfoundry/dropsonde.svg?branch=master)](https://travis-ci.org/cloudfoundry/dropsonde) [![Coverage Status](https://coveralls.io/repos/cloudfoundry/dropsonde/badge.png)](https://coveralls.io/r/cloudfoundry/dropsonde)
 
 
 Go library to collect and emit metric and logging data from CF components.
