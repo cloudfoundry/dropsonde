@@ -33,7 +33,7 @@ var _ = Describe("HTTP event creation", func() {
 				expectedStartEvent := &events.HttpStart{
 					RequestId:     factories.NewUUID(requestId),
 					PeerType:      events.PeerType_Server.Enum(),
-					Method:        events.HttpStart_GET.Enum(),
+					Method:        events.Method_GET.Enum(),
 					Uri:           proto.String("foo.example.com/"),
 					RemoteAddress: proto.String("127.0.0.1"),
 					UserAgent:     proto.String("our-testing-client"),
