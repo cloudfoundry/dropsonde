@@ -1,4 +1,4 @@
-package dropsonde_unmarshaller_test
+package signature_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -9,5 +9,5 @@ import (
 
 func TestUnmarshaller(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Dropsonde Unmarshaller Suite")
+	RunSpecs(t, "Signature Suite")
 }
