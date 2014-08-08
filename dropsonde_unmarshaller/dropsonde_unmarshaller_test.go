@@ -5,6 +5,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
+	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation/testhelpers"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -49,21 +50,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 	})
 
 	Context("metrics", func() {
-		var metricValue = func(name string) interface{} {
-			for _, metric := range unmarshaller.Emit().Metrics {
-				if metric.Name == name {
-					return metric.Value
-				}
-			}
-			return nil
-		}
-
-		var eventuallyExpectMetric = func(name string, value uint64) {
-			Eventually(func() interface{} {
-				return metricValue(name)
-			}).Should(Equal(value))
-		}
-
 		It("emits the correct metrics context", func() {
 			Expect(unmarshaller.Emit().Name).To(Equal("dropsondeUnmarshaller"))
 		})
@@ -77,12 +63,12 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			message, _ := proto.Marshal(envelope)
 
 			inputChan <- message
-			eventuallyExpectMetric("heartbeatReceived", 1)
+			testhelpers.EventuallyExpectMetric(unmarshaller, "heartbeatReceived", 1)
 		})
 
 		It("emits an unmarshal error counter", func() {
 			inputChan <- []byte{1, 2, 3}
-			eventuallyExpectMetric("unmarshalErrors", 1)
+			testhelpers.EventuallyExpectMetric(unmarshaller, "unmarshalErrors", 1)
 		})
 	})
 })
