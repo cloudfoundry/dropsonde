@@ -23,4 +23,4 @@ go:
 
 env:
   global:
-    secure: Pgjx4oo9hmui3ASIphUhiQPqG/QCjkFobsUFZZiKmamxdwWgJmy2vjm7co1wu7dGKK7qJU3rJ3ZYo0pvuFpL0PQzyq0vfxKsA5GvDXwhqbk6rG+vY5uUTiSCTW0aophhR4HyN7w/Zdq8BiQqfr5p0EOL3beOT6/lvdE70qNQ0Ms=
+    secure: "FjElKYv/qn9DFPYbp/rl41fapRsSvPh7OB0x6T4GZnmDheY6T/oYadHnwp+y5ccDg4nne/IN9+zf46CUpx7RGbjIvy4AeL7L9VS/NlehgWG/tbYFVedXwkruKylqhbbMVrKwsYNBoELnG8SmP1wsvg6mbi1lzf8l1aeufUKQ7nM="
