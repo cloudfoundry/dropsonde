@@ -29,7 +29,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 		var err error
 		received = make(chan *[]byte, 10)
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
-		emitter, err = NewEmitter("localhost:3456", "ROUTER", "42")
+		emitter, err = NewEmitter("localhost:3456", "ROUTER", "42", false)
 		Ω(err).ShouldNot(HaveOccurred())
 
 		emitter.LoggregatorClient = &MockLoggregatorClient{received}
@@ -38,7 +38,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 
 	It("returns an error if LOGGREGATOR_SHARED_SECRET is not set", func() {
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "")
-		_, err := NewEmitter("localhost:3456", "ROUTER", "42")
+		_, err := NewEmitter("localhost:3456", "ROUTER", "42", false)
 		Expect(err).To(Equal(ERR_SHARED_SECRET_NOT_SET))
 	})
 
@@ -121,7 +121,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 
 	It("source name is set if mapping is unknown", func() {
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
-		emitter, err := NewEmitter("localhost:3456", "XYZ", "42")
+		emitter, err := NewEmitter("localhost:3456", "XYZ", "42", false)
 		Ω(err).ShouldNot(HaveOccurred())
 		emitter.LoggregatorClient = &MockLoggregatorClient{received}
 

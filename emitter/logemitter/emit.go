@@ -90,7 +90,7 @@ func (e *LoggregatorEmitter) EmitLogMessage(logMessage *events.LogMessage) {
 	}
 }
 
-func NewEmitter(loggregatorServer, sourceName, sourceId string) (*LoggregatorEmitter, error) {
+func NewEmitter(loggregatorServer, sourceName, sourceId string, debug bool) (*LoggregatorEmitter, error) {
 	// TODO: delete when "legacy" format goes away
 	sharedSecret := os.Getenv("LOGGREGATOR_SHARED_SECRET")
 	if sharedSecret == "" {
@@ -100,7 +100,7 @@ func NewEmitter(loggregatorServer, sourceName, sourceId string) (*LoggregatorEmi
 	e := &LoggregatorEmitter{sharedSecret: sharedSecret}
 
 	e.sn = sourceName
-	e.logger = generic_logger.NewDefaultGenericLogger()
+	e.logger = generic_logger.NewDefaultGenericLogger(debug)
 	e.LoggregatorClient = loggregatorclient.NewLoggregatorClient(loggregatorServer, e.logger, loggregatorclient.DefaultBufferSize)
 	e.sId = sourceId
 

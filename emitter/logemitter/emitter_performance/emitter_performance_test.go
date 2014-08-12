@@ -59,7 +59,7 @@ func BenchmarkLogEnvelopeEmit(b *testing.B) {
 	log.SetOutput(ioutil.Discard)
 	received := make(chan *[]byte, 1)
 	os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
-	e, _ := logemitter.NewEmitter("localhost:3457", "ROUTER", "42")
+	e, _ := logemitter.NewEmitter("localhost:3457", "ROUTER", "42", false)
 	e.LoggregatorClient = &MockLoggregatorClient{received}
 
 	testEmitHelper(b, e, received, true)
