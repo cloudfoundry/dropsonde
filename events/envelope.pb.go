@@ -20,7 +20,7 @@ const (
 	Envelope_HttpStart     Envelope_EventType = 2
 	Envelope_HttpStop      Envelope_EventType = 3
 	Envelope_HttpStartStop Envelope_EventType = 4
-	Envelope_LogLine       Envelope_EventType = 5
+	Envelope_LogMessage    Envelope_EventType = 5
 )
 
 var Envelope_EventType_name = map[int32]string{
@@ -28,14 +28,14 @@ var Envelope_EventType_name = map[int32]string{
 	2: "HttpStart",
 	3: "HttpStop",
 	4: "HttpStartStop",
-	5: "LogLine",
+	5: "LogMessage",
 }
 var Envelope_EventType_value = map[string]int32{
 	"Heartbeat":     1,
 	"HttpStart":     2,
 	"HttpStop":      3,
 	"HttpStartStop": 4,
-	"LogLine":       5,
+	"LogMessage":    5,
 }
 
 func (x Envelope_EventType) Enum() *Envelope_EventType {
@@ -66,7 +66,7 @@ type Envelope struct {
 	HttpStart        *HttpStart          `protobuf:"bytes,4,opt,name=httpStart" json:"httpStart,omitempty"`
 	HttpStop         *HttpStop           `protobuf:"bytes,5,opt,name=httpStop" json:"httpStop,omitempty"`
 	HttpStartStop    *HttpStartStop      `protobuf:"bytes,7,opt,name=httpStartStop" json:"httpStartStop,omitempty"`
-	LogLine          *LogLine            `protobuf:"bytes,8,opt,name=logLine" json:"logLine,omitempty"`
+	LogMessage       *LogMessage         `protobuf:"bytes,8,opt,name=logMessage" json:"logMessage,omitempty"`
 	XXX_unrecognized []byte              `json:"-"`
 }
 
@@ -123,9 +123,9 @@ func (m *Envelope) GetHttpStartStop() *HttpStartStop {
 	return nil
 }
 
-func (m *Envelope) GetLogLine() *LogLine {
+func (m *Envelope) GetLogMessage() *LogMessage {
 	if m != nil {
-		return m.LogLine
+		return m.LogMessage
 	}
 	return nil
 }

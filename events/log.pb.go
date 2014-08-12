@@ -13,69 +13,98 @@ var _ = proto.Marshal
 var _ = &json.SyntaxError{}
 var _ = math.Inf
 
-type LogLine struct {
-	Timestamp        *int64  `protobuf:"varint,1,req,name=timestamp" json:"timestamp,omitempty"`
-	Payload          []byte  `protobuf:"bytes,2,req,name=payload" json:"payload,omitempty"`
-	Pid              *uint32 `protobuf:"varint,3,opt,name=pid" json:"pid,omitempty"`
-	Severity         *uint32 `protobuf:"varint,4,opt,name=severity" json:"severity,omitempty"`
-	AppId            *string `protobuf:"bytes,5,opt,name=app_id" json:"app_id,omitempty"`
-	SourceName       *string `protobuf:"bytes,6,opt,name=source_name" json:"source_name,omitempty"`
-	Hostname         *string `protobuf:"bytes,7,opt,name=hostname" json:"hostname,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+type LogMessage_MessageType int32
+
+const (
+	LogMessage_OUT LogMessage_MessageType = 1
+	LogMessage_ERR LogMessage_MessageType = 2
+)
+
+var LogMessage_MessageType_name = map[int32]string{
+	1: "OUT",
+	2: "ERR",
+}
+var LogMessage_MessageType_value = map[string]int32{
+	"OUT": 1,
+	"ERR": 2,
 }
 
-func (m *LogLine) Reset()         { *m = LogLine{} }
-func (m *LogLine) String() string { return proto.CompactTextString(m) }
-func (*LogLine) ProtoMessage()    {}
+func (x LogMessage_MessageType) Enum() *LogMessage_MessageType {
+	p := new(LogMessage_MessageType)
+	*p = x
+	return p
+}
+func (x LogMessage_MessageType) String() string {
+	return proto.EnumName(LogMessage_MessageType_name, int32(x))
+}
+func (x LogMessage_MessageType) MarshalJSON() ([]byte, error) {
+	return json.Marshal(x.String())
+}
+func (x *LogMessage_MessageType) UnmarshalJSON(data []byte) error {
+	value, err := proto.UnmarshalJSONEnum(LogMessage_MessageType_value, data, "LogMessage_MessageType")
+	if err != nil {
+		return err
+	}
+	*x = LogMessage_MessageType(value)
+	return nil
+}
 
-func (m *LogLine) GetTimestamp() int64 {
+type LogMessage struct {
+	Message          []byte                  `protobuf:"bytes,1,req,name=message" json:"message,omitempty"`
+	MessageType      *LogMessage_MessageType `protobuf:"varint,2,req,name=message_type,enum=events.LogMessage_MessageType" json:"message_type,omitempty"`
+	Timestamp        *int64                  `protobuf:"varint,3,req,name=timestamp" json:"timestamp,omitempty"`
+	AppId            *string                 `protobuf:"bytes,4,opt,name=app_id" json:"app_id,omitempty"`
+	SourceType       *string                 `protobuf:"bytes,5,opt,name=source_type" json:"source_type,omitempty"`
+	SourceInstance   *string                 `protobuf:"bytes,6,opt,name=source_instance" json:"source_instance,omitempty"`
+	XXX_unrecognized []byte                  `json:"-"`
+}
+
+func (m *LogMessage) Reset()         { *m = LogMessage{} }
+func (m *LogMessage) String() string { return proto.CompactTextString(m) }
+func (*LogMessage) ProtoMessage()    {}
+
+func (m *LogMessage) GetMessage() []byte {
+	if m != nil {
+		return m.Message
+	}
+	return nil
+}
+
+func (m *LogMessage) GetMessageType() LogMessage_MessageType {
+	if m != nil && m.MessageType != nil {
+		return *m.MessageType
+	}
+	return 0
+}
+
+func (m *LogMessage) GetTimestamp() int64 {
 	if m != nil && m.Timestamp != nil {
 		return *m.Timestamp
 	}
 	return 0
 }
 
-func (m *LogLine) GetPayload() []byte {
-	if m != nil {
-		return m.Payload
-	}
-	return nil
-}
-
-func (m *LogLine) GetPid() uint32 {
-	if m != nil && m.Pid != nil {
-		return *m.Pid
-	}
-	return 0
-}
-
-func (m *LogLine) GetSeverity() uint32 {
-	if m != nil && m.Severity != nil {
-		return *m.Severity
-	}
-	return 0
-}
-
-func (m *LogLine) GetAppId() string {
+func (m *LogMessage) GetAppId() string {
 	if m != nil && m.AppId != nil {
 		return *m.AppId
 	}
 	return ""
 }
 
-func (m *LogLine) GetSourceName() string {
-	if m != nil && m.SourceName != nil {
-		return *m.SourceName
+func (m *LogMessage) GetSourceType() string {
+	if m != nil && m.SourceType != nil {
+		return *m.SourceType
 	}
 	return ""
 }
 
-func (m *LogLine) GetHostname() string {
-	if m != nil && m.Hostname != nil {
-		return *m.Hostname
+func (m *LogMessage) GetSourceInstance() string {
+	if m != nil && m.SourceInstance != nil {
+		return *m.SourceInstance
 	}
 	return ""
 }
 
 func init() {
+	proto.RegisterEnum("events.LogMessage_MessageType", LogMessage_MessageType_name, LogMessage_MessageType_value)
 }
