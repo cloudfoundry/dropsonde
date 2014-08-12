@@ -1,8 +1,11 @@
 package emitter_performance
 
 import (
-	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
 	"github.com/cloudfoundry/dropsonde/emitter/logemitter"
+	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
+	"io/ioutil"
+	"log"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -53,8 +56,10 @@ func (m MockLoggregatorClient) Emit() instrumentation.Context {
 }
 
 func BenchmarkLogEnvelopeEmit(b *testing.B) {
+	log.SetOutput(ioutil.Discard)
 	received := make(chan *[]byte, 1)
-	e, _ := logemitter.NewEmitter("localhost:3457", "ROUTER", "42", "secret", nil)
+	os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
+	e, _ := logemitter.NewEmitter("localhost:3457", "ROUTER", "42")
 	e.LoggregatorClient = &MockLoggregatorClient{received}
 
 	testEmitHelper(b, e, received, true)

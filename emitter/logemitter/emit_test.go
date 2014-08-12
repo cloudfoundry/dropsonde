@@ -2,16 +2,22 @@ package logemitter_test
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
-	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
 	. "github.com/cloudfoundry/dropsonde/emitter/logemitter"
-	"github.com/cloudfoundry/loggregatorlib/logmessage"
 	"github.com/cloudfoundry/dropsonde/emitter/logemitter/testhelpers"
-	"strings"
+	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
+	"github.com/cloudfoundry/loggregatorlib/logmessage"
+	"log"
 	"os"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"io/ioutil"
 )
+
+var _ = BeforeSuite(func() {
+	log.SetOutput(ioutil.Discard)
+})
 
 var _ = Describe("Testing with Ginkgo", func() {
 	var (
@@ -23,7 +29,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 		var err error
 		received = make(chan *[]byte, 10)
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
-		emitter, err = NewEmitter("localhost:3456", "ROUTER", "42", nil)
+		emitter, err = NewEmitter("localhost:3456", "ROUTER", "42")
 		Ω(err).ShouldNot(HaveOccurred())
 
 		emitter.LoggregatorClient = &MockLoggregatorClient{received}
@@ -32,7 +38,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 
 	It("returns an error if LOGGREGATOR_SHARED_SECRET is not set", func() {
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "")
-		_, err := NewEmitter("localhost:3456", "ROUTER", "42", nil)
+		_, err := NewEmitter("localhost:3456", "ROUTER", "42")
 		Expect(err).To(Equal(ERR_SHARED_SECRET_NOT_SET))
 	})
 
@@ -115,7 +121,7 @@ var _ = Describe("Testing with Ginkgo", func() {
 
 	It("source name is set if mapping is unknown", func() {
 		os.Setenv("LOGGREGATOR_SHARED_SECRET", "secret")
-		emitter, err := NewEmitter("localhost:3456", "XYZ", "42", nil)
+		emitter, err := NewEmitter("localhost:3456", "XYZ", "42")
 		Ω(err).ShouldNot(HaveOccurred())
 		emitter.LoggregatorClient = &MockLoggregatorClient{received}
 

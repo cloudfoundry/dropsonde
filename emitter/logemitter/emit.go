@@ -2,14 +2,14 @@ package logemitter
 
 import (
 	"code.google.com/p/gogoprotobuf/proto"
+	"errors"
 	"github.com/cloudfoundry/dropsonde/events"
-	"github.com/cloudfoundry/gosteno"
+	"github.com/cloudfoundry/loggregatorlib/cfcomponent/generic_logger"
 	"github.com/cloudfoundry/loggregatorlib/loggregatorclient"
 	"github.com/cloudfoundry/loggregatorlib/logmessage"
+	"os"
 	"strings"
 	"time"
-	"os"
-	"errors"
 )
 
 var (
@@ -31,7 +31,7 @@ type LoggregatorEmitter struct {
 	sn                string
 	sId               string
 	sharedSecret      string
-	logger            *gosteno.Logger
+	logger            generic_logger.GenericLogger
 }
 
 func isEmpty(s string) bool {
@@ -90,12 +90,7 @@ func (e *LoggregatorEmitter) EmitLogMessage(logMessage *events.LogMessage) {
 	}
 }
 
-
-func NewEmitter(loggregatorServer, sourceName, sourceId string, logger *gosteno.Logger) (*LoggregatorEmitter, error) {
-	if logger == nil {
-		logger = gosteno.NewLogger("loggregatorlib.emitter")
-	}
-
+func NewEmitter(loggregatorServer, sourceName, sourceId string) (*LoggregatorEmitter, error) {
 	// TODO: delete when "legacy" format goes away
 	sharedSecret := os.Getenv("LOGGREGATOR_SHARED_SECRET")
 	if sharedSecret == "" {
@@ -105,8 +100,8 @@ func NewEmitter(loggregatorServer, sourceName, sourceId string, logger *gosteno.
 	e := &LoggregatorEmitter{sharedSecret: sharedSecret}
 
 	e.sn = sourceName
-	e.logger = logger
-	e.LoggregatorClient = loggregatorclient.NewLoggregatorClient(loggregatorServer, logger, loggregatorclient.DefaultBufferSize)
+	e.logger = generic_logger.NewDefaultGenericLogger()
+	e.LoggregatorClient = loggregatorclient.NewLoggregatorClient(loggregatorServer, e.logger, loggregatorclient.DefaultBufferSize)
 	e.sId = sourceId
 
 	e.logger.Debugf("Created new loggregator emitter: %#v", e)
