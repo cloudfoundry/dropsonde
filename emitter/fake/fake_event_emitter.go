@@ -21,19 +21,19 @@ type FakeEventEmitter struct {
 func NewFakeEventEmitter(origin string) *FakeEventEmitter {
 	return &FakeEventEmitter{mutex: new(sync.RWMutex), Origin: origin}
 }
-func (f *FakeEventEmitter) Emit(e events.Event) (err error) {
-
-	if f.ReturnError != nil {
-		err = f.ReturnError
-		f.ReturnError = nil
-		return
-	}
+func (f *FakeEventEmitter) Emit(e events.Event) error {
 
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
+	if f.ReturnError != nil {
+		err := f.ReturnError
+		f.ReturnError = nil
+		return err
+	}
+
 	f.Messages = append(f.Messages, envelope{e, f.Origin})
-	return
+	return nil
 }
 
 func (f *FakeEventEmitter) GetMessages() (messages []envelope) {
@@ -43,6 +43,15 @@ func (f *FakeEventEmitter) GetMessages() (messages []envelope) {
 	messages = make([]envelope, len(f.Messages))
 	copy(messages, f.Messages)
 	return
+}
+
+func (f *FakeEventEmitter) GetEvents() []events.Event {
+	messages := f.GetMessages()
+	events := []events.Event{}
+	for _, msg := range messages {
+		events = append(events, msg.Event)
+	}
+	return events
 }
 
 func (f *FakeEventEmitter) Close() {
