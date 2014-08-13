@@ -3,12 +3,16 @@ package autowire
 import (
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter"
+	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"log"
 	"net/http"
 	"os"
+	"time"
 )
 
 var autowiredEmitter emitter.EventEmitter
+
+const runtimeStatsInterval = 10 * time.Second
 
 var destination string
 
@@ -67,6 +71,8 @@ func Initialize() {
 	}
 
 	autowiredEmitter = emitter.NewEventEmitter(hbEmitter, origin)
+
+	go runtime_stats.NewRuntimeStats(autowiredEmitter, runtimeStatsInterval).Run(nil)
 
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }

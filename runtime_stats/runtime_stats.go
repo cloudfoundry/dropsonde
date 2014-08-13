@@ -24,15 +24,15 @@ func (rs *RuntimeStats) Run(stopChan <-chan struct{}) {
 	ticker := time.NewTicker(rs.interval)
 	defer ticker.Stop()
 	for {
+		rs.emit("numCPUS", uint64(runtime.NumCPU()))
+		rs.emit("numGoRoutines", uint64(runtime.NumGoroutine()))
+		rs.emitMemMetrics()
+
 		select {
 		case <-ticker.C:
 		case <-stopChan:
 			return
 		}
-
-		rs.emit("numCPUS", uint64(runtime.NumCPU()))
-		rs.emit("numGoRoutines", uint64(runtime.NumGoroutine()))
-		rs.emitMemMetrics()
 	}
 }
 

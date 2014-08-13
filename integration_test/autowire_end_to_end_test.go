@@ -66,6 +66,8 @@ var _ = Describe("Autowire End-to-End", func() {
 					case events.Envelope_HttpStop:
 						eventId += envelope.GetHttpStop().GetPeerType().String()
 					case events.Envelope_Heartbeat:
+					case events.Envelope_ValueMetric:
+						eventId += envelope.GetValueMetric().GetName()
 					default:
 						panic("Unexpected message type")
 
@@ -92,7 +94,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			_, err = http.Get("http://" + httpListener.Addr().String())
 			Expect(err).ToNot(HaveOccurred())
 
-			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient"}
+			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS"}
 
 			for _, eventType := range expectedEventTypes {
 				Eventually(func() bool {
@@ -100,7 +102,7 @@ var _ = Describe("Autowire End-to-End", func() {
 					defer lock.RUnlock()
 					_, ok := receivedEvents[eventType]
 					return ok
-				}).Should(BeTrue())
+				}).Should(BeTrue(), fmt.Sprintf("missing %s", eventType))
 			}
 
 			Eventually(func() bool {
