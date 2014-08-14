@@ -59,7 +59,8 @@ var _ = Describe("RuntimeStats", func() {
 
 		Eventually(fakeEventEmitter.GetEvents).Should(ContainElement(&events.ValueMetric{
 			Name:  proto.String("numCPUS"),
-			Value: proto.Uint64(uint64(runtime.NumCPU())),
+			Value: proto.Float64(float64(runtime.NumCPU())),
+			Unit: proto.String("count"),
 		}))
 	})
 

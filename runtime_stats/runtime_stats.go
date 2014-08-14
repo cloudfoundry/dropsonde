@@ -6,6 +6,7 @@ import (
 	"log"
 	"runtime"
 	"time"
+	"code.google.com/p/gogoprotobuf/proto"
 )
 
 type RuntimeStats struct {
@@ -24,8 +25,8 @@ func (rs *RuntimeStats) Run(stopChan <-chan struct{}) {
 	ticker := time.NewTicker(rs.interval)
 	defer ticker.Stop()
 	for {
-		rs.emit("numCPUS", uint64(runtime.NumCPU()))
-		rs.emit("numGoRoutines", uint64(runtime.NumGoroutine()))
+		rs.emit("numCPUS", float64(runtime.NumCPU()))
+		rs.emit("numGoRoutines", float64(runtime.NumGoroutine()))
 		rs.emitMemMetrics()
 
 		select {
@@ -40,18 +41,19 @@ func (rs *RuntimeStats) emitMemMetrics() {
 	stats := new(runtime.MemStats)
 	runtime.ReadMemStats(stats)
 
-	rs.emit("memoryStats.numBytesAllocatedHeap", stats.HeapAlloc)
-	rs.emit("memoryStats.numBytesAllocatedStack", stats.StackInuse)
-	rs.emit("memoryStats.numBytesAllocated", stats.Alloc)
-	rs.emit("memoryStats.numMallocs", stats.Mallocs)
-	rs.emit("memoryStats.numFrees", stats.Frees)
-	rs.emit("memoryStats.lastGCPauseTimeNS", stats.PauseNs[(stats.NumGC+255)%256])
+	rs.emit("memoryStats.numBytesAllocatedHeap", float64(stats.HeapAlloc))
+	rs.emit("memoryStats.numBytesAllocatedStack", float64(stats.StackInuse))
+	rs.emit("memoryStats.numBytesAllocated", float64(stats.Alloc))
+	rs.emit("memoryStats.numMallocs", float64(stats.Mallocs))
+	rs.emit("memoryStats.numFrees", float64(stats.Frees))
+	rs.emit("memoryStats.lastGCPauseTimeNS", float64(stats.PauseNs[(stats.NumGC+255)%256]))
 }
 
-func (rs *RuntimeStats) emit(name string, value uint64) {
+func (rs *RuntimeStats) emit(name string, value float64) {
 	err := rs.eventEmitter.Emit(&events.ValueMetric{
 		Name:  &name,
 		Value: &value,
+		Unit: proto.String("count"),
 	})
 	if err != nil {
 		log.Printf("RuntimeStats: failed to emit: %v", err)
