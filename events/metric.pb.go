@@ -14,9 +14,10 @@ var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type ValueMetric struct {
-	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
-	Value            *uint64 `protobuf:"varint,2,req,name=value" json:"value,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	Name             *string  `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	Value            *float64 `protobuf:"fixed64,2,req,name=value" json:"value,omitempty"`
+	Unit             *string  `protobuf:"bytes,3,req,name=unit" json:"unit,omitempty"`
+	XXX_unrecognized []byte   `json:"-"`
 }
 
 func (m *ValueMetric) Reset()         { *m = ValueMetric{} }
@@ -30,11 +31,18 @@ func (m *ValueMetric) GetName() string {
 	return ""
 }
 
-func (m *ValueMetric) GetValue() uint64 {
+func (m *ValueMetric) GetValue() float64 {
 	if m != nil && m.Value != nil {
 		return *m.Value
 	}
 	return 0
+}
+
+func (m *ValueMetric) GetUnit() string {
+	if m != nil && m.Unit != nil {
+		return *m.Unit
+	}
+	return ""
 }
 
 func init() {
