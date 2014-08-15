@@ -70,6 +70,8 @@ var _ = Describe("Autowire End-to-End", func() {
 					case events.Envelope_Heartbeat:
 					case events.Envelope_ValueMetric:
 						eventId += envelope.GetValueMetric().GetName()
+					case events.Envelope_CounterEvent:
+						eventId += envelope.GetCounterEvent().GetName()
 					default:
 						panic("Unexpected message type")
 
@@ -97,8 +99,9 @@ var _ = Describe("Autowire End-to-End", func() {
 			Expect(err).ToNot(HaveOccurred())
 
 			metrics.SendValue("TestMetric", 0, "")
+			metrics.IncrementCounter("TestIncrementCounter")
 
-			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS", "ValueMetricTestMetric"}
+			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS", "ValueMetricTestMetric", "CounterEventTestIncrementCounter"}
 
 			for _, eventType := range expectedEventTypes {
 				Eventually(func() bool {

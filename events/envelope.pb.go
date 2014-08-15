@@ -2,6 +2,19 @@
 // source: envelope.proto
 // DO NOT EDIT!
 
+/*
+Package events is a generated protocol buffer package.
+
+It is generated from these files:
+	envelope.proto
+	heartbeat.proto
+	http.proto
+	log.proto
+	metric.proto
+
+It has these top-level messages:
+	Envelope
+*/
 package events
 
 import proto "code.google.com/p/gogoprotobuf/proto"
@@ -22,6 +35,7 @@ const (
 	Envelope_HttpStartStop Envelope_EventType = 4
 	Envelope_LogMessage    Envelope_EventType = 5
 	Envelope_ValueMetric   Envelope_EventType = 6
+	Envelope_CounterEvent  Envelope_EventType = 7
 )
 
 var Envelope_EventType_name = map[int32]string{
@@ -31,6 +45,7 @@ var Envelope_EventType_name = map[int32]string{
 	4: "HttpStartStop",
 	5: "LogMessage",
 	6: "ValueMetric",
+	7: "CounterEvent",
 }
 var Envelope_EventType_value = map[string]int32{
 	"Heartbeat":     1,
@@ -39,6 +54,7 @@ var Envelope_EventType_value = map[string]int32{
 	"HttpStartStop": 4,
 	"LogMessage":    5,
 	"ValueMetric":   6,
+	"CounterEvent":  7,
 }
 
 func (x Envelope_EventType) Enum() *Envelope_EventType {
@@ -48,9 +64,6 @@ func (x Envelope_EventType) Enum() *Envelope_EventType {
 }
 func (x Envelope_EventType) String() string {
 	return proto.EnumName(Envelope_EventType_name, int32(x))
-}
-func (x Envelope_EventType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.String())
 }
 func (x *Envelope_EventType) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(Envelope_EventType_value, data, "Envelope_EventType")
@@ -71,6 +84,7 @@ type Envelope struct {
 	HttpStartStop    *HttpStartStop      `protobuf:"bytes,7,opt,name=httpStartStop" json:"httpStartStop,omitempty"`
 	LogMessage       *LogMessage         `protobuf:"bytes,8,opt,name=logMessage" json:"logMessage,omitempty"`
 	ValueMetric      *ValueMetric        `protobuf:"bytes,9,opt,name=valueMetric" json:"valueMetric,omitempty"`
+	CounterEvent     *CounterEvent       `protobuf:"bytes,10,opt,name=counterEvent" json:"counterEvent,omitempty"`
 	XXX_unrecognized []byte              `json:"-"`
 }
 
@@ -89,7 +103,7 @@ func (m *Envelope) GetEventType() Envelope_EventType {
 	if m != nil && m.EventType != nil {
 		return *m.EventType
 	}
-	return 0
+	return Envelope_Heartbeat
 }
 
 func (m *Envelope) GetTimestamp() int64 {
@@ -137,6 +151,13 @@ func (m *Envelope) GetLogMessage() *LogMessage {
 func (m *Envelope) GetValueMetric() *ValueMetric {
 	if m != nil {
 		return m.ValueMetric
+	}
+	return nil
+}
+
+func (m *Envelope) GetCounterEvent() *CounterEvent {
+	if m != nil {
+		return m.CounterEvent
 	}
 	return nil
 }

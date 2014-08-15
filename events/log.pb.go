@@ -37,9 +37,6 @@ func (x LogMessage_MessageType) Enum() *LogMessage_MessageType {
 func (x LogMessage_MessageType) String() string {
 	return proto.EnumName(LogMessage_MessageType_name, int32(x))
 }
-func (x LogMessage_MessageType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.String())
-}
 func (x *LogMessage_MessageType) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(LogMessage_MessageType_value, data, "LogMessage_MessageType")
 	if err != nil {
@@ -74,7 +71,7 @@ func (m *LogMessage) GetMessageType() LogMessage_MessageType {
 	if m != nil && m.MessageType != nil {
 		return *m.MessageType
 	}
-	return 0
+	return LogMessage_OUT
 }
 
 func (m *LogMessage) GetTimestamp() int64 {

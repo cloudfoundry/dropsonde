@@ -37,9 +37,6 @@ func (x PeerType) Enum() *PeerType {
 func (x PeerType) String() string {
 	return proto.EnumName(PeerType_name, int32(x))
 }
-func (x PeerType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.String())
-}
 func (x *PeerType) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(PeerType_value, data, "PeerType")
 	if err != nil {
@@ -81,9 +78,6 @@ func (x Method) Enum() *Method {
 }
 func (x Method) String() string {
 	return proto.EnumName(Method_name, int32(x))
-}
-func (x Method) MarshalJSON() ([]byte, error) {
-	return json.Marshal(x.String())
 }
 func (x *Method) UnmarshalJSON(data []byte) error {
 	value, err := proto.UnmarshalJSONEnum(Method_value, data, "Method")
@@ -155,14 +149,14 @@ func (m *HttpStart) GetPeerType() PeerType {
 	if m != nil && m.PeerType != nil {
 		return *m.PeerType
 	}
-	return 0
+	return PeerType_Client
 }
 
 func (m *HttpStart) GetMethod() Method {
 	if m != nil && m.Method != nil {
 		return *m.Method
 	}
-	return 0
+	return Method_GET
 }
 
 func (m *HttpStart) GetUri() string {
@@ -254,7 +248,7 @@ func (m *HttpStop) GetPeerType() PeerType {
 	if m != nil && m.PeerType != nil {
 		return *m.PeerType
 	}
-	return 0
+	return PeerType_Client
 }
 
 func (m *HttpStop) GetStatusCode() int32 {
@@ -325,14 +319,14 @@ func (m *HttpStartStop) GetPeerType() PeerType {
 	if m != nil && m.PeerType != nil {
 		return *m.PeerType
 	}
-	return 0
+	return PeerType_Client
 }
 
 func (m *HttpStartStop) GetMethod() Method {
 	if m != nil && m.Method != nil {
 		return *m.Method
 	}
-	return 0
+	return Method_GET
 }
 
 func (m *HttpStartStop) GetUri() string {

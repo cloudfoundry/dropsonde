@@ -45,5 +45,21 @@ func (m *ValueMetric) GetUnit() string {
 	return ""
 }
 
+type CounterEvent struct {
+	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	XXX_unrecognized []byte  `json:"-"`
+}
+
+func (m *CounterEvent) Reset()         { *m = CounterEvent{} }
+func (m *CounterEvent) String() string { return proto.CompactTextString(m) }
+func (*CounterEvent) ProtoMessage()    {}
+
+func (m *CounterEvent) GetName() string {
+	if m != nil && m.Name != nil {
+		return *m.Name
+	}
+	return ""
+}
+
 func init() {
 }

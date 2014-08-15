@@ -16,3 +16,7 @@ func NewMetricSender(eventEmitter emitter.EventEmitter) *MetricSender {
 func (ms *MetricSender) SendValue(name string, value float64, unit string) error {
 	return ms.eventEmitter.Emit(&events.ValueMetric{Name: &name, Value: &value, Unit: &unit})
 }
+
+func (ms *MetricSender) IncrementCounter(name string) error {
+	return ms.eventEmitter.Emit(&events.CounterEvent{Name: &name})
+}

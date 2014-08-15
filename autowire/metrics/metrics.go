@@ -18,3 +18,7 @@ func Initialize() {
 func SendValue(name string, value float64, unit string) error {
 	return metricSender.SendValue(name, value, unit)
 }
+
+func IncrementCounter(name string) error {
+	return metricSender.IncrementCounter(name)
+}

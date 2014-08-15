@@ -26,6 +26,9 @@ func Wrap(e events.Event, origin string) (*events.Envelope, error) {
 	case *events.ValueMetric:
 		envelope.EventType = events.Envelope_ValueMetric.Enum()
 		envelope.ValueMetric = e.(*events.ValueMetric)
+	case *events.CounterEvent:
+		envelope.EventType = events.Envelope_CounterEvent.Enum()
+		envelope.CounterEvent = e.(*events.CounterEvent)
 	default:
 		return nil, errors.New("Cannot create envelope for unknown event type")
 	}

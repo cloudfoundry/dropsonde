@@ -55,6 +55,14 @@ var _ = Describe("EventFormatter", func() {
 			Expect(envelope.GetValueMetric()).To(Equal(testEvent))
 		})
 
+		It("works with CounterEvent events", func() {
+			testEvent := &events.CounterEvent{Name: proto.String("test-counter")}
+
+			envelope, _ := emitter.Wrap(testEvent, origin)
+			Expect(envelope.GetEventType()).To(Equal(events.Envelope_CounterEvent))
+			Expect(envelope.GetCounterEvent()).To(Equal(testEvent))
+		})
+
 		It("errors with unknown events", func() {
 			envelope, err := emitter.Wrap(new(unknownEvent), origin)
 			Expect(envelope).To(BeNil())

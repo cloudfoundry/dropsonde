@@ -32,11 +32,29 @@ var _ = Describe("MetricSender", func() {
 		Expect(metric.GetUnit()).To(Equal("answers"))
 	})
 
-	It("returns an error if it can't emit", func() {
+	It("returns an error if it can't send metric value", func() {
 		emitter.ReturnError = errors.New("some error")
 
 		err := sender.SendValue("stuff", 12, "no answer")
 		Expect(emitter.Messages).To(HaveLen(0))
 		Expect(err.Error()).To(Equal("some error"))
+	})
+
+	It("sends an update counter event to its emitter", func() {
+		err := sender.IncrementCounter("counter-strike")
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(emitter.Messages).To(HaveLen(1))
+		counterEvent := emitter.Messages[0].Event.(*events.CounterEvent)
+		Expect(counterEvent.GetName()).To(Equal("counter-strike"))
+
+	})
+
+	It("returns an error if it can't increment counter", func() {
+		emitter.ReturnError = errors.New("some counter event error")
+
+		err := sender.IncrementCounter("count me in")
+		Expect(emitter.Messages).To(HaveLen(0))
+		Expect(err.Error()).To(Equal("some counter event error"))
 	})
 })
