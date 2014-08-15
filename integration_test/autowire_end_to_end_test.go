@@ -94,7 +94,9 @@ var _ = Describe("Autowire End-to-End", func() {
 			_, err = http.Get("http://" + httpListener.Addr().String())
 			Expect(err).ToNot(HaveOccurred())
 
-			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS"}
+			autowire.SendValue("TestMetric", 0, "")
+
+			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS", "ValueMetricTestMetric"}
 
 			for _, eventType := range expectedEventTypes {
 				Eventually(func() bool {

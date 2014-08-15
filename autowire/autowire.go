@@ -18,6 +18,8 @@ var destination string
 
 const defaultDestination = "localhost:42420"
 
+var metricSender *dropsonde.MetricSender
+
 func init() {
 	Initialize()
 }
@@ -42,9 +44,14 @@ func Destination() string {
 	return destination
 }
 
+func SendValue(name string, value float64, unit string) error {
+	return metricSender.SendValue(name, value, unit)
+}
+
 func Initialize() {
 	http.DefaultTransport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	autowiredEmitter = nil
+	metricSender = nil
 
 	origin := os.Getenv("DROPSONDE_ORIGIN")
 	if len(origin) == 0 {
@@ -71,6 +78,7 @@ func Initialize() {
 	}
 
 	autowiredEmitter = emitter.NewEventEmitter(hbEmitter, origin)
+	metricSender = dropsonde.NewMetricSender(autowiredEmitter)
 
 	go runtime_stats.NewRuntimeStats(autowiredEmitter, runtimeStatsInterval).Run(nil)
 

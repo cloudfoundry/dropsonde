@@ -1,12 +1,12 @@
 package runtime_stats
 
 import (
+	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
 	"log"
 	"runtime"
 	"time"
-	"code.google.com/p/gogoprotobuf/proto"
 )
 
 type RuntimeStats struct {
@@ -53,7 +53,7 @@ func (rs *RuntimeStats) emit(name string, value float64) {
 	err := rs.eventEmitter.Emit(&events.ValueMetric{
 		Name:  &name,
 		Value: &value,
-		Unit: proto.String("count"),
+		Unit:  proto.String("count"),
 	})
 	if err != nil {
 		log.Printf("RuntimeStats: failed to emit: %v", err)
