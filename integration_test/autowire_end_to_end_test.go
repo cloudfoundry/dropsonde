@@ -4,6 +4,7 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
 	"github.com/cloudfoundry/dropsonde/autowire"
+	"github.com/cloudfoundry/dropsonde/autowire/metrics"
 	"github.com/cloudfoundry/dropsonde/events"
 
 	. "github.com/onsi/ginkgo"
@@ -24,6 +25,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			oldEnv = os.Getenv("DROPSONDE_ORIGIN")
 			os.Setenv("DROPSONDE_ORIGIN", "test-origin")
 			autowire.Initialize()
+			metrics.Initialize()
 		})
 
 		AfterEach(func() {
@@ -94,7 +96,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			_, err = http.Get("http://" + httpListener.Addr().String())
 			Expect(err).ToNot(HaveOccurred())
 
-			autowire.SendValue("TestMetric", 0, "")
+			metrics.SendValue("TestMetric", 0, "")
 
 			expectedEventTypes := []string{"HttpStartClient", "HttpStartServer", "HttpStopServer", "HttpStopClient", "ValueMetricnumCPUS", "ValueMetricTestMetric"}
 
