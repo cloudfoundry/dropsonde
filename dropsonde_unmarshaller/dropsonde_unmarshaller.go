@@ -1,3 +1,18 @@
+// Package dropsonde_unmarshaller provides a tool for unmarshalling Envelopes
+// from Protocol Buffer messages.
+//
+// Use
+//
+// Instantiate a Marshaller and run it:
+//
+//		unmarshaller := dropsonde_unmarshaller.NewDropsondeUnMarshaller(logger)
+//		inputChan :=  make(chan []byte) // or use a channel provided by some other source
+//		outputChan := make(chan *events.Envelope)
+//		go unmarshaller.Run(inputChan, outputChan)
+//
+// The unmarshaller self-instruments, counting the number of messages
+// processed and the number of errors. These can be accessed through the Emit
+// function on the unmarshaller.
 package dropsonde_unmarshaller
 
 import (
@@ -10,11 +25,15 @@ import (
 	"unicode"
 )
 
+// A DropsondeUnmarshaller is an self-instrumenting tool for converting Protocol
+// Buffer-encoded dropsonde messages to Envelope instances.
 type DropsondeUnmarshaller interface {
 	instrumentation.Instrumentable
 	Run(inputChan <-chan []byte, outputChan chan<- *events.Envelope)
 }
 
+// NewDropsondeUnmarshaller instantiates a DropsondeUnmarshaller and logs to the
+// provided logger.
 func NewDropsondeUnmarshaller(logger *gosteno.Logger) DropsondeUnmarshaller {
 	receiveCounts := make(map[events.Envelope_EventType]*uint64)
 	for key := range events.Envelope_EventType_name {
@@ -34,6 +53,9 @@ type dropsondeUnmarshaller struct {
 	unmarshalErrorCount uint64
 }
 
+// Run reads byte slices from inputChan, unmarshalls them to Envelopes, and
+// emits the Envelopes onto outputChan. It operates one message at a time, and
+// will block if outputChan is not read.
 func (u *dropsondeUnmarshaller) Run(inputChan <-chan []byte, outputChan chan<- *events.Envelope) {
 	for message := range inputChan {
 		envelope := &events.Envelope{}
@@ -79,6 +101,7 @@ func (m *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	return metrics
 }
 
+// Emit returns the current metrics the DropsondeMarshaller keeps about itself.
 func (m *dropsondeUnmarshaller) Emit() instrumentation.Context {
 	return instrumentation.Context{
 		Name:    "dropsondeUnmarshaller",
