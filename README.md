@@ -26,7 +26,7 @@ basic [runtime stats](runtime_stats/runtime_stats.go).
 
 Alternatively, import `github.com/cloudfoundry/dropsonde/autowire/metrics` to include the
 ability to send custom metrics, via [`metrics.SendValue`](autowire/metrics/metrics.go#L44)
-and [`metrics.IncrementCounter`](autowire/metrics/metrics.go#51). (The same auto-
+and [`metrics.IncrementCounter`](autowire/metrics/metrics.go#L51). (The same auto-
 initialization will apply when importing `metrics`.)
 
 ### Configuration
