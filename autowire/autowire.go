@@ -34,7 +34,7 @@ const runtimeStatsInterval = 10 * time.Second
 
 var destination string
 
-const defaultDestination = "localhost:3457"
+const DefaultDestination = "localhost:3457"
 
 func init() {
 	Initialize()
@@ -73,7 +73,7 @@ func Destination() string {
 // source name for all metrics emitted by this process.
 //
 // The DROPSONDE_DESTINATION environment variable sets the host and port to
-// which metrics are sent. It is optional, and defaults to localhost:42420.
+// which metrics are sent. It is optional, and defaults to DefaultDestination.
 func Initialize() {
 	http.DefaultTransport = &http.Transport{Proxy: http.ProxyFromEnvironment}
 	autowiredEmitter = nil
@@ -86,8 +86,8 @@ func Initialize() {
 
 	destination = os.Getenv("DROPSONDE_DESTINATION")
 	if len(destination) == 0 {
-		log.Println("DROPSONDE_DESTINATION not set. Using " + defaultDestination)
-		destination = defaultDestination
+		log.Println("DROPSONDE_DESTINATION not set. Using " + DefaultDestination)
+		destination = DefaultDestination
 	}
 
 	udpEmitter, err := emitter.NewUdpEmitter(destination)
