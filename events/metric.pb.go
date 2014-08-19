@@ -5,12 +5,10 @@
 package events
 
 import proto "code.google.com/p/gogoprotobuf/proto"
-import json "encoding/json"
 import math "math"
 
-// Reference proto, json, and math imports to suppress error if they are not otherwise used.
+// Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = &json.SyntaxError{}
 var _ = math.Inf
 
 type ValueMetric struct {
@@ -47,6 +45,7 @@ func (m *ValueMetric) GetUnit() string {
 
 type CounterEvent struct {
 	Name             *string `protobuf:"bytes,1,req,name=name" json:"name,omitempty"`
+	Delta            *uint64 `protobuf:"varint,2,req,name=delta" json:"delta,omitempty"`
 	XXX_unrecognized []byte  `json:"-"`
 }
 
@@ -59,6 +58,13 @@ func (m *CounterEvent) GetName() string {
 		return *m.Name
 	}
 	return ""
+}
+
+func (m *CounterEvent) GetDelta() uint64 {
+	if m != nil && m.Delta != nil {
+		return *m.Delta
+	}
+	return 0
 }
 
 func init() {

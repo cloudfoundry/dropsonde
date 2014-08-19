@@ -51,6 +51,8 @@ func (m MockLoggregatorClient) Send(data []byte) {
 	m.received <- &data
 }
 
+func (m MockLoggregatorClient) Stop() {}
+
 func (m MockLoggregatorClient) Emit() instrumentation.Context {
 	return instrumentation.Context{}
 }

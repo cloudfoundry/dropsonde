@@ -1,10 +1,10 @@
-package dropsonde_test
+package metric_sender_test
 
 import (
 	"errors"
-	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/dropsonde/metric_sender"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -13,12 +13,12 @@ import (
 var _ = Describe("MetricSender", func() {
 	var (
 		emitter *fake.FakeEventEmitter
-		sender  *dropsonde.MetricSender
+		sender  metric_sender.MetricSender
 	)
 
 	BeforeEach(func() {
 		emitter = fake.NewFakeEventEmitter("origin")
-		sender = dropsonde.NewMetricSender(emitter)
+		sender = metric_sender.NewMetricSender(emitter)
 	})
 
 	It("sends a metric to its emitter", func() {

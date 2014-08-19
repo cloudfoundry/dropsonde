@@ -6,6 +6,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/autowire"
 	"github.com/cloudfoundry/dropsonde/autowire/metrics"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/dropsonde/metric_sender"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,7 +26,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			oldEnv = os.Getenv("DROPSONDE_ORIGIN")
 			os.Setenv("DROPSONDE_ORIGIN", "test-origin")
 			autowire.Initialize()
-			metrics.Initialize()
+			metrics.Initialize(metric_sender.NewMetricSender(autowire.AutowiredEmitter()))
 		})
 
 		AfterEach(func() {
