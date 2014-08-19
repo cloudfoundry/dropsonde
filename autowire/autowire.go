@@ -34,7 +34,7 @@ const runtimeStatsInterval = 10 * time.Second
 
 var destination string
 
-const defaultDestination = "localhost:42420"
+const defaultDestination = "localhost:3457"
 
 func init() {
 	Initialize()
