@@ -29,7 +29,7 @@ var _ = Describe("Autowire", func() {
 				os.Setenv("DROPSONDE_DESTINATION", "")
 				autowire.Initialize()
 
-				Expect(autowire.Destination()).To(Equal("localhost:42420"))
+				Expect(autowire.Destination()).To(Equal("localhost:3457"))
 			})
 		})
 
