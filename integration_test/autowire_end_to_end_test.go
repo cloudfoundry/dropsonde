@@ -33,7 +33,7 @@ var _ = Describe("Autowire End-to-End", func() {
 		})
 
 		It("emits HTTP client/server events and heartbeats", func() {
-			udpListener, err := net.ListenPacket("udp4", ":42420")
+			udpListener, err := net.ListenPacket("udp4", ":3457")
 			Expect(err).ToNot(HaveOccurred())
 			defer udpListener.Close()
 			udpDataChan := make(chan []byte, 16)
