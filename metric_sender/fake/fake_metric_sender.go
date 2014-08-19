@@ -1,4 +1,4 @@
-package metric_sender
+package fake
 
 import "sync"
 

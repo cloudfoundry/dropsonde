@@ -21,6 +21,7 @@ package autowire
 import (
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/emitter"
+	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"log"
 	"net/http"
@@ -40,25 +41,15 @@ func init() {
 	Initialize()
 }
 
-// InstrumentedHandler returns a Handler pre-configured to emit to autowire's
-// Emitter (if one has been set), or the original Handler (if one has been set),
-// or the original handler (if autowire has not been initialized).
+// InstrumentedHandler returns a Handler pre-configured to emit HTTP server
+// request metrics to autowire's Emitter.
 func InstrumentedHandler(handler http.Handler) http.Handler {
-	if autowiredEmitter == nil {
-		return handler
-	}
-
 	return dropsonde.InstrumentedHandler(handler, autowiredEmitter)
 }
 
-// InstrumentedRoundTripper returns a RoundTripper pre-configured to emit to
-// autowire's Emitter (if one has been set), or the original RoundTripper (if
-// autowire has not been initialized).
+// InstrumentedRoundTripper returns a RoundTripper pre-configured to emit
+// HTTP client request metrics to autowire's Emitter.
 func InstrumentedRoundTripper(roundTripper http.RoundTripper) http.RoundTripper {
-	if autowiredEmitter == nil {
-		return roundTripper
-	}
-
 	return dropsonde.InstrumentedRoundTripper(roundTripper, autowiredEmitter)
 }
 
@@ -70,13 +61,14 @@ func Destination() string {
 // transport.
 //
 // The DROPSONDE_ORIGIN environment variable is required and specifies the
-// source name for all metrics emitted by this process.
+// source name for all metrics emitted by this process. If it is not set, the
+// program will run normally but will not emit metrics.
 //
 // The DROPSONDE_DESTINATION environment variable sets the host and port to
 // which metrics are sent. It is optional, and defaults to DefaultDestination.
 func Initialize() {
 	http.DefaultTransport = &http.Transport{Proxy: http.ProxyFromEnvironment}
-	autowiredEmitter = nil
+	autowiredEmitter = &nullEventEmitter{}
 
 	origin := os.Getenv("DROPSONDE_ORIGIN")
 	if len(origin) == 0 {
@@ -112,3 +104,11 @@ func Initialize() {
 func AutowiredEmitter() emitter.EventEmitter {
 	return autowiredEmitter
 }
+
+type nullEventEmitter struct{}
+
+func (*nullEventEmitter) Emit(events.Event) error {
+	return nil
+}
+
+func (*nullEventEmitter) Close() {}

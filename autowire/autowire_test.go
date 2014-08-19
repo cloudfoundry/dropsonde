@@ -57,26 +57,6 @@ var _ = Describe("Autowire", func() {
 
 			Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("Transport"))
 		})
-
-		Describe("InstrumentedHandler", func() {
-			It("returns the given Handler with no changes", func() {
-				os.Setenv("DROPSONDE_ORIGIN", "")
-				fake := FakeHandler{}
-				autowire.Initialize()
-
-				Expect(autowire.InstrumentedHandler(fake)).To(Equal(fake))
-			})
-		})
-
-		Describe("InstrumentedRoundTripper", func() {
-			It("returns the given RoundTripper with no changes", func() {
-				fake := FakeRoundTripper{}
-				os.Setenv("DROPSONDE_ORIGIN", "")
-				autowire.Initialize()
-
-				Expect(autowire.InstrumentedRoundTripper(fake)).To(Equal(fake))
-			})
-		})
 	})
 })
 
