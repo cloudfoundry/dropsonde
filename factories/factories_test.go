@@ -103,11 +103,4 @@ var _ = Describe("HTTP event creation", func() {
 			Expect(stopEvent).To(Equal(expectedStopEvent))
 		})
 	})
-
-	Describe("StringFromUUID", func() {
-		It("returns a string for a UUID", func() {
-			id := factories.NewUUID(requestId)
-			Expect(factories.StringFromUUID(id)).To(Equal(requestId.String()))
-		})
-	})
 })
