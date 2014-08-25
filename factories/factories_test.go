@@ -103,4 +103,22 @@ var _ = Describe("HTTP event creation", func() {
 			Expect(stopEvent).To(Equal(expectedStopEvent))
 		})
 	})
+
+	Describe("NewLogMessage", func() {
+		It("should set appropriate fields", func() {
+			expectedLogEvent := &events.LogMessage{
+				Message:     []byte("hello"),
+				AppId:       proto.String("app-id"),
+				MessageType: events.LogMessage_OUT.Enum(),
+				SourceType:  proto.String("App"),
+			}
+
+			logEvent := factories.NewLogMessage(events.LogMessage_OUT, "hello", "app-id", "App")
+
+			Expect(logEvent.GetTimestamp()).ToNot(BeZero())
+			logEvent.Timestamp = nil
+
+			Expect(logEvent).To(Equal(expectedLogEvent))
+		})
+	})
 })
