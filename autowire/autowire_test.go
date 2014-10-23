@@ -1,13 +1,20 @@
 package autowire_test
 
 import (
-	"github.com/cloudfoundry/dropsonde/autowire"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
+
+	"code.google.com/p/gogoprotobuf/proto"
+
+	"github.com/cloudfoundry/dropsonde/autowire"
+	"github.com/cloudfoundry/dropsonde/emitter"
+	"github.com/cloudfoundry/dropsonde/events"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Autowire", func() {
@@ -63,6 +70,23 @@ var _ = Describe("Autowire", func() {
 					Expect(destination).To(Equal("test"))
 				})
 			})
+
+			It("responds to pings with heartbeats", func() {
+				os.Setenv("DROPSONDE_DESTINATION", "localhost:1235")
+
+				messages := make(chan []byte, 100)
+				readyChan := make(chan struct{})
+
+				go pingBack(1235, messages, readyChan)
+				<-readyChan
+
+				emitter, _ := autowire.CreateDefaultEmitter()
+
+				err := emitter.Emit(&events.CounterEvent{Name: proto.String("name"), Delta: proto.Uint64(1)})
+				Expect(err).NotTo(HaveOccurred())
+
+				Eventually(messages, 5).Should(Receive())
+			})
 		})
 
 		Context("with DROPSONDE_ORIGIN missing", func() {
@@ -83,4 +107,21 @@ type FakeRoundTripper struct{}
 
 func (frt FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return nil, nil
+}
+
+func pingBack(port int, messages chan []byte, readyChan chan struct{}) {
+	conn, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", port))
+	if err != nil {
+		panic(err)
+	}
+
+	buf := make([]byte, 1024)
+	close(readyChan)
+	n, addr, _ := conn.ReadFrom(buf)
+
+	conn.WriteTo([]byte("ping"), addr)
+	n, addr, _ = conn.ReadFrom(buf)
+
+	messages <- buf[:n]
+	conn.Close()
 }

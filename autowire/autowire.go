@@ -19,14 +19,15 @@
 package autowire
 
 import (
-	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/emitter"
-	"github.com/cloudfoundry/dropsonde/events"
-	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"log"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/cloudfoundry/dropsonde"
+	"github.com/cloudfoundry/dropsonde/emitter"
+	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/dropsonde/runtime_stats"
 )
 
 var autowiredEmitter emitter.EventEmitter
@@ -94,13 +95,15 @@ func CreateDefaultEmitter() (emitter.EventEmitter, string) {
 		return nil, destination
 	}
 
-	hbEmitter, err := emitter.NewHeartbeatEmitter(udpEmitter, origin)
+	pingResponder, err := emitter.NewPingResponder(udpEmitter, origin)
 	if err != nil {
 		log.Printf("Failed to auto-initialize dropsonde: %v\n", err)
 		return nil, destination
 	}
 
-	return emitter.NewEventEmitter(hbEmitter, origin), destination
+	go udpEmitter.ListenForPing(pingResponder.RespondToPing)
+
+	return emitter.NewEventEmitter(pingResponder, origin), destination
 }
 
 func AutowiredEmitter() emitter.EventEmitter {

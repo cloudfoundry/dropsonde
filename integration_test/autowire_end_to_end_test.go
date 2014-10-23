@@ -48,7 +48,8 @@ var _ = Describe("Autowire End-to-End", func() {
 				defer close(udpDataChan)
 				for {
 					buffer := make([]byte, 1024)
-					n, _, err := udpListener.ReadFrom(buffer)
+					n, addr, err := udpListener.ReadFrom(buffer)
+					udpListener.WriteTo([]byte("Ping"), addr)
 					if err != nil {
 						return
 					}

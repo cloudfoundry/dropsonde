@@ -6,6 +6,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

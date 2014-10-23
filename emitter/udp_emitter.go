@@ -32,3 +32,19 @@ func (e *udpEmitter) Emit(data []byte) error {
 func (e *udpEmitter) Close() {
 	e.udpConn.Close()
 }
+
+func (e *udpEmitter) Address() net.Addr {
+	return e.udpConn.LocalAddr()
+}
+
+func (e *udpEmitter) ListenForPing(responder func()) error {
+	buf := make([]byte, 1024)
+	for {
+		_, _, err := e.udpConn.ReadFrom(buf)
+		if err != nil {
+			return err
+		}
+
+		responder()
+	}
+}

@@ -1,10 +1,13 @@
 package emitter_test
 
 import (
+	"net"
+	"sync"
+
 	"github.com/cloudfoundry/dropsonde/emitter"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net"
 )
 
 var _ = Describe("UdpEmitter", func() {
@@ -105,4 +108,58 @@ var _ = Describe("UdpEmitter", func() {
 			})
 		})
 	})
+
+	Describe("ListenForPing", func() {
+		var timesCalled int
+		var lock sync.Mutex
+
+		var fakeResponder = func() {
+			lock.Lock()
+			defer lock.Unlock()
+			timesCalled++
+		}
+
+		var getTimesCalled = func() int {
+			lock.Lock()
+			defer lock.Unlock()
+			return timesCalled
+		}
+
+		BeforeEach(func() {
+			lock = sync.Mutex{}
+			timesCalled = 0
+		})
+
+		It("calls responder when pinged", func() {
+			emitter, _ := emitter.NewUdpEmitter("localhost:123")
+			go emitter.ListenForPing(fakeResponder)
+
+			Expect(timesCalled).To(BeZero())
+
+			pingAddress(emitter.Address())
+			Eventually(getTimesCalled).Should(Equal(1))
+		})
+
+		It("responds to multiple pings", func() {
+			emitter, _ := emitter.NewUdpEmitter("localhost:123")
+			go emitter.ListenForPing(fakeResponder)
+			pingAddress(emitter.Address())
+			pingAddress(emitter.Address())
+
+			Eventually(getTimesCalled).Should(Equal(2))
+		})
+
+		It("returns an error if listening on the UDP port fails", func() {
+			emitter, _ := emitter.NewUdpEmitter("localhost:123")
+			emitter.Close()
+			err := emitter.ListenForPing(fakeResponder)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(MatchError("use of closed network connection"))
+		})
+	})
 })
+
+func pingAddress(addr net.Addr) {
+	conn, _ := net.ListenPacket("udp4", "")
+	conn.WriteTo([]byte("ping"), addr)
+}
