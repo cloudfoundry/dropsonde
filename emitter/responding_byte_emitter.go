@@ -1,6 +1,9 @@
 package emitter
 
+import "github.com/cloudfoundry/dropsonde/control"
+
+
 type RespondingByteEmitter interface {
 	ByteEmitter
-	RespondToPing()
+	Respond(*control.ControlMessage)
 }

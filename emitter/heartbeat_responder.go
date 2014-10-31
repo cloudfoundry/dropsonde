@@ -6,9 +6,11 @@ import (
 	"sync"
 
 	"code.google.com/p/gogoprotobuf/proto"
+	"github.com/cloudfoundry/dropsonde/control"
+	"github.com/cloudfoundry/dropsonde/events"
 )
 
-type pingResponder struct {
+type heartbeatResponder struct {
 	instrumentedEmitter InstrumentedEmitter
 	innerEmitter        ByteEmitter
 	origin              string
@@ -16,28 +18,28 @@ type pingResponder struct {
 	closed bool
 }
 
-func NewPingResponder(byteEmitter ByteEmitter, origin string) (RespondingByteEmitter, error) {
+func NewHeartbeatResponder(byteEmitter ByteEmitter, origin string) (RespondingByteEmitter, error) {
 	instrumentedEmitter, err := NewInstrumentedEmitter(byteEmitter)
 	if err != nil {
 		return nil, err
 	}
 
-	hbEmitter := &pingResponder{
+	hbEmitter := &heartbeatResponder{
 		instrumentedEmitter: instrumentedEmitter,
 		innerEmitter:        byteEmitter,
 		origin:              origin,
 	}
 
-	runtime.SetFinalizer(hbEmitter, (*pingResponder).Close)
+	runtime.SetFinalizer(hbEmitter, (*heartbeatResponder).Close)
 
 	return hbEmitter, nil
 }
 
-func (e *pingResponder) Emit(data []byte) error {
+func (e *heartbeatResponder) Emit(data []byte) error {
 	return e.instrumentedEmitter.Emit(data)
 }
 
-func (e *pingResponder) Close() {
+func (e *heartbeatResponder) Close() {
 	e.Lock()
 	defer e.Unlock()
 
@@ -49,8 +51,9 @@ func (e *pingResponder) Close() {
 	e.closed = true
 }
 
-func (e *pingResponder) RespondToPing() {
-	hbEvent := e.instrumentedEmitter.GetHeartbeatEvent()
+func (e *heartbeatResponder) Respond(controlMessage *control.ControlMessage) {
+	hbEvent := e.instrumentedEmitter.GetHeartbeatEvent().(*events.Heartbeat)
+	hbEvent.ControlMessageIdentifier = convertToEventUUID(controlMessage.GetIdentifier())
 	hbEnvelope, err := Wrap(hbEvent, e.origin)
 	if err != nil {
 		log.Printf("Failed to wrap heartbeat event: %v\n", err)
@@ -67,4 +70,8 @@ func (e *pingResponder) RespondToPing() {
 	if err != nil {
 		log.Printf("Problem while emitting heartbeat data: %v\n", err)
 	}
+}
+
+func convertToEventUUID(uuid *control.UUID) *events.UUID {
+	return &events.UUID{Low: uuid.Low, High: uuid.High}
 }

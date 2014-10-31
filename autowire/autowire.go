@@ -95,15 +95,15 @@ func CreateDefaultEmitter() (emitter.EventEmitter, string) {
 		return nil, destination
 	}
 
-	pingResponder, err := emitter.NewPingResponder(udpEmitter, origin)
+	heartbeatResponder, err := emitter.NewHeartbeatResponder(udpEmitter, origin)
 	if err != nil {
 		log.Printf("Failed to auto-initialize dropsonde: %v\n", err)
 		return nil, destination
 	}
 
-	go udpEmitter.ListenForPing(pingResponder.RespondToPing)
+	go udpEmitter.ListenForHeartbeatRequest(heartbeatResponder.Respond)
 
-	return emitter.NewEventEmitter(pingResponder, origin), destination
+	return emitter.NewEventEmitter(heartbeatResponder, origin), destination
 }
 
 func AutowiredEmitter() emitter.EventEmitter {

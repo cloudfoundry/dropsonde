@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"github.com/cloudfoundry/dropsonde/autowire"
 	"github.com/cloudfoundry/dropsonde/autowire/metrics"
+	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
+	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"time"
 )
 
 // these tests need to be invoked individually from an external script,
@@ -41,17 +45,27 @@ var _ = Describe("Autowire End-to-End", func() {
 			udpDataChan := make(chan []byte, 16)
 
 			receivedEvents := make(map[string]bool)
+			heartbeatUuidsChan := make(chan string, 1000)
+
 			lock := sync.RWMutex{}
 			origin := os.Getenv("DROPSONDE_ORIGIN")
+			heartbeatRequest := newHeartbeatRequest()
+			marshalledHeartbeatRequest, _ := proto.Marshal(heartbeatRequest)
 
+			requestedHeartbeat := false
 			go func() {
 				defer close(udpDataChan)
 				for {
 					buffer := make([]byte, 1024)
 					n, addr, err := udpListener.ReadFrom(buffer)
-					udpListener.WriteTo([]byte("Ping"), addr)
 					if err != nil {
 						return
+					}
+
+					if !requestedHeartbeat {
+
+						udpListener.WriteTo(marshalledHeartbeatRequest, addr)
+						requestedHeartbeat = true
 					}
 
 					if n == 0 {
@@ -71,6 +85,7 @@ var _ = Describe("Autowire End-to-End", func() {
 					case events.Envelope_HttpStop:
 						eventId += envelope.GetHttpStop().GetPeerType().String()
 					case events.Envelope_Heartbeat:
+						heartbeatUuidsChan <- envelope.GetHeartbeat().GetControlMessageIdentifier().String()
 					case events.Envelope_ValueMetric:
 						eventId += envelope.GetValueMetric().GetName()
 					case events.Envelope_CounterEvent:
@@ -115,12 +130,9 @@ var _ = Describe("Autowire End-to-End", func() {
 				}).Should(BeTrue(), fmt.Sprintf("missing %s", eventType))
 			}
 
-			Eventually(func() bool {
-				lock.RLock()
-				defer lock.RUnlock()
-				_, ok := receivedEvents["Heartbeat"]
-				return ok
-			}).Should(BeTrue())
+			heartbeatUuid := heartbeatRequest.GetIdentifier().String()
+			Eventually(heartbeatUuidsChan).Should(Receive(Equal(heartbeatUuid)))
+
 		})
 	})
 })
@@ -135,4 +147,15 @@ type FakeRoundTripper struct{}
 
 func (frt FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return nil, nil
+}
+
+func newHeartbeatRequest() *control.ControlMessage {
+	id, _ := uuid.NewV4()
+
+	return &control.ControlMessage{
+		Origin:      proto.String("MET"),
+		Identifier:  factories.NewControlUUID(id),
+		Timestamp:   proto.Int64(time.Now().UnixNano()),
+		ControlType: control.ControlMessage_HeartbeatRequest.Enum(),
+	}
 }

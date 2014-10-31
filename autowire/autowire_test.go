@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"time"
 
 	"code.google.com/p/gogoprotobuf/proto"
-
 	"github.com/cloudfoundry/dropsonde/autowire"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/dropsonde/control"
+	"github.com/cloudfoundry/dropsonde/factories"
+	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -71,13 +74,13 @@ var _ = Describe("Autowire", func() {
 				})
 			})
 
-			It("responds to pings with heartbeats", func() {
+			It("responds to heartbeat requests with heartbeats", func() {
 				os.Setenv("DROPSONDE_DESTINATION", "localhost:1235")
 
 				messages := make(chan []byte, 100)
 				readyChan := make(chan struct{})
 
-				go pingBack(1235, messages, readyChan)
+				go respondWithHeartbeatRequest(1235, messages, readyChan)
 				<-readyChan
 
 				emitter, _ := autowire.CreateDefaultEmitter()
@@ -109,7 +112,7 @@ func (frt FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	return nil, nil
 }
 
-func pingBack(port int, messages chan []byte, readyChan chan struct{}) {
+func respondWithHeartbeatRequest(port int, messages chan []byte, readyChan chan struct{}) {
 	conn, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(err)
@@ -119,9 +122,26 @@ func pingBack(port int, messages chan []byte, readyChan chan struct{}) {
 	close(readyChan)
 	n, addr, _ := conn.ReadFrom(buf)
 
-	conn.WriteTo([]byte("ping"), addr)
+	conn.WriteTo(newMarshalledHeartbeatRequest(), addr)
 	n, addr, _ = conn.ReadFrom(buf)
 
 	messages <- buf[:n]
 	conn.Close()
+}
+
+func newMarshalledHeartbeatRequest() []byte {
+	id, _ := uuid.NewV4()
+
+	heartbeatRequest := &control.ControlMessage{
+		Origin:      proto.String("test"),
+		Identifier:  factories.NewControlUUID(id),
+		Timestamp:   proto.Int64(time.Now().UnixNano()),
+		ControlType: control.ControlMessage_HeartbeatRequest.Enum(),
+	}
+
+	bytes, err := proto.Marshal(heartbeatRequest)
+	if err != nil {
+		panic(err.Error())
+	}
+	return bytes
 }
