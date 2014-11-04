@@ -3,8 +3,8 @@ package integration_test
 import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
-	"github.com/cloudfoundry/dropsonde/autowire"
-	"github.com/cloudfoundry/dropsonde/autowire/metrics"
+	"github.com/cloudfoundry/dropsonde"
+	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
@@ -15,7 +15,6 @@ import (
 	. "github.com/onsi/gomega"
 	"net"
 	"net/http"
-	"os"
 	"sync"
 	"time"
 )
@@ -23,19 +22,12 @@ import (
 // these tests need to be invoked individually from an external script,
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
-	Context("with DROPSONDE_ORIGIN set", func() {
-		var oldEnv string
+	Context("with standard initialization", func() {
+			origin := "test-origin"
 
 		BeforeEach(func() {
-			oldEnv = os.Getenv("DROPSONDE_ORIGIN")
-			os.Setenv("DROPSONDE_ORIGIN", "test-origin")
-			emitter, _ := autowire.CreateDefaultEmitter()
-			autowire.Initialize(emitter)
-			metrics.Initialize(metric_sender.NewMetricSender(autowire.AutowiredEmitter()))
-		})
-
-		AfterEach(func() {
-			os.Setenv("DROPSONDE_ORIGIN", oldEnv)
+			dropsonde.Initialize(origin, "localhost:3457")
+			metrics.Initialize(metric_sender.NewMetricSender(dropsonde.AutowiredEmitter()))
 		})
 
 		It("emits HTTP client/server events and heartbeats", func() {
@@ -48,7 +40,6 @@ var _ = Describe("Autowire End-to-End", func() {
 			heartbeatUuidsChan := make(chan string, 1000)
 
 			lock := sync.RWMutex{}
-			origin := os.Getenv("DROPSONDE_ORIGIN")
 			heartbeatRequest := newHeartbeatRequest()
 			marshalledHeartbeatRequest, _ := proto.Marshal(heartbeatRequest)
 
@@ -110,7 +101,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			httpListener, err := net.Listen("tcp", "localhost:0")
 			Expect(err).ToNot(HaveOccurred())
 			defer httpListener.Close()
-			httpHandler := autowire.InstrumentedHandler(FakeHandler{})
+			httpHandler := dropsonde.InstrumentedHandler(FakeHandler{})
 			go http.Serve(httpListener, httpHandler)
 
 			_, err = http.Get("http://" + httpListener.Addr().String())

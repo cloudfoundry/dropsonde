@@ -4,8 +4,8 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"encoding/binary"
 	"fmt"
-	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/control"
+	"github.com/cloudfoundry/dropsonde/events"
 	uuid "github.com/nu7hatch/gouuid"
 	"net/http"
 	"strconv"
@@ -84,4 +84,3 @@ func NewLogMessage(messageType events.LogMessage_MessageType, messageString, app
 
 	return logMessage
 }
-

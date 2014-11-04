@@ -41,7 +41,7 @@ var _ = Describe("HeartbeatResponder", func() {
 	Describe("Emit", func() {
 		var (
 			heartbeatResponder emitter.RespondingByteEmitter
-			testData      = []byte("hello")
+			testData           = []byte("hello")
 		)
 
 		BeforeEach(func() {
