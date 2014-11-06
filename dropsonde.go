@@ -7,7 +7,7 @@
 //
 // Use
 //
-// dropsonde.Initialize([]byte{"router"}, "localhost:3457")
+// dropsonde.Initialize([]string{"router"}, "localhost:3457")
 //
 // to initialize. See package metrics and logs for other usage.
 
