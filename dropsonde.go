@@ -7,7 +7,7 @@
 //
 // Use
 //
-// dropsonde.Initialize("RTR", "localhost:3457")
+// dropsonde.Initialize([]byte{"router"}, "localhost:3457")
 //
 // to initialize. See package metrics and logs for other usage.
 
@@ -27,12 +27,16 @@ import (
 	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"github.com/cloudfoundry/gosteno"
 	"net/http"
+	"strings"
 	"time"
 )
 
 var autowiredEmitter emitter.EventEmitter
 
-const runtimeStatsInterval = 10 * time.Second
+const (
+	runtimeStatsInterval = 10 * time.Second
+	originDelimiter      = "/"
+)
 
 // Initialize creates default emitters and instruments the default HTTP
 // transport.
@@ -43,9 +47,9 @@ const runtimeStatsInterval = 10 * time.Second
 //
 // The destination variable sets the host and port to
 // which metrics are sent. It is optional, and defaults to DefaultDestination.
-func Initialize(origin, destination string) error {
+func Initialize(origin []string, destination string) error {
 	autowiredEmitter = nil
-	emitter, err := createDefaultEmitter(origin, destination)
+	emitter, err := createDefaultEmitter(strings.Join(origin, originDelimiter), destination)
 	if err != nil {
 		return err
 	}

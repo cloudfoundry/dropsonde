@@ -16,6 +16,7 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"strings"
 	"time"
 )
 
@@ -23,7 +24,7 @@ import (
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
 	Context("with standard initialization", func() {
-		origin := "test-origin"
+		origin := []string{"test-origin"}
 
 		BeforeEach(func() {
 			dropsonde.Initialize(origin, "localhost:3457")
@@ -86,7 +87,7 @@ var _ = Describe("Autowire End-to-End", func() {
 
 					}
 
-					if envelope.GetOrigin() != origin {
+					if envelope.GetOrigin() != strings.Join(origin, "/") {
 						panic("origin not as expected")
 					}
 

@@ -19,7 +19,7 @@ import (
 )
 
 func main() {
-    dropsonde.Initialize("RTR", "localhost:3457")
+    dropsonde.Initialize([]byte{"router"}, "localhost:3457")
 }
 ```
 This initializes dropsonde, along with the logs and metrics packages. It also instruments
