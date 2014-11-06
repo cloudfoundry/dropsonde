@@ -4,11 +4,11 @@ import (
 	"code.google.com/p/gogoprotobuf/proto"
 	"fmt"
 	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
+	"github.com/cloudfoundry/dropsonde/metrics"
 	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
@@ -23,7 +23,7 @@ import (
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
 	Context("with standard initialization", func() {
-			origin := "test-origin"
+		origin := "test-origin"
 
 		BeforeEach(func() {
 			dropsonde.Initialize(origin, "localhost:3457")
