@@ -38,6 +38,10 @@ const (
 	originDelimiter      = "/"
 )
 
+func init(){
+	autowiredEmitter = &NullEventEmitter{}
+}
+
 // Initialize creates default emitters and instruments the default HTTP
 // transport.
 //
