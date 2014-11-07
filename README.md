@@ -15,7 +15,7 @@ various protobuf messages.
 ## Initialization and Configuration
 ```go
 import (
-    _ "github.com/cloudfoundry/dropsonde"
+    "github.com/cloudfoundry/dropsonde"
 )
 
 func main() {
