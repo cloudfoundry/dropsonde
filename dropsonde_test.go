@@ -30,7 +30,7 @@ var _ = Describe("Autowire", func() {
 	Describe("CreateDefaultEmitter", func() {
 		Context("with origin set", func() {
 			It("responds to heartbeat requests with heartbeats", func() {
-				err := dropsonde.Initialize([]string{"cf", "metron"}, "localhost:1235")
+				err := dropsonde.Initialize("localhost:1235", "cf", "metron")
 				Expect(err).ToNot(HaveOccurred())
 
 				messages := make(chan []byte, 100)
@@ -54,7 +54,7 @@ var _ = Describe("Autowire", func() {
 
 		Context("with origin missing", func() {
 			It("returns a nil-emitter", func() {
-				err := dropsonde.Initialize([]string{""}, "localhost:2343")
+				err := dropsonde.Initialize("localhost:2343", "")
 				Expect(err).To(HaveOccurred())
 
 				emitter := dropsonde.AutowiredEmitter()

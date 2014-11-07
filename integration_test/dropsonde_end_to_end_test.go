@@ -15,8 +15,8 @@ import (
 	. "github.com/onsi/gomega"
 	"net"
 	"net/http"
-	"sync"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -27,7 +27,7 @@ var _ = Describe("Autowire End-to-End", func() {
 		origin := []string{"test-origin"}
 
 		BeforeEach(func() {
-			dropsonde.Initialize(origin, "localhost:3457")
+			dropsonde.Initialize("localhost:3457", origin...)
 			metrics.Initialize(metric_sender.NewMetricSender(dropsonde.AutowiredEmitter()))
 		})
 
