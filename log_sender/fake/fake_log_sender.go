@@ -54,7 +54,7 @@ func (fls *FakeLogSender) SendAppErrorLog(appId, message, sourceType, sourceInst
 	return nil
 }
 
-func (fls *FakeLogSender) ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
+func (fls *FakeLogSender) ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		fls.Lock()
@@ -69,7 +69,7 @@ func (fls *FakeLogSender) ScanLogStream(appId, sourceType, sourceInstance string
 	}
 }
 
-func (fls *FakeLogSender) ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
+func (fls *FakeLogSender) ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 

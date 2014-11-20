@@ -95,7 +95,7 @@ var _ = Describe("ScanLogStream", func() {
 	It("sends lines from stream to emitter", func() {
 		buf := bytes.NewBufferString("line 1\nline 2\n")
 
-		sender.ScanLogStream("someId", "app", "0", buf, nil)
+		sender.ScanLogStream("someId", "app", "0", buf)
 
 		messages := emitter.GetMessages()
 		Expect(messages).To(HaveLen(2))
@@ -114,7 +114,7 @@ var _ = Describe("ScanLogStream", func() {
 
 	It("emits an error message and reconnects on read errors", func() {
 		var errReader fakeReader
-		sender.ScanLogStream("someId", "app", "0", &errReader, nil)
+		sender.ScanLogStream("someId", "app", "0", &errReader)
 
 		messages := emitter.GetMessages()
 		Expect(messages).To(HaveLen(3))
@@ -137,7 +137,7 @@ var _ = Describe("ScanLogStream", func() {
 		reader.stopChan = make(chan struct{})
 
 		go func() {
-			sender.ScanLogStream("someId", "app", "0", reader, nil)
+			sender.ScanLogStream("someId", "app", "0", reader)
 			close(done)
 		}()
 
@@ -146,26 +146,10 @@ var _ = Describe("ScanLogStream", func() {
 		close(reader.stopChan)
 	})
 
-	It("stops when stopChan is closed", func() {
-		var reader infiniteReader
-
-		stopChan := make(chan struct{})
-		done := make(chan struct{})
-		go func() {
-			sender.ScanLogStream("someId", "app", "0", reader, stopChan)
-			close(done)
-		}()
-
-		Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
-
-		close(stopChan)
-		Eventually(done).Should(BeClosed())
-	})
-
 	It("drops over-length messages and resumes scanning", func(done Done) {
 		// Scanner can't handle tokens over 64K
 		bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
-		sender.ScanLogStream("someId", "app", "0", bigReader, nil)
+		sender.ScanLogStream("someId", "app", "0", bigReader)
 
 		Expect(emitter.GetMessages()).To(HaveLen(3))
 
@@ -180,7 +164,7 @@ var _ = Describe("ScanLogStream", func() {
 	It("ignores empty lines", func() {
 		reader := strings.NewReader("one\n\ntwo\n")
 
-		sender.ScanLogStream("someId", "app", "0", reader, nil)
+		sender.ScanLogStream("someId", "app", "0", reader)
 
 		Expect(emitter.GetMessages()).To(HaveLen(2))
 		messages := emitter.GetMessages()
@@ -204,7 +188,7 @@ var _ = Describe("ScanErrorLogStream", func() {
 	It("sends lines from stream to emitter", func() {
 		buf := bytes.NewBufferString("line 1\nline 2\n")
 
-		sender.ScanErrorLogStream("someId", "app", "0", buf, nil)
+		sender.ScanErrorLogStream("someId", "app", "0", buf)
 
 		messages := emitter.GetMessages()
 		Expect(messages).To(HaveLen(2))
@@ -223,7 +207,7 @@ var _ = Describe("ScanErrorLogStream", func() {
 
 	It("emits an error message and reconnects on read errors", func() {
 		var errReader fakeReader
-		sender.ScanErrorLogStream("someId", "app", "0", &errReader, nil)
+		sender.ScanErrorLogStream("someId", "app", "0", &errReader)
 
 		messages := emitter.GetMessages()
 		Expect(messages).To(HaveLen(3))
@@ -246,7 +230,7 @@ var _ = Describe("ScanErrorLogStream", func() {
 		reader.stopChan = make(chan struct{})
 
 		go func() {
-			sender.ScanErrorLogStream("someId", "app", "0", reader, nil)
+			sender.ScanErrorLogStream("someId", "app", "0", reader)
 			close(done)
 		}()
 
@@ -255,26 +239,10 @@ var _ = Describe("ScanErrorLogStream", func() {
 		close(reader.stopChan)
 	})
 
-	It("stops when stopChan is closed", func() {
-		var reader infiniteReader
-
-		stopChan := make(chan struct{})
-		done := make(chan struct{})
-		go func() {
-			sender.ScanErrorLogStream("someId", "app", "0", reader, stopChan)
-			close(done)
-		}()
-
-		Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
-
-		close(stopChan)
-		Eventually(done).Should(BeClosed())
-	})
-
 	It("drops over-length messages and resumes scanning", func(done Done) {
 		// Scanner can't handle tokens over 64K
 		bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
-		sender.ScanErrorLogStream("someId", "app", "0", bigReader, nil)
+		sender.ScanErrorLogStream("someId", "app", "0", bigReader)
 
 		Expect(emitter.GetMessages()).To(HaveLen(3))
 
@@ -289,7 +257,7 @@ var _ = Describe("ScanErrorLogStream", func() {
 	It("ignores empty lines", func() {
 		reader := strings.NewReader("one\n\ntwo\n")
 
-		sender.ScanErrorLogStream("someId", "app", "0", reader, nil)
+		sender.ScanErrorLogStream("someId", "app", "0", reader)
 
 		Expect(emitter.GetMessages()).To(HaveLen(2))
 		messages := emitter.GetMessages()

@@ -16,8 +16,8 @@ type LogSender interface {
 	SendAppLog(appId, message, sourceType, sourceInstance string) error
 	SendAppErrorLog(appId, message, sourceType, sourceInstance string) error
 
-	ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{})
-	ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{})
+	ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader)
+	ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader)
 }
 
 type logSender struct {
@@ -45,28 +45,22 @@ func (l *logSender) SendAppErrorLog(appId, message, sourceType, sourceInstance s
 }
 
 // ScanLogStream sends a log message with the given meta-data for each line from reader.
-// Restarts on read errors and continues until EOF (or stopChan is closed).
-func (l *logSender) ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
-	l.scanLogStream(appId, sourceType, sourceInstance, l.SendAppLog, reader, stopChan)
+// Restarts on read errors and continues until EOF.
+func (l *logSender) ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
+	l.scanLogStream(appId, sourceType, sourceInstance, l.SendAppLog, reader)
 }
 
 // ScanErrorLogStream sends a log error message with the given meta-data for each line from reader.
-// Restarts on read errors and continues until EOF (or stopChan is closed).
-func (l *logSender) ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
-	l.scanLogStream(appId, sourceType, sourceInstance, l.SendAppErrorLog, reader, stopChan)
+// Restarts on read errors and continues until EOF.
+func (l *logSender) ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
+	l.scanLogStream(appId, sourceType, sourceInstance, l.SendAppErrorLog, reader)
 }
 
-func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send func(string, string, string, string) error, reader io.Reader, stopChan chan struct{}) {
+func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send func(string, string, string, string) error, reader io.Reader) {
 	for {
 		scanner := bufio.NewScanner(reader)
 
 		for scanner.Scan() {
-			select {
-			case <-stopChan:
-				return
-			default:
-			}
-
 			line := scanner.Text()
 
 			if len(line) == 0 {

@@ -49,19 +49,19 @@ func SendAppErrorLog(appId, message, sourceType, sourceInstance string) error {
 }
 
 // ScanLogStream sends a log message with the given meta-data for each line from reader.
-// Restarts on read errors and continues until EOF (or stopChan is closed).
-func ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
+// Restarts on read errors and continues until EOF.
+func ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
 	if logSender == nil {
 		return
 	}
-	logSender.ScanLogStream(appId, sourceType, sourceInstance, reader, stopChan)
+	logSender.ScanLogStream(appId, sourceType, sourceInstance, reader)
 }
 
 // ScanErrorLogStream sends a log error message with the given meta-data for each line from reader.
-// Restarts on read errors and continues until EOF (or stopChan is closed).
-func ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader, stopChan chan struct{}) {
+// Restarts on read errors and continues until EOF.
+func ScanErrorLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
 	if logSender == nil {
 		return
 	}
-	logSender.ScanErrorLogStream(appId, sourceType, sourceInstance, reader, stopChan)
+	logSender.ScanErrorLogStream(appId, sourceType, sourceInstance, reader)
 }
