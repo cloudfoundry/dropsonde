@@ -92,3 +92,9 @@ func (fls *FakeLogSender) GetLogs() []Log {
 
 	return fls.logs
 }
+
+func (fls *FakeLogSender) Reset() {
+	fls.Lock()
+	defer fls.Unlock()
+	fls.logs = nil
+}
