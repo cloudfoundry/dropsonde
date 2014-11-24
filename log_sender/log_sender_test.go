@@ -6,12 +6,13 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/log_sender"
-	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	"io"
 	"strings"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 )
 
 var _ = Describe("LogSender", func() {
@@ -22,7 +23,14 @@ var _ = Describe("LogSender", func() {
 
 	BeforeEach(func() {
 		emitter = fake.NewFakeEventEmitter("origin")
-		sender = log_sender.NewLogSender(emitter, nil)
+		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
+	})
+
+	AfterEach(func() {
+		emitter.Close()
+		for !emitter.IsClosed() {
+			time.Sleep(10*time.Millisecond)
+		}
 	})
 
 	Describe("SendAppLog", func() {
@@ -79,191 +87,162 @@ var _ = Describe("LogSender", func() {
 
 		})
 	})
-})
 
-var _ = Describe("ScanLogStream", func() {
-	var (
-		emitter *fake.FakeEventEmitter
-		sender  log_sender.LogSender
-	)
+	Describe("ScanLogStream", func() {
 
-	BeforeEach(func() {
-		emitter = fake.NewFakeEventEmitter("origin")
-		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
-	})
+		It("sends lines from stream to emitter", func() {
+			buf := bytes.NewBufferString("line 1\nline 2\n")
 
-	It("sends lines from stream to emitter", func() {
-		buf := bytes.NewBufferString("line 1\nline 2\n")
+			sender.ScanLogStream("someId", "app", "0", buf)
 
-		sender.ScanLogStream("someId", "app", "0", buf)
+			messages := emitter.GetMessages()
+			Expect(messages).To(HaveLen(2))
 
-		messages := emitter.GetMessages()
-		Expect(messages).To(HaveLen(2))
+			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
+			Expect(log.GetAppId()).To(Equal("someId"))
+			Expect(log.GetSourceType()).To(Equal("app"))
+			Expect(log.GetSourceInstance()).To(Equal("0"))
 
-		log := emitter.Messages[0].Event.(*events.LogMessage)
-		Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
-		Expect(log.GetAppId()).To(Equal("someId"))
-		Expect(log.GetSourceType()).To(Equal("app"))
-		Expect(log.GetSourceInstance()).To(Equal("0"))
+			log = emitter.Messages[1].Event.(*events.LogMessage)
+			Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
+		})
 
-		log = emitter.Messages[1].Event.(*events.LogMessage)
-		Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
-	})
+		It("emits an error message and returns on read errors", func() {
+			var errReader fakeReader
+			sender.ScanLogStream("someId", "app", "0", &errReader)
 
-	It("emits an error message and reconnects on read errors", func() {
-		var errReader fakeReader
-		sender.ScanLogStream("someId", "app", "0", &errReader)
+			messages := emitter.GetMessages()
+			Expect(messages).To(HaveLen(2))
 
-		messages := emitter.GetMessages()
-		Expect(messages).To(HaveLen(3))
+			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
+			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
-		log := emitter.Messages[0].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
-		Expect(log.GetMessage()).To(BeEquivalentTo("one"))
+			log = emitter.Messages[1].Event.(*events.LogMessage)
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
+			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+		})
 
-		log = emitter.Messages[1].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-		Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+		It("stops when reader returns EOF", func(done Done) {
+			var reader infiniteReader
+			reader.stopChan = make(chan struct{})
 
-		log = emitter.Messages[2].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
-		Expect(log.GetMessage()).To(BeEquivalentTo("two"))
-	})
+			go func() {
+				sender.ScanLogStream("someId", "app", "0", reader)
+				close(done)
+			}()
 
-	It("stops when reader returns EOF", func(done Done) {
-		var reader infiniteReader
-		reader.stopChan = make(chan struct{})
+			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
 
-		go func() {
+			close(reader.stopChan)
+		})
+
+		It("drops over-length messages and resumes scanning", func() {
+			// Scanner can't handle tokens over 64K
+			bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
+			go sender.ScanLogStream("someId", "app", "0", bigReader)
+			Eventually(emitter.GetMessages).Should(HaveLen(3))
+
+			messages := emitter.GetMessages()
+
+			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
+			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
+			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
+		})
+
+		It("ignores empty lines", func() {
+			reader := strings.NewReader("one\n\ntwo\n")
+
 			sender.ScanLogStream("someId", "app", "0", reader)
-			close(done)
-		}()
 
-		Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
+			Expect(emitter.GetMessages()).To(HaveLen(2))
+			messages := emitter.GetMessages()
 
-		close(reader.stopChan)
+			Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
+			Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
+		})
 	})
 
-	It("drops over-length messages and resumes scanning", func(done Done) {
-		// Scanner can't handle tokens over 64K
-		bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
-		sender.ScanLogStream("someId", "app", "0", bigReader)
+	Describe("ScanErrorLogStream", func() {
 
-		Expect(emitter.GetMessages()).To(HaveLen(3))
+		It("sends lines from stream to emitter", func() {
+			buf := bytes.NewBufferString("line 1\nline 2\n")
 
-		messages := emitter.GetMessages()
+			sender.ScanErrorLogStream("someId", "app", "0", buf)
 
-		Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
-		Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
-		Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
-		close(done)
-	})
+			messages := emitter.GetMessages()
+			Expect(messages).To(HaveLen(2))
 
-	It("ignores empty lines", func() {
-		reader := strings.NewReader("one\n\ntwo\n")
+			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
+			Expect(log.GetAppId()).To(Equal("someId"))
+			Expect(log.GetSourceType()).To(Equal("app"))
+			Expect(log.GetSourceInstance()).To(Equal("0"))
 
-		sender.ScanLogStream("someId", "app", "0", reader)
+			log = emitter.Messages[1].Event.(*events.LogMessage)
+			Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
+		})
 
-		Expect(emitter.GetMessages()).To(HaveLen(2))
-		messages := emitter.GetMessages()
+		It("emits an error message and stops on read errors", func() {
+			var errReader fakeReader
+			sender.ScanErrorLogStream("someId", "app", "0", &errReader)
 
-		Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
-		Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
-	})
-})
+			messages := emitter.GetMessages()
+			Expect(messages).To(HaveLen(2))
 
-var _ = Describe("ScanErrorLogStream", func() {
-	var (
-		emitter *fake.FakeEventEmitter
-		sender  log_sender.LogSender
-	)
+			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
+			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
-	BeforeEach(func() {
-		emitter = fake.NewFakeEventEmitter("origin")
-		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
-	})
+			log = emitter.Messages[1].Event.(*events.LogMessage)
+			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
+			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+		})
 
-	It("sends lines from stream to emitter", func() {
-		buf := bytes.NewBufferString("line 1\nline 2\n")
+		It("stops when reader returns EOF", func(done Done) {
+			var reader infiniteReader
+			reader.stopChan = make(chan struct{})
 
-		sender.ScanErrorLogStream("someId", "app", "0", buf)
+			go func() {
+				sender.ScanErrorLogStream("someId", "app", "0", reader)
+				close(done)
+			}()
 
-		messages := emitter.GetMessages()
-		Expect(messages).To(HaveLen(2))
+			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
 
-		log := emitter.Messages[0].Event.(*events.LogMessage)
-		Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-		Expect(log.GetAppId()).To(Equal("someId"))
-		Expect(log.GetSourceType()).To(Equal("app"))
-		Expect(log.GetSourceInstance()).To(Equal("0"))
+			close(reader.stopChan)
+		})
 
-		log = emitter.Messages[1].Event.(*events.LogMessage)
-		Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-	})
+		It("drops over-length messages and resumes scanning", func() {
+			// Scanner can't handle tokens over 64K
+			bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
+			sender.ScanErrorLogStream("someId", "app", "0", bigReader)
 
-	It("emits an error message and reconnects on read errors", func() {
-		var errReader fakeReader
-		sender.ScanErrorLogStream("someId", "app", "0", &errReader)
+			Eventually(emitter.GetMessages).Should(HaveLen(3))
 
-		messages := emitter.GetMessages()
-		Expect(messages).To(HaveLen(3))
+			messages := emitter.GetMessages()
 
-		log := emitter.Messages[0].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-		Expect(log.GetMessage()).To(BeEquivalentTo("one"))
+			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
+			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
+			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
+		})
 
-		log = emitter.Messages[1].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-		Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+		It("ignores empty lines", func() {
+			reader := strings.NewReader("one\n \ntwo\n")
 
-		log = emitter.Messages[2].Event.(*events.LogMessage)
-		Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-		Expect(log.GetMessage()).To(BeEquivalentTo("two"))
-	})
-
-	It("stops when reader returns EOF", func(done Done) {
-		var reader infiniteReader
-		reader.stopChan = make(chan struct{})
-
-		go func() {
 			sender.ScanErrorLogStream("someId", "app", "0", reader)
-			close(done)
-		}()
 
-		Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
+			Expect(emitter.GetMessages()).To(HaveLen(2))
+			messages := emitter.GetMessages()
 
-		close(reader.stopChan)
-	})
-
-	It("drops over-length messages and resumes scanning", func(done Done) {
-		// Scanner can't handle tokens over 64K
-		bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
-		sender.ScanErrorLogStream("someId", "app", "0", bigReader)
-
-		Expect(emitter.GetMessages()).To(HaveLen(3))
-
-		messages := emitter.GetMessages()
-
-		Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
-		Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
-		Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
-		close(done)
-	})
-
-	It("ignores empty lines", func() {
-		reader := strings.NewReader("one\n\ntwo\n")
-
-		sender.ScanErrorLogStream("someId", "app", "0", reader)
-
-		Expect(emitter.GetMessages()).To(HaveLen(2))
-		messages := emitter.GetMessages()
-
-		Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
-		Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
+			Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
+			Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
+		})
 	})
 })
 

@@ -9,6 +9,7 @@ import (
 	"github.com/cloudfoundry/gosteno"
 	"io"
 	"time"
+	"strings"
 )
 
 // A LogSender emits log events.
@@ -57,27 +58,27 @@ func (l *logSender) ScanErrorLogStream(appId, sourceType, sourceInstance string,
 }
 
 func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send func(string, string, string, string) error, reader io.Reader) {
-	for {
-		scanner := bufio.NewScanner(reader)
+	err := bufio.ErrTooLong
 
+	for err == bufio.ErrTooLong {
+		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			if len(line) == 0 {
+			if len(strings.TrimSpace(line)) == 0 {
 				continue
 			}
 
 			send(appId, line, sourceType, sourceInstance)
 		}
 
-		err := scanner.Err()
+		err = scanner.Err()
 		if err != nil {
 			l.logger.Errorf("ScanLogStream: Error while reading STDOUT/STDERR for app %s/%s: %s", appId, sourceInstance, err.Error())
 			msg := fmt.Sprintf("Dropped log message due to read error: %s", err.Error())
 			l.SendAppErrorLog(appId, msg, sourceType, sourceInstance)
 		} else {
-			l.logger.Debugf("EOF on log stream for app %s/%s", appId, sourceInstance)
-			return
+			l.logger.Debugf("Error on log stream for app %s/%s", appId, sourceInstance)
 		}
 	}
 }
