@@ -8,8 +8,8 @@ import (
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
 	"io"
-	"time"
 	"strings"
+	"time"
 )
 
 // A LogSender emits log events.
@@ -58,9 +58,7 @@ func (l *logSender) ScanErrorLogStream(appId, sourceType, sourceInstance string,
 }
 
 func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send func(string, string, string, string) error, reader io.Reader) {
-	err := bufio.ErrTooLong
-
-	for err == bufio.ErrTooLong {
+	for {
 		scanner := bufio.NewScanner(reader)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -72,13 +70,19 @@ func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send
 			send(appId, line, sourceType, sourceInstance)
 		}
 
-		err = scanner.Err()
+		err := scanner.Err()
+		if err == bufio.ErrTooLong {
+			l.SendAppErrorLog(appId, "Dropped log message: message too long (>64K without a newline)", sourceType, sourceInstance)
+			continue
+		}
 		if err != nil {
 			l.logger.Errorf("ScanLogStream: Error while reading STDOUT/STDERR for app %s/%s: %s", appId, sourceInstance, err.Error())
-			msg := fmt.Sprintf("Dropped log message due to read error: %s", err.Error())
+			msg := fmt.Sprintf("Stopped listening to STDOUT/STDERR due to read error: %s", err.Error())
 			l.SendAppErrorLog(appId, msg, sourceType, sourceInstance)
+			break
 		} else {
 			l.logger.Debugf("Error on log stream for app %s/%s", appId, sourceInstance)
+			break
 		}
 	}
 }

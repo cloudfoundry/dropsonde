@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 )
 
 var _ = Describe("LogSender", func() {
@@ -29,7 +29,7 @@ var _ = Describe("LogSender", func() {
 	AfterEach(func() {
 		emitter.Close()
 		for !emitter.IsClosed() {
-			time.Sleep(10*time.Millisecond)
+			time.Sleep(10 * time.Millisecond)
 		}
 	})
 
@@ -126,29 +126,38 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
 		})
 
-		It("stops when reader returns EOF", func(done Done) {
+		It("stops when reader returns EOF", func() {
 			var reader infiniteReader
 			reader.stopChan = make(chan struct{})
+			doneChan := make(chan struct{})
 
 			go func() {
 				sender.ScanLogStream("someId", "app", "0", reader)
-				close(done)
+				close(doneChan)
 			}()
 
 			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
-
 			close(reader.stopChan)
+			Eventually(doneChan).Should(BeClosed())
 		})
 
 		It("drops over-length messages and resumes scanning", func() {
 			// Scanner can't handle tokens over 64K
 			bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
-			go sender.ScanLogStream("someId", "app", "0", bigReader)
+
+			doneChan := make(chan struct{})
+			go func() {
+				sender.ScanLogStream("someId", "app", "0", bigReader)
+				close(doneChan)
+			}()
+
 			Eventually(emitter.GetMessages).Should(HaveLen(3))
+
+			Eventually(doneChan).Should(BeClosed())
 
 			messages := emitter.GetMessages()
 
-			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
+			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
 			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
 			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
 		})
@@ -204,18 +213,21 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
 		})
 
-		It("stops when reader returns EOF", func(done Done) {
+		It("stops when reader returns EOF", func() {
 			var reader infiniteReader
 			reader.stopChan = make(chan struct{})
+			doneChan := make(chan struct{})
 
 			go func() {
 				sender.ScanErrorLogStream("someId", "app", "0", reader)
-				close(done)
+				close(doneChan)
 			}()
 
 			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
 
 			close(reader.stopChan)
+			Eventually(doneChan).Should(BeClosed())
+
 		})
 
 		It("drops over-length messages and resumes scanning", func() {
@@ -227,7 +239,7 @@ var _ = Describe("LogSender", func() {
 
 			messages := emitter.GetMessages()
 
-			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message due to read error:"))
+			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
 			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
 			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
 		})
