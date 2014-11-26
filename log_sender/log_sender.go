@@ -3,7 +3,6 @@ package log_sender
 import (
 	"bufio"
 	"code.google.com/p/gogoprotobuf/proto"
-	"fmt"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
@@ -57,33 +56,19 @@ func (l *logSender) ScanErrorLogStream(appId, sourceType, sourceInstance string,
 	l.scanLogStream(appId, sourceType, sourceInstance, l.SendAppErrorLog, reader)
 }
 
-func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send func(string, string, string, string) error, reader io.Reader) {
+func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, sender func(string, string, string, string) error, reader io.Reader) {
 	for {
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			line := scanner.Text()
-
-			if len(strings.TrimSpace(line)) == 0 {
-				continue
-			}
-
-			send(appId, line, sourceType, sourceInstance)
-		}
-
-		err := scanner.Err()
+		err := sendScannedLines(appId, sourceType, sourceInstance, bufio.NewScanner(reader), sender)
 		if err == bufio.ErrTooLong {
 			l.SendAppErrorLog(appId, "Dropped log message: message too long (>64K without a newline)", sourceType, sourceInstance)
 			continue
 		}
-		if err != nil {
-			l.logger.Errorf("ScanLogStream: Error while reading STDOUT/STDERR for app %s/%s: %s", appId, sourceInstance, err.Error())
-			msg := fmt.Sprintf("Stopped listening to STDOUT/STDERR due to read error: %s", err.Error())
-			l.SendAppErrorLog(appId, msg, sourceType, sourceInstance)
-			break
+		if err == nil {
+			l.logger.Debugf("EOF on log stream for app %s/%s", appId, sourceInstance)
 		} else {
-			l.logger.Debugf("Error on log stream for app %s/%s", appId, sourceInstance)
-			break
+			l.logger.Infof("ScanLogStream: Error while reading STDOUT/STDERR for app %s/%s: %s", appId, sourceInstance, err.Error())
 		}
+		return
 	}
 }
 
@@ -96,4 +81,17 @@ func makeLogMessage(appId, message, sourceType, sourceInstance string, messageTy
 		SourceInstance: &sourceInstance,
 		Timestamp:      proto.Int64(time.Now().UnixNano()),
 	}
+}
+
+func sendScannedLines(appId, sourceType, sourceInstance string, scanner *bufio.Scanner, send func(string, string, string, string) error) error {
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if len(strings.TrimSpace(line)) == 0 {
+			continue
+		}
+
+		send(appId, line, sourceType, sourceInstance)
+	}
+	return scanner.Err()
 }

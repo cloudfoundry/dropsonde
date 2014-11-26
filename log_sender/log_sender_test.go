@@ -110,20 +110,19 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 		})
 
-		It("emits an error message and returns on read errors", func() {
+		It("logs a message and returns on read errors", func() {
 			var errReader fakeReader
 			sender.ScanLogStream("someId", "app", "0", &errReader)
 
 			messages := emitter.GetMessages()
-			Expect(messages).To(HaveLen(2))
+			Expect(messages).To(HaveLen(1))
 
 			log := emitter.Messages[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
-			log = emitter.Messages[1].Event.(*events.LogMessage)
-			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+			loggerMessage := loggertesthelper.TestLoggerSink.LogContents()
+			Expect(loggerMessage).To(ContainSubstring("Read Error"))
 		})
 
 		It("stops when reader returns EOF", func() {
@@ -197,20 +196,19 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 		})
 
-		It("emits an error message and stops on read errors", func() {
+		It("logs a message and stops on read errors", func() {
 			var errReader fakeReader
 			sender.ScanErrorLogStream("someId", "app", "0", &errReader)
 
 			messages := emitter.GetMessages()
-			Expect(messages).To(HaveLen(2))
+			Expect(messages).To(HaveLen(1))
 
 			log := emitter.Messages[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
-			log = emitter.Messages[1].Event.(*events.LogMessage)
-			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
-			Expect(log.GetMessage()).To(ContainSubstring("Read Error"))
+			loggerMessage := loggertesthelper.TestLoggerSink.LogContents()
+			Expect(loggerMessage).To(ContainSubstring("Read Error"))
 		})
 
 		It("stops when reader returns EOF", func() {
