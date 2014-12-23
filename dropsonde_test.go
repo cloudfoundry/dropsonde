@@ -58,7 +58,8 @@ var _ = Describe("Autowire", func() {
 				Expect(err).To(HaveOccurred())
 
 				emitter := dropsonde.AutowiredEmitter()
-				Expect(emitter).To(BeNil())
+				Expect(emitter).ToNot(BeNil())
+				Expect(reflect.TypeOf(emitter).Elem().Name()).To(Equal("NullEventEmitter"))
 			})
 		})
 	})

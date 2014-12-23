@@ -52,7 +52,6 @@ func init() {
 // The destination variable sets the host and port to
 // which metrics are sent. It is optional, and defaults to DefaultDestination.
 func Initialize(destination string, origin ...string) error {
-	autowiredEmitter = nil
 	emitter, err := createDefaultEmitter(strings.Join(origin, originDelimiter), destination)
 	if err != nil {
 		return err
