@@ -1,7 +1,6 @@
 package fake
 
 import (
-	"github.com/cloudfoundry/dropsonde/events"
 	"sync"
 )
 
@@ -18,7 +17,7 @@ type Metric struct {
 }
 
 type ContainerMetric struct {
-	ApplicationId events.UUID
+	ApplicationId string
 	InstanceIndex int32
 	CpuPercentage float64
 	MemoryBytes   uint64
@@ -57,10 +56,10 @@ func (fms *FakeMetricSender) AddToCounter(name string, delta uint64) error {
 	return nil
 }
 
-func (fms *FakeMetricSender) SendContainerMetric(applicationId events.UUID, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
+func (fms *FakeMetricSender) SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
 	fms.Lock()
 	defer fms.Unlock()
-	fms.containerMetrics[applicationId.String()] = ContainerMetric{ApplicationId: applicationId, InstanceIndex: instanceIndex, CpuPercentage: cpuPercentage, MemoryBytes: memoryBytes, DiskBytes: diskBytes}
+	fms.containerMetrics[applicationId] = ContainerMetric{ApplicationId: applicationId, InstanceIndex: instanceIndex, CpuPercentage: cpuPercentage, MemoryBytes: memoryBytes, DiskBytes: diskBytes}
 
 	return nil
 }
@@ -79,9 +78,9 @@ func (fms *FakeMetricSender) GetCounter(name string) uint64 {
 	return fms.counters[name]
 }
 
-func (fms *FakeMetricSender) GetContainerMetric(applicationId events.UUID) ContainerMetric {
+func (fms *FakeMetricSender) GetContainerMetric(applicationId string) ContainerMetric {
 	fms.RLock()
 	defer fms.RUnlock()
 
-	return fms.containerMetrics[applicationId.String()]
+	return fms.containerMetrics[applicationId]
 }

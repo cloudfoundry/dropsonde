@@ -1,8 +1,6 @@
 package metric_sender_test
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
-
 	"errors"
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
@@ -71,14 +69,13 @@ var _ = Describe("MetricSender", func() {
 	})
 
 	It("sends a container metric to its emitter", func() {
-		appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
-		err := sender.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
+		err := sender.SendContainerMetric("some_app_guid", 0, 42.42, 1234, 123412341234)
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(emitter.Messages).To(HaveLen(1))
 		containerMetric := emitter.Messages[0].Event.(*events.ContainerMetric)
 
-		Expect(containerMetric.GetApplicationId()).To(Equal(&appGuid))
+		Expect(containerMetric.GetApplicationId()).To(Equal("some_app_guid"))
 		Expect(containerMetric.GetInstanceIndex()).To(Equal(int32(0)))
 
 		Expect(containerMetric.GetCpuPercentage()).To(BeNumerically("~", 42.42, 0.005))
@@ -90,8 +87,7 @@ var _ = Describe("MetricSender", func() {
 
 		emitter.ReturnError = errors.New("some container metric error")
 
-		appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
-		err := sender.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
+		err := sender.SendContainerMetric("some_app_guid", 0, 42.42, 1234, 123412341234)
 		Expect(emitter.Messages).To(HaveLen(0))
 		Expect(err.Error()).To(Equal("some container metric error"))
 	})

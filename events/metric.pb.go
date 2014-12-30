@@ -71,7 +71,7 @@ func (m *CounterEvent) GetDelta() uint64 {
 
 // / A ContainerMetric records resource usage of an app in a container.
 type ContainerMetric struct {
-	ApplicationId    *UUID    `protobuf:"bytes,1,req,name=applicationId" json:"applicationId,omitempty"`
+	ApplicationId    *string  `protobuf:"bytes,1,req,name=applicationId" json:"applicationId,omitempty"`
 	InstanceIndex    *int32   `protobuf:"varint,2,req,name=instanceIndex" json:"instanceIndex,omitempty"`
 	CpuPercentage    *float64 `protobuf:"fixed64,3,req,name=cpuPercentage" json:"cpuPercentage,omitempty"`
 	MemoryBytes      *uint64  `protobuf:"varint,4,req,name=memoryBytes" json:"memoryBytes,omitempty"`
@@ -83,11 +83,11 @@ func (m *ContainerMetric) Reset()         { *m = ContainerMetric{} }
 func (m *ContainerMetric) String() string { return proto.CompactTextString(m) }
 func (*ContainerMetric) ProtoMessage()    {}
 
-func (m *ContainerMetric) GetApplicationId() *UUID {
-	if m != nil {
-		return m.ApplicationId
+func (m *ContainerMetric) GetApplicationId() string {
+	if m != nil && m.ApplicationId != nil {
+		return *m.ApplicationId
 	}
-	return nil
+	return ""
 }
 
 func (m *ContainerMetric) GetInstanceIndex() int32 {

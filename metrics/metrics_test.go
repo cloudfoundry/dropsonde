@@ -1,9 +1,6 @@
 package metrics_test
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
-
-	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	. "github.com/onsi/ginkgo"
@@ -46,10 +43,10 @@ var _ = Describe("Metrics", func() {
 	})
 
 	It("delegates SendContainerMetric", func() {
-		appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
+		appGuid := "some_app_guid"
 		metrics.SendContainerMetric(appGuid, 7, 42.42, 1234, 123412341234)
 
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).ApplicationId).To(Equal(events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}))
+		Expect(fakeMetricSender.GetContainerMetric(appGuid).ApplicationId).To(Equal(appGuid))
 		Expect(fakeMetricSender.GetContainerMetric(appGuid).InstanceIndex).To(BeEquivalentTo(7))
 		Expect(fakeMetricSender.GetContainerMetric(appGuid).CpuPercentage).To(BeEquivalentTo(42.42))
 		Expect(fakeMetricSender.GetContainerMetric(appGuid).MemoryBytes).To(BeEquivalentTo(1234))
@@ -82,7 +79,7 @@ var _ = Describe("Metrics", func() {
 		})
 
 		It("SendContainerMetric is a no-op", func() {
-			appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
+			appGuid := "some_app_guid"
 			err := metrics.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
 
 			Expect(err).ToNot(HaveOccurred())

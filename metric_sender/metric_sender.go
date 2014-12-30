@@ -10,7 +10,7 @@ type MetricSender interface {
 	SendValue(name string, value float64, unit string) error
 	IncrementCounter(name string) error
 	AddToCounter(name string, delta uint64) error
-	SendContainerMetric(applicationId events.UUID, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
+	SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
 }
 
 type metricSender struct {
@@ -47,6 +47,6 @@ func (ms *metricSender) AddToCounter(name string, delta uint64) error {
 // The container is identified by the applicationId and the instanceIndex. The resource
 // metrics are CPU percentage, memory and disk usage in bytes. Returns an error if one occurs
 // when sending the metric.
-func (ms *metricSender) SendContainerMetric(applicationId events.UUID, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
+func (ms *metricSender) SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
 	return ms.eventEmitter.Emit(&events.ContainerMetric{ApplicationId: &applicationId, InstanceIndex: &instanceIndex, CpuPercentage: &cpuPercentage, MemoryBytes: &memoryBytes, DiskBytes: &diskBytes})
 }
