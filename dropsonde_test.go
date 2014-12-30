@@ -23,7 +23,7 @@ var _ = Describe("Autowire", func() {
 	Describe("Initialize", func() {
 		It("resets the HTTP default transport to be instrumented", func() {
 			dropsonde.InitializeWithEmitter(&dropsonde.NullEventEmitter{})
-			Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("instrumentedRoundTripper"))
+			Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("instrumentedCancelableRoundTripper"))
 		})
 	})
 

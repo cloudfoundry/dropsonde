@@ -1,12 +1,13 @@
 package instrumented_round_tripper
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
 	uuid "github.com/nu7hatch/gouuid"
-	"log"
-	"net/http"
 )
 
 type instrumentedRoundTripper struct {
@@ -14,11 +15,31 @@ type instrumentedRoundTripper struct {
 	emitter      emitter.EventEmitter
 }
 
+type instrumentedCancelableRoundTripper struct {
+	instrumentedRoundTripper *instrumentedRoundTripper
+	cancelableRoundTripper   cancelableRoundTripper
+}
+
+type cancelableRoundTripper interface {
+	CancelRequest(*http.Request)
+	RoundTrip(*http.Request) (*http.Response, error)
+}
+
 /*
 Helper for creating an InstrumentedRoundTripper which will delegate to the given RoundTripper
 */
 func InstrumentedRoundTripper(roundTripper http.RoundTripper, emitter emitter.EventEmitter) http.RoundTripper {
-	return &instrumentedRoundTripper{roundTripper, emitter}
+	irt := &instrumentedRoundTripper{roundTripper, emitter}
+
+	tr, ok := roundTripper.(cancelableRoundTripper)
+	if ok {
+		return &instrumentedCancelableRoundTripper{
+			instrumentedRoundTripper: irt,
+			cancelableRoundTripper:   tr,
+		}
+	}
+
+	return irt
 }
 
 /*
@@ -63,6 +84,14 @@ func (irt *instrumentedRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	}
 
 	return resp, roundTripErr
+}
+
+func (icrt *instrumentedCancelableRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return icrt.instrumentedRoundTripper.RoundTrip(req)
+}
+
+func (icrt *instrumentedCancelableRoundTripper) CancelRequest(req *http.Request) {
+	icrt.cancelableRoundTripper.CancelRequest(req)
 }
 
 var GenerateUuid = uuid.NewV4

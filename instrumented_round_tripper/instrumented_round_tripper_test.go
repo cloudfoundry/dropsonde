@@ -2,6 +2,9 @@ package instrumented_round_tripper_test
 
 import (
 	"errors"
+	"net/http"
+	"reflect"
+
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
@@ -9,7 +12,6 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
 )
 
 type FakeRoundTripper struct {
@@ -19,6 +21,16 @@ type FakeRoundTripper struct {
 func (frt *FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &http.Response{StatusCode: 123, ContentLength: 1234}, frt.FakeError
 }
+
+type FakeCancelableRoundTripper struct {
+	FakeError error
+}
+
+func (frt *FakeCancelableRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	return &http.Response{StatusCode: 123, ContentLength: 1234}, frt.FakeError
+}
+
+func (frt *FakeCancelableRoundTripper) CancelRequest(req *http.Request) {}
 
 var _ = Describe("InstrumentedRoundTripper", func() {
 	var fakeRoundTripper *FakeRoundTripper
@@ -39,7 +51,27 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 		Expect(err).ToNot(HaveOccurred())
 		req.RemoteAddr = "127.0.0.1"
 		req.Header.Set("User-Agent", "our-testing-client")
+	})
 
+	Context("when the round tripper is a cancelable round tripper", func() {
+		BeforeEach(func() {
+			rt = instrumented_round_tripper.InstrumentedRoundTripper(new(FakeCancelableRoundTripper), fakeEmitter)
+		})
+
+		It("returns an instrumentedCancelableRoundTripper", func() {
+			Expect(reflect.TypeOf(rt).Elem().Name()).To(Equal("instrumentedCancelableRoundTripper"))
+		})
+	})
+
+	Context("when the round tripper is not a cancelable round tripper", func() {
+		BeforeEach(func() {
+			fakeRoundTripper = new(FakeRoundTripper)
+			rt = instrumented_round_tripper.InstrumentedRoundTripper(fakeRoundTripper, fakeEmitter)
+		})
+
+		It("returns an instrumentedRoundTripper", func() {
+			Expect(reflect.TypeOf(rt).Elem().Name()).To(Equal("instrumentedRoundTripper"))
+		})
 	})
 
 	Describe("request ID", func() {
