@@ -20,6 +20,7 @@
 package metrics
 
 import (
+	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 )
 
@@ -57,4 +58,16 @@ func AddToCounter(name string, delta uint64) error {
 		return nil
 	}
 	return metricSender.AddToCounter(name, delta)
+}
+
+// SendContainerMetric sends a metric that records resource usage of an app in a container.
+// The container is identified by the applicationId and the instanceIndex. The resource
+// metrics are CPU percentage, memory and disk usage in bytes. Returns an error if one occurs
+// when sending the metric.
+func SendContainerMetric(applicationId events.UUID, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
+	if metricSender == nil {
+		return nil
+	}
+
+	return metricSender.SendContainerMetric(applicationId, instanceIndex, cpuPercentage, memoryBytes, diskBytes)
 }

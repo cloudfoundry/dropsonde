@@ -1,6 +1,8 @@
 package metric_sender_test
 
 import (
+	"code.google.com/p/gogoprotobuf/proto"
+
 	"errors"
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
@@ -47,7 +49,17 @@ var _ = Describe("MetricSender", func() {
 		Expect(emitter.Messages).To(HaveLen(1))
 		counterEvent := emitter.Messages[0].Event.(*events.CounterEvent)
 		Expect(counterEvent.GetName()).To(Equal("counter-strike"))
+		Expect(counterEvent.GetDelta()).To(Equal(uint64(1)))
+	})
 
+	It("sends an update counter event with arbitrary increment", func() {
+		err := sender.AddToCounter("counter-strike", 3)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(emitter.Messages).To(HaveLen(1))
+		counterEvent := emitter.Messages[0].Event.(*events.CounterEvent)
+		Expect(counterEvent.GetName()).To(Equal("counter-strike"))
+		Expect(counterEvent.GetDelta()).To(Equal(uint64(3)))
 	})
 
 	It("returns an error if it can't increment counter", func() {
@@ -56,5 +68,31 @@ var _ = Describe("MetricSender", func() {
 		err := sender.IncrementCounter("count me in")
 		Expect(emitter.Messages).To(HaveLen(0))
 		Expect(err.Error()).To(Equal("some counter event error"))
+	})
+
+	It("sends a container metric to its emitter", func() {
+		appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
+		err := sender.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(emitter.Messages).To(HaveLen(1))
+		containerMetric := emitter.Messages[0].Event.(*events.ContainerMetric)
+
+		Expect(containerMetric.GetApplicationId()).To(Equal(&appGuid))
+		Expect(containerMetric.GetInstanceIndex()).To(Equal(int32(0)))
+
+		Expect(containerMetric.GetCpuPercentage()).To(BeNumerically("~", 42.42, 0.005))
+		Expect(containerMetric.GetMemoryBytes()).To(Equal(uint64(1234)))
+		Expect(containerMetric.GetDiskBytes()).To(Equal(uint64(123412341234)))
+	})
+
+	It("returns an error if it can't send a container metric", func() {
+
+		emitter.ReturnError = errors.New("some container metric error")
+
+		appGuid := events.UUID{Low: proto.Uint64(1234), High: proto.Uint64(5678)}
+		err := sender.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
+		Expect(emitter.Messages).To(HaveLen(0))
+		Expect(err.Error()).To(Equal("some container metric error"))
 	})
 })
