@@ -54,6 +54,7 @@ func init() {
 func Initialize(destination string, origin ...string) error {
 	emitter, err := createDefaultEmitter(strings.Join(origin, originDelimiter), destination)
 	if err != nil {
+		autowiredEmitter = &NullEventEmitter{}
 		return err
 	}
 

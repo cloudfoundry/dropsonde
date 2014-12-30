@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"reflect"
 	"time"
 
 	"code.google.com/p/gogoprotobuf/proto"
@@ -12,6 +11,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
+	"github.com/cloudfoundry/dropsonde/instrumented_round_tripper"
 	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
@@ -23,7 +23,8 @@ var _ = Describe("Autowire", func() {
 	Describe("Initialize", func() {
 		It("resets the HTTP default transport to be instrumented", func() {
 			dropsonde.InitializeWithEmitter(&dropsonde.NullEventEmitter{})
-			Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("instrumentedRoundTripper"))
+			irt := instrumented_round_tripper.InstrumentedRoundTripper(nil, nil)
+			Expect(http.DefaultTransport).To(BeAssignableToTypeOf(irt))
 		})
 	})
 
@@ -53,13 +54,14 @@ var _ = Describe("Autowire", func() {
 		})
 
 		Context("with origin missing", func() {
-			It("returns a nil-emitter", func() {
+			It("returns a NullEventEmitter", func() {
 				err := dropsonde.Initialize("localhost:2343", "")
 				Expect(err).To(HaveOccurred())
 
 				emitter := dropsonde.AutowiredEmitter()
 				Expect(emitter).ToNot(BeNil())
-				Expect(reflect.TypeOf(emitter).Elem().Name()).To(Equal("NullEventEmitter"))
+				nullEmitter := &dropsonde.NullEventEmitter{}
+				Expect(emitter).To(BeAssignableToTypeOf(nullEmitter))
 			})
 		})
 	})
