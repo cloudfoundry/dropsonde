@@ -78,5 +78,16 @@ var _ = Describe("EnvelopeExtensions", func() {
 				Expect(appId).To(Equal(envelope_extensions.SystemAppId))
 			})
 		})
+
+		Context("ContainerMetric", func() {
+			It("returns the App ID ", func() {
+				envelope := &events.Envelope{
+					EventType:       events.Envelope_ContainerMetric.Enum(),
+					ContainerMetric: &events.ContainerMetric{ApplicationId: proto.String("test-app-id")},
+				}
+				appId := envelope_extensions.GetAppId(envelope)
+				Expect(appId).To(Equal("test-app-id"))
+			})
+		})
 	})
 })
