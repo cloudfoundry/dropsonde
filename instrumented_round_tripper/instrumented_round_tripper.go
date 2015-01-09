@@ -17,12 +17,6 @@ type instrumentedRoundTripper struct {
 
 type instrumentedCancelableRoundTripper struct {
 	instrumentedRoundTripper *instrumentedRoundTripper
-	cancelableRoundTripper   cancelableRoundTripper
-}
-
-type cancelableRoundTripper interface {
-	CancelRequest(*http.Request)
-	RoundTrip(*http.Request) (*http.Response, error)
 }
 
 /*
@@ -31,11 +25,10 @@ Helper for creating an InstrumentedRoundTripper which will delegate to the given
 func InstrumentedRoundTripper(roundTripper http.RoundTripper, emitter emitter.EventEmitter) http.RoundTripper {
 	irt := &instrumentedRoundTripper{roundTripper, emitter}
 
-	tr, ok := roundTripper.(cancelableRoundTripper)
+	_, ok := roundTripper.(canceler)
 	if ok {
 		return &instrumentedCancelableRoundTripper{
 			instrumentedRoundTripper: irt,
-			cancelableRoundTripper:   tr,
 		}
 	}
 
@@ -91,7 +84,12 @@ func (icrt *instrumentedCancelableRoundTripper) RoundTrip(req *http.Request) (*h
 }
 
 func (icrt *instrumentedCancelableRoundTripper) CancelRequest(req *http.Request) {
-	icrt.cancelableRoundTripper.CancelRequest(req)
+	cancelableTransport := icrt.instrumentedRoundTripper.roundTripper.(canceler)
+	cancelableTransport.CancelRequest(req)
 }
 
 var GenerateUuid = uuid.NewV4
+
+type canceler interface {
+	CancelRequest(*http.Request)
+}
