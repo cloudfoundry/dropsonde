@@ -5,13 +5,13 @@ import (
 	"net"
 	"net/http"
 	"time"
+	"reflect"
 
 	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
-	"github.com/cloudfoundry/dropsonde/instrumented_round_tripper"
 	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
@@ -23,8 +23,7 @@ var _ = Describe("Autowire", func() {
 	Describe("Initialize", func() {
 		It("resets the HTTP default transport to be instrumented", func() {
 			dropsonde.InitializeWithEmitter(&dropsonde.NullEventEmitter{})
-			irt := instrumented_round_tripper.InstrumentedRoundTripper(nil, nil)
-			Expect(http.DefaultTransport).To(BeAssignableToTypeOf(irt))
+			Expect(reflect.TypeOf(http.DefaultTransport).Elem().Name()).To(Equal("instrumentedCancelableRoundTripper"))
 		})
 	})
 
