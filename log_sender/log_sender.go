@@ -2,10 +2,10 @@ package log_sender
 
 import (
 	"bufio"
-	"code.google.com/p/gogoprotobuf/proto"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
+	"github.com/gogo/protobuf/proto"
 	"io"
 	"strings"
 	"time"
