@@ -1,9 +1,9 @@
 package emitter
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"errors"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/gogo/protobuf/proto"
 	"time"
 )
 

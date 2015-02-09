@@ -1,11 +1,11 @@
 package factories
 
 import (
-	"code.google.com/p/gogoprotobuf/proto"
 	"encoding/binary"
 	"fmt"
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/gogo/protobuf/proto"
 	uuid "github.com/nu7hatch/gouuid"
 	"net/http"
 	"strconv"
