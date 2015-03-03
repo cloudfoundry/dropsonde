@@ -100,6 +100,7 @@ func (u *dropsondeUnmarshaller) incrementLogMessageReceiveCount(appId string) {
 		u.Unlock()
 	}
 	incrementCount(u.logMessageReceiveCounts[appId])
+	incrementCount(u.receiveCounts[events.Envelope_LogMessage])
 }
 
 func (u *dropsondeUnmarshaller) incrementReceiveCount(eventType events.Envelope_EventType) {
@@ -113,24 +114,28 @@ func incrementCount(count *uint64) {
 func (m *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	var metrics []instrumentation.Metric
 
-	for eventType, eventName := range events.Envelope_EventType_name {
-		modifiedEventName := []rune(eventName)
+	m.RLock()
+	for appId, count := range m.logMessageReceiveCounts {
+		metricValue := atomic.LoadUint64(count)
+		tags := make(map[string]interface{})
+		tags["appId"] = appId
+		metrics = append(metrics, instrumentation.Metric{Name: "logMessageReceived", Value: metricValue, Tags: tags})
+	}
+
+	metricValue := atomic.LoadUint64(m.receiveCounts[events.Envelope_LogMessage])
+	metrics = append(metrics, instrumentation.Metric{Name: "logMessageTotal", Value: metricValue})
+
+	m.RUnlock()
+
+	for eventType, counterPointer := range m.receiveCounts {
+		if eventType == events.Envelope_LogMessage {
+			continue
+		}
+		modifiedEventName := []rune(eventType.String())
 		modifiedEventName[0] = unicode.ToLower(modifiedEventName[0])
 		metricName := string(modifiedEventName) + "Received"
-
-		if eventName == "LogMessage" {
-			m.RLock()
-			for appId, count := range m.logMessageReceiveCounts {
-				metricValue := atomic.LoadUint64(count)
-				tags := make(map[string]interface{})
-				tags["appId"] = appId
-				metrics = append(metrics, instrumentation.Metric{Name: metricName, Value: metricValue, Tags: tags})
-			}
-			m.RUnlock()
-		} else {
-			metricValue := atomic.LoadUint64(m.receiveCounts[events.Envelope_EventType(eventType)])
-			metrics = append(metrics, instrumentation.Metric{Name: metricName, Value: metricValue})
-		}
+		metricValue := atomic.LoadUint64(counterPointer)
+		metrics = append(metrics, instrumentation.Metric{Name: metricName, Value: metricValue})
 	}
 
 	metrics = append(metrics, instrumentation.Metric{
