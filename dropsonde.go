@@ -10,7 +10,6 @@
 // dropsonde.Initialize("localhost:3457", origins...)
 //
 // to initialize. See package metrics and logs for other usage.
-
 package dropsonde
 
 import (
@@ -64,11 +63,14 @@ func Initialize(destination string, origin ...string) error {
 	return nil
 }
 
+// InitializeWithEmitter sets up Dropsonde with the passed emitter, instead of
+// creating one.
 func InitializeWithEmitter(emitter emitter.EventEmitter) {
 	autowiredEmitter = emitter
 	initialize()
 }
 
+// AutowiredEmitter exposes the emitter used by Dropsonde after its initialization.
 func AutowiredEmitter() emitter.EventEmitter {
 	return autowiredEmitter
 }
@@ -103,12 +105,12 @@ func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, err
 
 	udpEmitter, err := emitter.NewUdpEmitter(destination)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Failed to initialize dropsonde: %v", err.Error()))
+		return nil, fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
 	}
 
 	heartbeatResponder, err := emitter.NewHeartbeatResponder(udpEmitter, origin)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("Failed to initialize dropsonde: %v", err.Error()))
+		return nil, fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
 	}
 
 	go udpEmitter.ListenForHeartbeatRequest(heartbeatResponder.Respond)
@@ -116,10 +118,15 @@ func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, err
 	return emitter.NewEventEmitter(heartbeatResponder, origin), nil
 }
 
+// NullEventEmitter is used when no event emission is desired. See
+// http://en.wikipedia.org/wiki/Null_Object_pattern.
 type NullEventEmitter struct{}
 
+// Emit is called to send an event to a remote host. On NullEventEmitter,
+// it is a no-op.
 func (*NullEventEmitter) Emit(events.Event) error {
 	return nil
 }
 
+// Close ceases emitter operations. On NullEventEmitter, it is a no-op.
 func (*NullEventEmitter) Close() {}

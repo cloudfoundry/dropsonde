@@ -91,15 +91,15 @@ func (u *dropsondeUnmarshaller) UnmarshallMessage(message []byte) (*events.Envel
 	return envelope, nil
 }
 
-func (u *dropsondeUnmarshaller) incrementLogMessageReceiveCount(appId string) {
-	_, ok := u.logMessageReceiveCounts[appId]
+func (u *dropsondeUnmarshaller) incrementLogMessageReceiveCount(appID string) {
+	_, ok := u.logMessageReceiveCounts[appID]
 	if ok == false {
 		var count uint64
 		u.Lock()
-		u.logMessageReceiveCounts[appId] = &count
+		u.logMessageReceiveCounts[appID] = &count
 		u.Unlock()
 	}
-	incrementCount(u.logMessageReceiveCounts[appId])
+	incrementCount(u.logMessageReceiveCounts[appID])
 	incrementCount(u.receiveCounts[events.Envelope_LogMessage])
 }
 
@@ -111,23 +111,23 @@ func incrementCount(count *uint64) {
 	atomic.AddUint64(count, 1)
 }
 
-func (m *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
+func (u *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	var metrics []instrumentation.Metric
 
-	m.RLock()
-	for appId, count := range m.logMessageReceiveCounts {
+	u.RLock()
+	for appID, count := range u.logMessageReceiveCounts {
 		metricValue := atomic.LoadUint64(count)
 		tags := make(map[string]interface{})
-		tags["appId"] = appId
+		tags["appID"] = appID
 		metrics = append(metrics, instrumentation.Metric{Name: "logMessageReceived", Value: metricValue, Tags: tags})
 	}
 
-	metricValue := atomic.LoadUint64(m.receiveCounts[events.Envelope_LogMessage])
+	metricValue := atomic.LoadUint64(u.receiveCounts[events.Envelope_LogMessage])
 	metrics = append(metrics, instrumentation.Metric{Name: "logMessageTotal", Value: metricValue})
 
-	m.RUnlock()
+	u.RUnlock()
 
-	for eventType, counterPointer := range m.receiveCounts {
+	for eventType, counterPointer := range u.receiveCounts {
 		if eventType == events.Envelope_LogMessage {
 			continue
 		}
@@ -140,16 +140,16 @@ func (m *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 
 	metrics = append(metrics, instrumentation.Metric{
 		Name:  "unmarshalErrors",
-		Value: atomic.LoadUint64(&m.unmarshalErrorCount),
+		Value: atomic.LoadUint64(&u.unmarshalErrorCount),
 	})
 
 	return metrics
 }
 
 // Emit returns the current metrics the DropsondeMarshaller keeps about itself.
-func (m *dropsondeUnmarshaller) Emit() instrumentation.Context {
+func (u *dropsondeUnmarshaller) Emit() instrumentation.Context {
 	return instrumentation.Context{
 		Name:    "dropsondeUnmarshaller",
-		Metrics: m.metrics(),
+		Metrics: u.metrics(),
 	}
 }
