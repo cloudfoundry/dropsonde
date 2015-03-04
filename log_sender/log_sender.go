@@ -8,6 +8,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"io"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,19 +22,41 @@ type LogSender interface {
 }
 
 type logSender struct {
-	eventEmitter emitter.EventEmitter
-	logger       *gosteno.Logger
+	eventEmitter            emitter.EventEmitter
+	logger                  *gosteno.Logger
+	logMessageReceiveCounts map[string]float64
+	logMessageTotalCount    float64
+	sync.RWMutex
 }
 
 // NewLogSender instantiates a logSender with the given EventEmitter.
-func NewLogSender(eventEmitter emitter.EventEmitter, logger *gosteno.Logger) LogSender {
-	return &logSender{eventEmitter: eventEmitter, logger: logger}
+func NewLogSender(eventEmitter emitter.EventEmitter, counterEmissionInterval time.Duration, logger *gosteno.Logger) LogSender {
+	l := logSender{
+		eventEmitter:            eventEmitter,
+		logger:                  logger,
+		logMessageReceiveCounts: make(map[string]float64),
+	}
+
+	go func() {
+		ticker := time.NewTicker(counterEmissionInterval)
+		for {
+			<-ticker.C
+			l.emitCounters()
+		}
+	}()
+
+	return &l
 }
 
 // SendAppLog sends a log message with the given appid and log message
 // with a message type of std out.
 // Returns an error if one occurs while sending the event.
 func (l *logSender) SendAppLog(appId, message, sourceType, sourceInstance string) error {
+	l.Lock()
+	l.logMessageTotalCount += 1
+	l.logMessageReceiveCounts[appId] = l.logMessageReceiveCounts[appId] + 1
+	l.Unlock()
+
 	return l.eventEmitter.Emit(makeLogMessage(appId, message, sourceType, sourceInstance, events.LogMessage_OUT))
 }
 
@@ -41,6 +64,11 @@ func (l *logSender) SendAppLog(appId, message, sourceType, sourceInstance string
 // with a message type of std err.
 // Returns an error if one occurs while sending the event.
 func (l *logSender) SendAppErrorLog(appId, message, sourceType, sourceInstance string) error {
+	l.Lock()
+	l.logMessageTotalCount += 1
+	l.logMessageReceiveCounts[appId] += 1
+	l.Unlock()
+
 	return l.eventEmitter.Emit(makeLogMessage(appId, message, sourceType, sourceInstance, events.LogMessage_ERR))
 }
 
@@ -69,6 +97,23 @@ func (l *logSender) scanLogStream(appId, sourceType, sourceInstance string, send
 			l.logger.Infof("ScanLogStream: Error while reading STDOUT/STDERR for app %s/%s: %s", appId, sourceInstance, err.Error())
 		}
 		return
+	}
+}
+
+func (l *logSender) emitCounters() {
+	l.Lock()
+	defer l.Unlock()
+
+	l.eventEmitter.Emit(&events.ValueMetric{
+		Name:  proto.String("logSenderTotalMessagesRead"),
+		Value: proto.Float64(l.logMessageTotalCount),
+	})
+
+	for appID, count := range l.logMessageReceiveCounts {
+		l.eventEmitter.Emit(&events.ValueMetric{
+			Name:  proto.String("logSenderTotalMessagesRead." + appID),
+			Value: proto.Float64(count),
+		})
 	}
 }
 

@@ -34,8 +34,8 @@ import (
 var autowiredEmitter emitter.EventEmitter
 
 const (
-	runtimeStatsInterval = 10 * time.Second
-	originDelimiter      = "/"
+	statsInterval   = 10 * time.Second
+	originDelimiter = "/"
 )
 
 func init() {
@@ -87,8 +87,8 @@ func InstrumentedRoundTripper(roundTripper http.RoundTripper) http.RoundTripper 
 
 func initialize() {
 	metrics.Initialize(metric_sender.NewMetricSender(AutowiredEmitter()))
-	logs.Initialize(log_sender.NewLogSender(AutowiredEmitter(), gosteno.NewLogger("dropsonde/logs")))
-	go runtime_stats.NewRuntimeStats(autowiredEmitter, runtimeStatsInterval).Run(nil)
+	logs.Initialize(log_sender.NewLogSender(AutowiredEmitter(), statsInterval, gosteno.NewLogger("dropsonde/logs")))
+	go runtime_stats.NewRuntimeStats(autowiredEmitter, statsInterval).Run(nil)
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }
 

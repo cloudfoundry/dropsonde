@@ -6,6 +6,8 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/log_sender"
+	"github.com/gogo/protobuf/proto"
+
 	"io"
 	"strings"
 	"time"
@@ -23,7 +25,7 @@ var _ = Describe("LogSender", func() {
 
 	BeforeEach(func() {
 		emitter = fake.NewFakeEventEmitter("origin")
-		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
+		sender = log_sender.NewLogSender(emitter, 50*time.Millisecond, loggertesthelper.Logger())
 	})
 
 	AfterEach(func() {
@@ -47,6 +49,22 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetSourceInstance()).To(Equal("0"))
 			Expect(log.GetTimestamp()).ToNot(BeNil())
 		})
+
+		It("totals number of log messages sent to emitter", func() {
+			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
+			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
+
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+		})
+
+		It("counts number of log messages read per app", func() {
+			sender.SendAppLog("app-id1", "custom-log-message", "App", "0")
+			sender.SendAppLog("app-id1", "custom-log-message", "App", "0")
+			sender.SendAppLog("app-id2", "custom-log-message", "App", "0")
+
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1)}))
+		})
 	})
 
 	Describe("SendAppErrorLog", func() {
@@ -64,6 +82,35 @@ var _ = Describe("LogSender", func() {
 			Expect(log.GetTimestamp()).ToNot(BeNil())
 		})
 
+		It("totals number of log messages sent to emitter", func() {
+			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
+			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
+
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+		})
+
+		It("counts number of log messages read per app", func() {
+			sender.SendAppErrorLog("app-id1", "custom-log-message", "App", "0")
+			sender.SendAppErrorLog("app-id1", "custom-log-message", "App", "0")
+			sender.SendAppErrorLog("app-id2", "custom-log-message", "App", "0")
+
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1)}))
+		})
+	})
+
+	Describe("counter emission", func() {
+		It("emits on a timer", func() {
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(0)}))
+			Eventually(func() int { return len(emitter.GetEvents()) }).Should(BeNumerically(">", 3))
+
+			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(1)}))
+
+			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+
+		})
 	})
 
 	Context("when messages cannot be emitted", func() {
