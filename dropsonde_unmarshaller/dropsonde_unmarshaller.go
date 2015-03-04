@@ -118,7 +118,7 @@ func (u *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	for appID, count := range u.logMessageReceiveCounts {
 		metricValue := atomic.LoadUint64(count)
 		tags := make(map[string]interface{})
-		tags["appID"] = appID
+		tags["appId"] = appID
 		metrics = append(metrics, instrumentation.Metric{Name: "logMessageReceived", Value: metricValue, Tags: tags})
 	}
 
