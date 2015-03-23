@@ -39,6 +39,7 @@ func NewLogSender(eventEmitter emitter.EventEmitter, counterEmissionInterval tim
 
 	go func() {
 		ticker := time.NewTicker(counterEmissionInterval)
+		defer ticker.Stop()
 		for {
 			<-ticker.C
 			l.emitCounters()
@@ -107,12 +108,14 @@ func (l *logSender) emitCounters() {
 	l.eventEmitter.Emit(&events.ValueMetric{
 		Name:  proto.String("logSenderTotalMessagesRead"),
 		Value: proto.Float64(l.logMessageTotalCount),
+		Unit:  proto.String("count"),
 	})
 
 	for appID, count := range l.logMessageReceiveCounts {
 		l.eventEmitter.Emit(&events.ValueMetric{
 			Name:  proto.String("logSenderTotalMessagesRead." + appID),
 			Value: proto.Float64(count),
+			Unit:  proto.String("count"),
 		})
 	}
 }

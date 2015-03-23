@@ -54,7 +54,7 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
 		})
 
 		It("counts number of log messages read per app", func() {
@@ -62,8 +62,8 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppLog("app-id1", "custom-log-message", "App", "0")
 			sender.SendAppLog("app-id2", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2)}))
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2), Unit: proto.String("count")}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1), Unit: proto.String("count")}))
 		})
 	})
 
@@ -86,7 +86,7 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
 		})
 
 		It("counts number of log messages read per app", func() {
@@ -94,21 +94,21 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppErrorLog("app-id1", "custom-log-message", "App", "0")
 			sender.SendAppErrorLog("app-id2", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2)}))
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2), Unit: proto.String("count")}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1), Unit: proto.String("count")}))
 		})
 	})
 
 	Describe("counter emission", func() {
 		It("emits on a timer", func() {
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(0)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(0), Unit: proto.String("count")}))
 			Eventually(func() int { return len(emitter.GetEvents()) }).Should(BeNumerically(">", 3))
 
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(1)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(1), Unit: proto.String("count")}))
 
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2)}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
 
 		})
 	})
