@@ -57,13 +57,12 @@ func (fls *FakeLogSender) SendAppErrorLog(appId, message, sourceType, sourceInst
 func (fls *FakeLogSender) ScanLogStream(appId, sourceType, sourceInstance string, reader io.Reader) {
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
-		fls.Lock()
 		msg := scanner.Text()
 		if len(msg) == 0 {
-			fls.Unlock()
 			continue
 		}
 
+		fls.Lock()
 		fls.logs = append(fls.logs, Log{AppId: appId, SourceType: sourceType, SourceInstance: sourceInstance, MessageType: "OUT", Message: msg})
 		fls.Unlock()
 	}
@@ -73,22 +72,20 @@ func (fls *FakeLogSender) ScanErrorLogStream(appId, sourceType, sourceInstance s
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 
-		fls.Lock()
-
 		msg := scanner.Text()
 		if len(msg) == 0 {
-			fls.Unlock()
 			continue
 		}
 
+		fls.Lock()
 		fls.logs = append(fls.logs, Log{AppId: appId, SourceType: sourceType, SourceInstance: sourceInstance, MessageType: "ERR", Message: msg})
 		fls.Unlock()
 	}
 }
 
 func (fls *FakeLogSender) GetLogs() []Log {
-	fls.Lock()
-	defer fls.Unlock()
+	fls.RLock()
+	defer fls.RUnlock()
 
 	return fls.logs
 }
