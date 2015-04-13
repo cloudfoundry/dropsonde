@@ -15,6 +15,10 @@ package dropsonde
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/instrumented_handler"
@@ -25,9 +29,6 @@ import (
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/dropsonde/runtime_stats"
 	"github.com/cloudfoundry/gosteno"
-	"net/http"
-	"strings"
-	"time"
 )
 
 var autowiredEmitter emitter.EventEmitter

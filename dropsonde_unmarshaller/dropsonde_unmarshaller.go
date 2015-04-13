@@ -16,14 +16,15 @@
 package dropsonde_unmarshaller
 
 import (
+	"sync"
+	"sync/atomic"
+	"unicode"
+
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
-	"sync"
-	"sync/atomic"
-	"unicode"
 )
 
 // A DropsondeUnmarshaller is an self-instrumenting tool for converting Protocol

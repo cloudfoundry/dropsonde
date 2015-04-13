@@ -1,8 +1,9 @@
 package fake
 
 import (
-	"github.com/cloudfoundry/dropsonde/events"
 	"sync"
+
+	"github.com/cloudfoundry/dropsonde/events"
 )
 
 type envelope struct {

@@ -2,6 +2,7 @@ package integration_test
 
 import (
 	"fmt"
+
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
@@ -11,13 +12,14 @@ import (
 	"github.com/gogo/protobuf/proto"
 	uuid "github.com/nu7hatch/gouuid"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 // these tests need to be invoked individually from an external script,

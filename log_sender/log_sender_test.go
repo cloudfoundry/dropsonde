@@ -3,6 +3,7 @@ package log_sender_test
 import (
 	"bytes"
 	"errors"
+
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/log_sender"

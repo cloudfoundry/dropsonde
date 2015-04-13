@@ -3,6 +3,7 @@ package signature_test
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+
 	"github.com/cloudfoundry/dropsonde/signature"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation/testhelpers"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"

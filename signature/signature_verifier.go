@@ -8,9 +8,10 @@ package signature
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"sync/atomic"
+
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
-	"sync/atomic"
 )
 
 const SIGNATURE_LENGTH = 32
