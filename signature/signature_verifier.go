@@ -59,9 +59,8 @@ func (v *signatureVerifier) Run(inputChan <-chan []byte, outputChan chan<- []byt
 		if v.verifyMessage(message, signature) {
 			outputChan <- message
 			incrementCount(&v.validSignatureCount)
-			v.logger.Debugf("signatureVerifier: valid signature %v for message %v", signature, message)
 		} else {
-			v.logger.Warnf("signatureVerifier: invalid signature %v for message %v", signature, message)
+			v.logger.Warnf("signatureVerifier: invalid signature for message %v", message)
 			incrementCount(&v.invalidSignatureErrorCount)
 		}
 	}
