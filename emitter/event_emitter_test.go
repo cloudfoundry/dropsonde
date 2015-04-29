@@ -5,7 +5,6 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
-	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,8 +37,8 @@ var _ = Describe("EventEmitter", func() {
 			Expect(innerEmitter.GetMessages()).To(HaveLen(1))
 			msg := innerEmitter.GetMessages()[0]
 
-			var envelope events.Envelope
-			err = proto.Unmarshal(msg, &envelope)
+			envelope := &events.Envelope{}
+			err = envelope.Unmarshal(msg)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
 		})

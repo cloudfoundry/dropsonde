@@ -31,14 +31,19 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				EventType: events.Envelope_Heartbeat.Enum(),
 				Heartbeat: factories.NewHeartbeat(1, 2, 3),
 			}
-			message, _ := proto.Marshal(input)
+			message, _ := input.Marshal()
 
 			output, _ := unmarshaller.UnmarshallMessage(message)
 
 			Expect(output).To(Equal(input))
 		})
+
 		It("handles bad input gracefully", func() {
 			output, err := unmarshaller.UnmarshallMessage(make([]byte, 4))
+			Expect(output).To(BeNil())
+			Expect(err).To(Equal(proto.NewRequiredNotSetError("origin")))
+
+			output, err = unmarshaller.UnmarshallMessage([]byte("hello"))
 			Expect(output).To(BeNil())
 			Expect(err).To(HaveOccurred())
 		})
@@ -69,7 +74,7 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				EventType: events.Envelope_Heartbeat.Enum(),
 				Heartbeat: factories.NewHeartbeat(1, 2, 3),
 			}
-			message, _ := proto.Marshal(envelope)
+			message, _ := envelope.Marshal()
 
 			inputChan <- message
 			outputEnvelope := <-outputChan
@@ -104,7 +109,7 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				EventType: events.Envelope_Heartbeat.Enum(),
 				Heartbeat: factories.NewHeartbeat(1, 2, 3),
 			}
-			message, _ := proto.Marshal(envelope)
+			message, _ := envelope.Marshal()
 
 			inputChan <- message
 			testhelpers.EventuallyExpectMetric(unmarshaller, "heartbeatReceived", 1)
@@ -123,8 +128,8 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 2", "fake-app-id-2", "DEA"),
 			}
 
-			message1, _ := proto.Marshal(envelope1)
-			message2, _ := proto.Marshal(envelope2)
+			message1, _ := envelope1.Marshal()
+			message2, _ := envelope2.Marshal()
 
 			inputChan <- message1
 			inputChan <- message1
@@ -152,8 +157,8 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 2", "fake-app-id-2", "DEA"),
 			}
 
-			message1, _ := proto.Marshal(envelope1)
-			message2, _ := proto.Marshal(envelope2)
+			message1, _ := envelope1.Marshal()
+			message2, _ := envelope2.Marshal()
 
 			inputChan <- message1
 			inputChan <- message1
@@ -177,8 +182,8 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 2", "fake-app-id-2", "DEA"),
 			}
 
-			message1, _ := proto.Marshal(envelope1)
-			message2, _ := proto.Marshal(envelope2)
+			message1, _ := envelope1.Marshal()
+			message2, _ := envelope2.Marshal()
 
 			inputChan <- message1
 			inputChan <- message1

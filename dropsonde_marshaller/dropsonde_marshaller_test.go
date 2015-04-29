@@ -42,7 +42,7 @@ var _ = Describe("DropsondeMarshaller", func() {
 			EventType: events.Envelope_Heartbeat.Enum(),
 			Heartbeat: factories.NewHeartbeat(1, 2, 3),
 		}
-		message, _ := proto.Marshal(envelope)
+		message, _ := envelope.Marshal()
 
 		inputChan <- envelope
 		outputMessage := <-outputChan

@@ -24,7 +24,6 @@ import (
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/gogo/protobuf/proto"
 )
 
 // A DropsondeUnmarshaller is an self-instrumenting tool for converting Protocol
@@ -74,7 +73,7 @@ func (u *dropsondeUnmarshaller) Run(inputChan <-chan []byte, outputChan chan<- *
 
 func (u *dropsondeUnmarshaller) UnmarshallMessage(message []byte) (*events.Envelope, error) {
 	envelope := &events.Envelope{}
-	err := proto.Unmarshal(message, envelope)
+	err := envelope.Unmarshal(message)
 	if err != nil {
 		u.logger.Debugf("dropsondeUnmarshaller: unmarshal error %v for message %v", err, message)
 		incrementCount(&u.unmarshalErrorCount)

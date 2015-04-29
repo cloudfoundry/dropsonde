@@ -4,7 +4,6 @@ import (
 	"net"
 
 	"github.com/cloudfoundry/dropsonde/control"
-	"github.com/gogo/protobuf/proto"
 )
 
 type udpEmitter struct {
@@ -49,7 +48,7 @@ func (e *udpEmitter) ListenForHeartbeatRequest(responder func(*control.ControlMe
 		}
 
 		controlMessage := &control.ControlMessage{}
-		err = proto.Unmarshal(buf[:n], controlMessage)
+		err = controlMessage.Unmarshal(buf[:n])
 		if err != nil {
 			return err
 		}

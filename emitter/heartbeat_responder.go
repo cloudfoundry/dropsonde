@@ -7,7 +7,6 @@ import (
 
 	"github.com/cloudfoundry/dropsonde/control"
 	"github.com/cloudfoundry/dropsonde/events"
-	"github.com/gogo/protobuf/proto"
 )
 
 type heartbeatResponder struct {
@@ -60,7 +59,7 @@ func (e *heartbeatResponder) Respond(controlMessage *control.ControlMessage) {
 		return
 	}
 
-	hbData, err := proto.Marshal(hbEnvelope)
+	hbData, err := hbEnvelope.Marshal()
 	if err != nil {
 		log.Printf("Failed to marshal heartbeat event: %v\n", err)
 		return

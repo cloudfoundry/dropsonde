@@ -176,7 +176,7 @@ var _ = Describe("UdpEmitter", func() {
 })
 
 func sendHeartbeatRequest(addr net.Addr, message *control.ControlMessage) {
-	encodedMessage, _ := proto.Marshal(message)
+	encodedMessage, _ := message.Marshal()
 	conn, _ := net.ListenPacket("udp4", "")
 	conn.WriteTo(encodedMessage, addr)
 }

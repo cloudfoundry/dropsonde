@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cloudfoundry/dropsonde/events"
-	"github.com/gogo/protobuf/proto"
 )
 
 type EventEmitter interface {
@@ -27,7 +26,7 @@ func (e *eventEmitter) Emit(event events.Event) error {
 		return fmt.Errorf("Wrap: %v", err)
 	}
 
-	data, err := proto.Marshal(envelope)
+	data, err := envelope.Marshal()
 	if err != nil {
 		return fmt.Errorf("Marshal: %v", err)
 	}
