@@ -44,7 +44,7 @@ var _ = Describe("Autowire End-to-End", func() {
 
 			lock := sync.RWMutex{}
 			heartbeatRequest := newHeartbeatRequest()
-			marshalledHeartbeatRequest, _ := heartbeatRequest.Marshal()
+			marshalledHeartbeatRequest, _ := proto.Marshal(heartbeatRequest)
 
 			requestedHeartbeat := false
 			go func() {
@@ -66,7 +66,7 @@ var _ = Describe("Autowire End-to-End", func() {
 						panic("Received empty packet")
 					}
 					envelope := new(events.Envelope)
-					err = envelope.Unmarshal(buffer[0:n])
+					err = proto.Unmarshal(buffer[0:n], envelope)
 					if err != nil {
 						panic(err)
 					}

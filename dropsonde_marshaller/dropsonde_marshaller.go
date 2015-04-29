@@ -23,6 +23,7 @@ import (
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/gogo/protobuf/proto"
 )
 
 // A DropsondeMarshaller is an self-instrumenting tool for converting dropsonde
@@ -58,7 +59,7 @@ type dropsondeMarshaller struct {
 func (u *dropsondeMarshaller) Run(inputChan <-chan *events.Envelope, outputChan chan<- []byte) {
 	for message := range inputChan {
 
-		messageBytes, err := message.Marshal()
+		messageBytes, err := proto.Marshal(message)
 		if err != nil {
 			u.logger.Errorf("dropsondeMarshaller: marshal error %v for message %v", err, message)
 			incrementCount(&u.marshalErrorCount)

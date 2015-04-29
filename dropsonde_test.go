@@ -47,7 +47,7 @@ var _ = Describe("Autowire", func() {
 				bytes := make([]byte, 65000)
 				Eventually(messages, 5).Should(Receive(&bytes))
 				message := &events.Envelope{}
-				message.Unmarshal(bytes)
+				proto.Unmarshal(bytes, message)
 				Expect(message.GetOrigin()).To(Equal("cf/metron"))
 			})
 		})
@@ -103,7 +103,7 @@ func newMarshalledHeartbeatRequest() []byte {
 		ControlType: control.ControlMessage_HeartbeatRequest.Enum(),
 	}
 
-	bytes, err := heartbeatRequest.Marshal()
+	bytes, err := proto.Marshal(heartbeatRequest)
 	if err != nil {
 		panic(err.Error())
 	}

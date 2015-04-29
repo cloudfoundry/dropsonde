@@ -72,7 +72,7 @@ var _ = Describe("HeartbeatResponder", func() {
 
 			message := wrappedEmitter.GetMessages()[1]
 			hbEnvelope := &events.Envelope{}
-			err := hbEnvelope.Unmarshal(message)
+			err := proto.Unmarshal(message, hbEnvelope)
 			Expect(err).NotTo(HaveOccurred())
 
 			hbEvent := hbEnvelope.GetHeartbeat()
@@ -120,8 +120,8 @@ var _ = Describe("HeartbeatResponder", func() {
 			Expect(wrappedEmitter.GetMessages()).To(HaveLen(1))
 			hbBytes := wrappedEmitter.GetMessages()[0]
 
-			heartbeat := &events.Envelope{}
-			err := heartbeat.Unmarshal(hbBytes)
+			var heartbeat events.Envelope
+			err := proto.Unmarshal(hbBytes, &heartbeat)
 			Expect(err).NotTo(HaveOccurred())
 
 			heartbeatUuid := heartbeatRequest.GetIdentifier().String()
