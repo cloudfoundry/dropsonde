@@ -1,6 +1,8 @@
 package dropsonde_unmarshaller
 
 import (
+	metricNames "github.com/cloudfoundry/dropsonde/metrics"
+
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
@@ -62,8 +64,6 @@ func (u *dropsondeUnmarshallerCollection) Emit() instrumentation.Context {
 
 func (u *dropsondeUnmarshallerCollection) metrics() []instrumentation.Metric {
 	var internalMetrics []instrumentation.Metric
-	var metrics []instrumentation.Metric
-
 	for _, u := range u.unmarshallers {
 		internalMetrics = append(internalMetrics, u.Emit().Metrics...)
 	}
@@ -74,41 +74,44 @@ func (u *dropsondeUnmarshallerCollection) metrics() []instrumentation.Metric {
 		metricsByName[metric.Name] = append(metricsEntry, metric)
 	}
 
-	concatTotalLogMessages(&metricsByName, &metrics)
-	concatLogMessagesReceivedPerApp(&metricsByName, &metrics)
-	concatOtherEventTypes(&metricsByName, &metrics)
+	var metrics []instrumentation.Metric
+	metrics = concatTotalLogMessages(metricsByName, metrics)
+	metrics = concatLogMessagesReceivedPerApp(metricsByName, metrics)
+	metrics = concatOtherEventTypes(metricsByName, metrics)
 
 	return metrics
 }
 
-func concatTotalLogMessages(metricsByName *map[string][]instrumentation.Metric, metrics *[]instrumentation.Metric) {
+func concatTotalLogMessages(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	totalLogs := uint64(0)
-	for _, metric := range (*metricsByName)["logMessageTotal"] {
+	for _, metric := range metricsByName[metricNames.LogMessageTotal] {
 		totalLogs += metric.Value.(uint64)
 	}
 
-	*metrics = append(*metrics, instrumentation.Metric{Name: "logMessageTotal", Value: totalLogs})
+	return append(metrics, instrumentation.Metric{Name: metricNames.LogMessageTotal, Value: totalLogs})
 }
 
-func concatLogMessagesReceivedPerApp(metricsByName *map[string][]instrumentation.Metric, metrics *[]instrumentation.Metric) {
+func concatLogMessagesReceivedPerApp(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	logsReceivedPerApp := make(map[string]uint64)
-	for _, metric := range (*metricsByName)["logMessageReceived"] {
-		appId := metric.Tags["appId"].(string)
+	for _, metric := range metricsByName[metricNames.LogMessageReceived] {
+		appId := metric.Tags[metricNames.AppIdTag].(string)
 		logsReceivedPerApp[appId] += metric.Value.(uint64)
 	}
 
 	for appId, count := range logsReceivedPerApp {
 		tags := make(map[string]interface{})
-		tags["appId"] = appId
-		*metrics = append(*metrics, instrumentation.Metric{Name: "logMessageReceived", Value: count, Tags: tags})
+		tags[metricNames.AppIdTag] = appId
+		metrics = append(metrics, instrumentation.Metric{Name: metricNames.LogMessageReceived, Value: count, Tags: tags})
 	}
+
+	return metrics
 }
 
-func concatOtherEventTypes(metricsByName *map[string][]instrumentation.Metric, metrics *[]instrumentation.Metric) {
+func concatOtherEventTypes(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	metricsByEventType := make(map[string]uint64)
 
-	for eventType, eventTypeMetrics := range *metricsByName {
-		if eventType == "logMessageTotal" || eventType == "logMessageReceived" {
+	for eventType, eventTypeMetrics := range metricsByName {
+		if eventType == metricNames.LogMessageTotal || eventType == metricNames.LogMessageReceived {
 			continue
 		}
 
@@ -118,6 +121,8 @@ func concatOtherEventTypes(metricsByName *map[string][]instrumentation.Metric, m
 	}
 
 	for eventType, count := range metricsByEventType {
-		*metrics = append(*metrics, instrumentation.Metric{Name: eventType, Value: count})
+		metrics = append(metrics, instrumentation.Metric{Name: eventType, Value: count})
 	}
+
+	return metrics
 }
