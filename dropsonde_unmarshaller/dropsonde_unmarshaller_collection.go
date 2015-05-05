@@ -45,10 +45,10 @@ func (u *dropsondeUnmarshallerCollection) Size() int {
 // This is done in separate go routines.
 func (u *dropsondeUnmarshallerCollection) Run(inputChan <-chan []byte, outputChan chan<- *events.Envelope, waitGroup *sync.WaitGroup) {
 	for _, unmarshaller := range u.unmarshallers {
-		go func() {
+		go func(um DropsondeUnmarshaller) {
 			defer waitGroup.Done()
-			unmarshaller.Run(inputChan, outputChan)
-		}()
+			um.Run(inputChan, outputChan)
+		}(unmarshaller)
 	}
 }
 
