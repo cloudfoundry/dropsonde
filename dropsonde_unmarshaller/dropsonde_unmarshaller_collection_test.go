@@ -19,13 +19,13 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 		inputChan  chan []byte
 		outputChan chan *events.Envelope
 		collection dropsonde_unmarshaller.DropsondeUnmarshallerCollection
-		waitGroup  sync.WaitGroup
+		waitGroup  *sync.WaitGroup
 	)
 	BeforeEach(func() {
 		inputChan = make(chan []byte, 10)
 		outputChan = make(chan *events.Envelope, 10)
 		collection = dropsonde_unmarshaller.NewDropsondeUnmarshallerCollection(loggertesthelper.Logger(), 5)
-		waitGroup = sync.WaitGroup{}
+		waitGroup = &sync.WaitGroup{}
 	})
 
 	Context("DropsondeUnmarshallerCollection", func() {
