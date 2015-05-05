@@ -16,7 +16,6 @@
 package dropsonde_unmarshaller
 
 import (
-	metricNames "github.com/cloudfoundry/dropsonde/metrics"
 	"sync"
 	"sync/atomic"
 	"unicode"
@@ -120,12 +119,12 @@ func (u *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	for appID, count := range u.logMessageReceiveCounts {
 		metricValue := atomic.LoadUint64(count)
 		tags := make(map[string]interface{})
-		tags[metricNames.AppIdTag] = appID
-		metrics = append(metrics, instrumentation.Metric{Name: metricNames.LogMessageReceived, Value: metricValue, Tags: tags})
+		tags[appIdTag] = appID
+		metrics = append(metrics, instrumentation.Metric{Name: logMessageReceived, Value: metricValue, Tags: tags})
 	}
 
 	metricValue := atomic.LoadUint64(u.receiveCounts[events.Envelope_LogMessage])
-	metrics = append(metrics, instrumentation.Metric{Name: metricNames.LogMessageTotal, Value: metricValue})
+	metrics = append(metrics, instrumentation.Metric{Name: logMessageTotal, Value: metricValue})
 
 	u.RUnlock()
 
@@ -141,7 +140,7 @@ func (u *dropsondeUnmarshaller) metrics() []instrumentation.Metric {
 	}
 
 	metrics = append(metrics, instrumentation.Metric{
-		Name:  metricNames.UnmarshalErrors,
+		Name:  unmarshalErrors,
 		Value: atomic.LoadUint64(&u.unmarshalErrorCount),
 	})
 

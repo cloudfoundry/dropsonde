@@ -1,8 +1,6 @@
 package dropsonde_unmarshaller
 
 import (
-	metricNames "github.com/cloudfoundry/dropsonde/metrics"
-
 	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
@@ -84,24 +82,24 @@ func (u *dropsondeUnmarshallerCollection) metrics() []instrumentation.Metric {
 
 func concatTotalLogMessages(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	totalLogs := uint64(0)
-	for _, metric := range metricsByName[metricNames.LogMessageTotal] {
+	for _, metric := range metricsByName[logMessageTotal] {
 		totalLogs += metric.Value.(uint64)
 	}
 
-	return append(metrics, instrumentation.Metric{Name: metricNames.LogMessageTotal, Value: totalLogs})
+	return append(metrics, instrumentation.Metric{Name: logMessageTotal, Value: totalLogs})
 }
 
 func concatLogMessagesReceivedPerApp(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	logsReceivedPerApp := make(map[string]uint64)
-	for _, metric := range metricsByName[metricNames.LogMessageReceived] {
-		appId := metric.Tags[metricNames.AppIdTag].(string)
+	for _, metric := range metricsByName[logMessageReceived] {
+		appId := metric.Tags[appIdTag].(string)
 		logsReceivedPerApp[appId] += metric.Value.(uint64)
 	}
 
 	for appId, count := range logsReceivedPerApp {
 		tags := make(map[string]interface{})
-		tags[metricNames.AppIdTag] = appId
-		metrics = append(metrics, instrumentation.Metric{Name: metricNames.LogMessageReceived, Value: count, Tags: tags})
+		tags[appIdTag] = appId
+		metrics = append(metrics, instrumentation.Metric{Name: logMessageReceived, Value: count, Tags: tags})
 	}
 
 	return metrics
@@ -111,7 +109,7 @@ func concatOtherEventTypes(metricsByName map[string][]instrumentation.Metric, me
 	metricsByEventType := make(map[string]uint64)
 
 	for eventType, eventTypeMetrics := range metricsByName {
-		if eventType == metricNames.LogMessageTotal || eventType == metricNames.LogMessageReceived {
+		if eventType == logMessageTotal || eventType == logMessageReceived {
 			continue
 		}
 
