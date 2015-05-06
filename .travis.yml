@@ -7,8 +7,8 @@ before_install:
 
 - go get github.com/mattn/goveralls
 - pushd $HOME/gopath
-- mkdir -p src/github.com/
-- cd src/github.com
+- mkdir -p src/github.com/onsi
+- cd src/github.com/onsi
 - git clone --branch v1.1.1 https://github.com/onsi/ginkgo/
 - cd ginkgo/ginkgo
 - go install
