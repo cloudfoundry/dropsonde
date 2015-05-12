@@ -109,15 +109,6 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 			for _, m := range metrics {
 				metricsNameMap[m.Name]++
 			}
-
-			Expect(metricsNameMap["logMessageReceived"]).To(Equal(5))
-			for _, metric := range metrics {
-				if metric.Name == "logMessageReceived" {
-					Expect(metric.Value.(uint64)).To(Equal(uint64(5)))
-					Expect(len(metric.Tags)).To(Equal(1))
-					Expect(metric.Tags["appId"]).To(ContainSubstring("fake-app-id"))
-				}
-			}
 		})
 
 		It("emits event type metrics concatenated from the different unmarshallers", func() {

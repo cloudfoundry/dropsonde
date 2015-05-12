@@ -110,35 +110,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			testhelpers.EventuallyExpectMetric(unmarshaller, "heartbeatReceived", 1)
 		})
 
-		It("emits a log message counter tagged with app id", func() {
-			envelope1 := &events.Envelope{
-				Origin:     proto.String("fake-origin-3"),
-				EventType:  events.Envelope_LogMessage.Enum(),
-				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 1", "fake-app-id-1", "DEA"),
-			}
-
-			envelope2 := &events.Envelope{
-				Origin:     proto.String("fake-origin-3"),
-				EventType:  events.Envelope_LogMessage.Enum(),
-				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 2", "fake-app-id-2", "DEA"),
-			}
-
-			message1, _ := proto.Marshal(envelope1)
-			message2, _ := proto.Marshal(envelope2)
-
-			inputChan <- message1
-			inputChan <- message1
-			inputChan <- message2
-
-			Eventually(func() uint64 {
-				return getLogMessageCountByAppId(unmarshaller, "fake-app-id-1")
-			}).Should(BeNumerically("==", 2))
-
-			Eventually(func() uint64 {
-				return getLogMessageCountByAppId(unmarshaller, "fake-app-id-2")
-			}).Should(BeNumerically("==", 1))
-		})
-
 		It("emits a total log message counter", func() {
 			envelope1 := &events.Envelope{
 				Origin:     proto.String("fake-origin-3"),
@@ -188,14 +159,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				return getTotalLogMessageCount(unmarshaller)
 			}).Should(BeNumerically("==", 3))
 
-			var totalFromApps uint64
-			for _, metric := range unmarshaller.Emit().Metrics {
-				if metric.Name == "logMessageReceived" {
-					totalFromApps += metric.Value.(uint64)
-				}
-			}
-
-			Expect(totalFromApps).To(BeNumerically("==", 3))
 		})
 
 		It("emits an unmarshal error counter", func() {
@@ -205,16 +168,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 	})
 })
 
-func getLogMessageCountByAppId(instrumentable instrumentation.Instrumentable, appId string) uint64 {
-	for _, metric := range instrumentable.Emit().Metrics {
-		if metric.Name == "logMessageReceived" {
-			if metric.Tags["appId"] == appId {
-				return metric.Value.(uint64)
-			}
-		}
-	}
-	return uint64(0)
-}
 
 func getTotalLogMessageCount(instrumentable instrumentation.Instrumentable) uint64 {
 	for _, metric := range instrumentable.Emit().Metrics {

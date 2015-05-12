@@ -74,7 +74,6 @@ func (u *dropsondeUnmarshallerCollection) metrics() []instrumentation.Metric {
 
 	var metrics []instrumentation.Metric
 	metrics = concatTotalLogMessages(metricsByName, metrics)
-	metrics = concatLogMessagesReceivedPerApp(metricsByName, metrics)
 	metrics = concatOtherEventTypes(metricsByName, metrics)
 
 	return metrics
@@ -89,27 +88,11 @@ func concatTotalLogMessages(metricsByName map[string][]instrumentation.Metric, m
 	return append(metrics, instrumentation.Metric{Name: logMessageTotal, Value: totalLogs})
 }
 
-func concatLogMessagesReceivedPerApp(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
-	logsReceivedPerApp := make(map[string]uint64)
-	for _, metric := range metricsByName[logMessageReceived] {
-		appId := metric.Tags[appIdTag].(string)
-		logsReceivedPerApp[appId] += metric.Value.(uint64)
-	}
-
-	for appId, count := range logsReceivedPerApp {
-		tags := make(map[string]interface{})
-		tags[appIdTag] = appId
-		metrics = append(metrics, instrumentation.Metric{Name: logMessageReceived, Value: count, Tags: tags})
-	}
-
-	return metrics
-}
-
 func concatOtherEventTypes(metricsByName map[string][]instrumentation.Metric, metrics []instrumentation.Metric) []instrumentation.Metric {
 	metricsByEventType := make(map[string]uint64)
 
 	for eventType, eventTypeMetrics := range metricsByName {
-		if eventType == logMessageTotal || eventType == logMessageReceived {
+		if eventType == logMessageTotal {
 			continue
 		}
 

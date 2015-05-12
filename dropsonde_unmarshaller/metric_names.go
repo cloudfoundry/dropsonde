@@ -1,7 +1,6 @@
 package dropsonde_unmarshaller
 
 const (
-	logMessageReceived = "logMessageReceived"
 	logMessageTotal = "logMessageTotal"
 	unmarshalErrors = "unmarshalErrors"
 )
