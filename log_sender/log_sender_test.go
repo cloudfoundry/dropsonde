@@ -41,8 +41,8 @@ var _ = Describe("LogSender", func() {
 			err := sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(emitter.Messages).To(HaveLen(1))
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(emitter.GetMessages()).To(HaveLen(1))
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 			Expect(log.GetMessage()).To(BeEquivalentTo("custom-log-message"))
 			Expect(log.GetAppId()).To(Equal("app-id"))
@@ -73,8 +73,8 @@ var _ = Describe("LogSender", func() {
 			err := sender.SendAppErrorLog("app-id", "custom-log-error-message", "App", "0")
 			Expect(err).NotTo(HaveOccurred())
 
-			Expect(emitter.Messages).To(HaveLen(1))
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			Expect(emitter.GetMessages()).To(HaveLen(1))
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 			Expect(log.GetMessage()).To(BeEquivalentTo("custom-log-error-message"))
 			Expect(log.GetAppId()).To(Equal("app-id"))
@@ -146,14 +146,14 @@ var _ = Describe("LogSender", func() {
 			messages := emitter.GetMessages()
 			Expect(messages).To(HaveLen(2))
 
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 			Expect(log.GetAppId()).To(Equal("someId"))
 			Expect(log.GetSourceType()).To(Equal("app"))
 			Expect(log.GetSourceInstance()).To(Equal("0"))
 
-			log = emitter.Messages[1].Event.(*events.LogMessage)
+			log = emitter.GetMessages()[1].Event.(*events.LogMessage)
 			Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 		})
@@ -165,7 +165,7 @@ var _ = Describe("LogSender", func() {
 			messages := emitter.GetMessages()
 			Expect(messages).To(HaveLen(1))
 
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_OUT))
 			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
@@ -232,14 +232,14 @@ var _ = Describe("LogSender", func() {
 			messages := emitter.GetMessages()
 			Expect(messages).To(HaveLen(2))
 
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessage()).To(BeEquivalentTo("line 1"))
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 			Expect(log.GetAppId()).To(Equal("someId"))
 			Expect(log.GetSourceType()).To(Equal("app"))
 			Expect(log.GetSourceInstance()).To(Equal("0"))
 
-			log = emitter.Messages[1].Event.(*events.LogMessage)
+			log = emitter.GetMessages()[1].Event.(*events.LogMessage)
 			Expect(log.GetMessage()).To(BeEquivalentTo("line 2"))
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 		})
@@ -251,7 +251,7 @@ var _ = Describe("LogSender", func() {
 			messages := emitter.GetMessages()
 			Expect(messages).To(HaveLen(1))
 
-			log := emitter.Messages[0].Event.(*events.LogMessage)
+			log := emitter.GetMessages()[0].Event.(*events.LogMessage)
 			Expect(log.GetMessageType()).To(Equal(events.LogMessage_ERR))
 			Expect(log.GetMessage()).To(BeEquivalentTo("one"))
 
