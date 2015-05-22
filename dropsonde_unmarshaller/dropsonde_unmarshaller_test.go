@@ -168,7 +168,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 	})
 })
 
-
 func getTotalLogMessageCount(instrumentable instrumentation.Instrumentable) uint64 {
 	for _, metric := range instrumentable.Emit().Metrics {
 		if metric.Name == "logMessageTotal" {
