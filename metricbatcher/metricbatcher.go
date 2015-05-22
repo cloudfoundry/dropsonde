@@ -28,7 +28,7 @@ func New(metricSender metric_sender.MetricSender, batchDuration time.Duration) *
 			for name, delta := range mb.metrics {
 				metricSender.AddToCounter(name, delta)
 			}
-			mb.metrics = make(map[string]uint64, len(mb.metrics))
+			mb.unsafeReset()
 
 			mb.lock.Unlock()
 		}
@@ -46,4 +46,15 @@ func (mb *MetricBatcher) BatchAddCounter(name string, delta uint64) {
 	defer mb.lock.Unlock()
 
 	mb.metrics[name] += delta
+}
+
+func (mb *MetricBatcher) Reset() {
+    mb.lock.Lock()
+    defer mb.lock.Unlock()
+
+    mb.unsafeReset()
+}
+
+func (mb *MetricBatcher) unsafeReset() {
+    mb.metrics = make(map[string]uint64, len(mb.metrics))
 }
