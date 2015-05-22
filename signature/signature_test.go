@@ -4,26 +4,32 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 
+	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/signature"
-	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation/testhelpers"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
+	"github.com/gogo/protobuf/proto"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("SignatureVerifier", func() {
+
+var _ = Describe("Verifier", func() {
 	var (
 		inputChan         chan []byte
 		outputChan        chan []byte
 		runComplete       chan struct{}
-		signatureVerifier signature.SignatureVerifier
+
+		signatureVerifier *signature.Verifier
 	)
 
 	BeforeEach(func() {
 		inputChan = make(chan []byte, 10)
 		outputChan = make(chan []byte, 10)
 		runComplete = make(chan struct{})
-		signatureVerifier = signature.NewSignatureVerifier(loggertesthelper.Logger(), "valid-secret")
+
+		signatureVerifier = signature.NewVerifier(loggertesthelper.Logger(), "valid-secret")
+
 
 		go func() {
 			signatureVerifier.Run(inputChan, outputChan)
@@ -75,18 +81,29 @@ var _ = Describe("SignatureVerifier", func() {
 	})
 
 	Context("metrics", func() {
-		It("emits the correct metrics context", func() {
-			Expect(signatureVerifier.Emit().Name).To(Equal("signatureVerifier"))
+
+		BeforeEach(func() {
+			fakeEventEmitter.Reset()
+			metricBatcher.Reset()
 		})
 
 		It("emits a missing signature error counter", func() {
 			inputChan <- []byte{1, 2, 3}
-			testhelpers.EventuallyExpectMetric(signatureVerifier, "missingSignatureErrors", 1)
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("signatureVerifier.missingSignatureErrors"),
+				Delta: proto.Uint64(1),
+			}))
 		})
 
 		It("emits an invalid signature error counter", func() {
 			inputChan <- make([]byte, 32)
-			testhelpers.EventuallyExpectMetric(signatureVerifier, "invalidSignatureErrors", 1)
+
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("signatureVerifier.invalidSignatureErrors"),
+				Delta: proto.Uint64(1),
+			}))
 		})
 
 		It("emits an valid signature counter", func() {
@@ -97,7 +114,12 @@ var _ = Describe("SignatureVerifier", func() {
 
 			signedMessage := append(signature, message...)
 			inputChan <- signedMessage
-			testhelpers.EventuallyExpectMetric(signatureVerifier, "validSignatures", 1)
+
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("signatureVerifier.validSignatures"),
+				Delta: proto.Uint64(1),
+			}))
 		})
 	})
 })
