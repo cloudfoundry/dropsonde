@@ -57,15 +57,6 @@ var _ = Describe("LogSender", func() {
 
 			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
 		})
-
-		It("counts number of log messages read per app", func() {
-			sender.SendAppLog("app-id1", "custom-log-message", "App", "0")
-			sender.SendAppLog("app-id1", "custom-log-message", "App", "0")
-			sender.SendAppLog("app-id2", "custom-log-message", "App", "0")
-
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2), Unit: proto.String("count")}))
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1), Unit: proto.String("count")}))
-		})
 	})
 
 	Describe("SendAppErrorLog", func() {
@@ -88,15 +79,6 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 
 			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
-		})
-
-		It("counts number of log messages read per app", func() {
-			sender.SendAppErrorLog("app-id1", "custom-log-message", "App", "0")
-			sender.SendAppErrorLog("app-id1", "custom-log-message", "App", "0")
-			sender.SendAppErrorLog("app-id2", "custom-log-message", "App", "0")
-
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id1"), Value: proto.Float64(2), Unit: proto.String("count")}))
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead.app-id2"), Value: proto.Float64(1), Unit: proto.String("count")}))
 		})
 	})
 
