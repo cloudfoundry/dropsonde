@@ -21,10 +21,10 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 		unmarshaller dropsonde_unmarshaller.DropsondeUnmarshaller
 	)
 
-    BeforeEach(func() {
-        fakeEventEmitter.Reset()
-        metricBatcher.Reset()
-    })
+	BeforeEach(func() {
+		fakeEventEmitter.Reset()
+		metricBatcher.Reset()
+	})
 
 	Context("UnmarshallMessage", func() {
 		BeforeEach(func() {
@@ -117,11 +117,11 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			inputChan <- message
 			testhelpers.EventuallyExpectMetric(unmarshaller, "heartbeatReceived", 1)
 
-            Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-            Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-                Name: proto.String("dropsondeUnmarshaller.heartbeatReceived"),
-                Delta: proto.Uint64(1),
-            }))
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("dropsondeUnmarshaller.heartbeatReceived"),
+				Delta: proto.Uint64(1),
+			}))
 		})
 
 		It("emits a total log message counter", func() {
@@ -148,11 +148,11 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				return getTotalLogMessageCount(unmarshaller)
 			}).Should(BeNumerically("==", 3))
 
-            Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-            Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-                Name: proto.String("dropsondeUnmarshaller.logMessageTotal"),
-                Delta: proto.Uint64(3),
-            }))
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
+				Delta: proto.Uint64(3),
+			}))
 		})
 
 		It("has consistency between total log message counter and per-app counters", func() {
@@ -179,22 +179,22 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				return getTotalLogMessageCount(unmarshaller)
 			}).Should(BeNumerically("==", 3))
 
-            Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-            Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-                Name: proto.String("dropsondeUnmarshaller.logMessageTotal"),
-                Delta: proto.Uint64(3),
-            }))
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
+				Delta: proto.Uint64(3),
+			}))
 		})
 
 		It("emits an unmarshal error counter", func() {
 			inputChan <- []byte{1, 2, 3}
 			testhelpers.EventuallyExpectMetric(unmarshaller, "unmarshalErrors", 1)
 
-            Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-            Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-                Name: proto.String("dropsondeUnmarshaller.unmarshalErrors"),
-                Delta: proto.Uint64(1),
-            }))
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("dropsondeUnmarshaller.unmarshalErrors"),
+				Delta: proto.Uint64(1),
+			}))
 		})
 	})
 })

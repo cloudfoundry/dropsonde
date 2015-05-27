@@ -103,15 +103,15 @@ var _ = Describe("MetricBatcher", func() {
 		})
 	})
 
-    Describe("Reset", func() {
-        It("cancels any scheduled counter emission", func() {
-            metricBatcher.BatchAddCounter("count1", 2)
-            metricBatcher.BatchIncrementCounter("count1")
+	Describe("Reset", func() {
+		It("cancels any scheduled counter emission", func() {
+			metricBatcher.BatchAddCounter("count1", 2)
+			metricBatcher.BatchIncrementCounter("count1")
 
-            metricBatcher.Reset()
+			metricBatcher.Reset()
 
-            Consistently(func() uint64 { return fakeMetricSender.GetCounter("count1") }).Should(BeZero())
-        })
-    })
+			Consistently(func() uint64 { return fakeMetricSender.GetCounter("count1") }).Should(BeZero())
+		})
+	})
 
 })

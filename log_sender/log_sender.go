@@ -23,17 +23,17 @@ type LogSender interface {
 }
 
 type logSender struct {
-	eventEmitter            emitter.EventEmitter
-	logger                  *gosteno.Logger
-	logMessageTotalCount    float64
+	eventEmitter         emitter.EventEmitter
+	logger               *gosteno.Logger
+	logMessageTotalCount float64
 	sync.RWMutex
 }
 
 // NewLogSender instantiates a logSender with the given EventEmitter.
 func NewLogSender(eventEmitter emitter.EventEmitter, counterEmissionInterval time.Duration, logger *gosteno.Logger) LogSender {
 	l := logSender{
-		eventEmitter:            eventEmitter,
-		logger:                  logger,
+		eventEmitter: eventEmitter,
+		logger:       logger,
 	}
 
 	go func() {

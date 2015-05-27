@@ -58,12 +58,12 @@ func (mb *MetricBatcher) BatchAddCounter(name string, delta uint64) {
 
 // Reset clears the MetricBatcher's internal state, so that no counters are tracked.
 func (mb *MetricBatcher) Reset() {
-    mb.lock.Lock()
-    defer mb.lock.Unlock()
+	mb.lock.Lock()
+	defer mb.lock.Unlock()
 
-    mb.unsafeReset()
+	mb.unsafeReset()
 }
 
 func (mb *MetricBatcher) unsafeReset() {
-    mb.metrics = make(map[string]uint64, len(mb.metrics))
+	mb.metrics = make(map[string]uint64, len(mb.metrics))
 }

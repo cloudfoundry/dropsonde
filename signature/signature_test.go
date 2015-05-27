@@ -13,12 +13,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-
 var _ = Describe("Verifier", func() {
 	var (
-		inputChan         chan []byte
-		outputChan        chan []byte
-		runComplete       chan struct{}
+		inputChan   chan []byte
+		outputChan  chan []byte
+		runComplete chan struct{}
 
 		signatureVerifier *signature.Verifier
 	)
@@ -29,7 +28,6 @@ var _ = Describe("Verifier", func() {
 		runComplete = make(chan struct{})
 
 		signatureVerifier = signature.NewVerifier(loggertesthelper.Logger(), "valid-secret")
-
 
 		go func() {
 			signatureVerifier.Run(inputChan, outputChan)

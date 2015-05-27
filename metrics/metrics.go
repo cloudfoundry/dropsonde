@@ -56,9 +56,9 @@ func IncrementCounter(name string) error {
 // not emit a CounterEvent for each increment; instead, the increments are batched
 // and a single CounterEvent is sent after the timeout.
 func BatchIncrementCounter(name string) {
-    if metricBatcher == nil {
-        return
-    }
+	if metricBatcher == nil {
+		return
+	}
 	metricBatcher.BatchIncrementCounter(name)
 }
 
@@ -76,10 +76,10 @@ func AddToCounter(name string, delta uint64) error {
 // CounterEvent for each add; instead, the adds are batched and a single CounterEvent
 // is sent after the timeout.
 func BatchAddCounter(name string, delta uint64) {
-    if metricBatcher == nil {
-        return
-    }
-    metricBatcher.BatchAddCounter(name, delta)
+	if metricBatcher == nil {
+		return
+	}
+	metricBatcher.BatchAddCounter(name, delta)
 }
 
 // SendContainerMetric sends a metric that records resource usage of an app in a container.

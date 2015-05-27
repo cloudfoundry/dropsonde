@@ -69,10 +69,10 @@ func (f *FakeEventEmitter) IsClosed() bool {
 }
 
 func (f *FakeEventEmitter) Reset() {
-    f.Lock()
-    defer f.Unlock()
+	f.Lock()
+	defer f.Unlock()
 
-    f.isClosed = false
-    f.messages = []envelope{}
-    f.ReturnError = nil
+	f.isClosed = false
+	f.messages = []envelope{}
+	f.ReturnError = nil
 }
