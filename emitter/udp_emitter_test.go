@@ -26,7 +26,7 @@ var _ = Describe("UdpEmitter", func() {
 
 			err := udpEmitter.Emit(testData)
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("use of closed network connection"))
+			Expect(err.Error()).To(ContainSubstring("use of closed network connection"))
 		})
 	})
 
