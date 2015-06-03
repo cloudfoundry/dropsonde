@@ -20,10 +20,10 @@ import (
 	"sync/atomic"
 	"unicode"
 
-	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
 )

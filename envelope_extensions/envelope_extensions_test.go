@@ -2,7 +2,7 @@ package envelope_extensions_test
 
 import (
 	"github.com/cloudfoundry/dropsonde/envelope_extensions"
-	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"

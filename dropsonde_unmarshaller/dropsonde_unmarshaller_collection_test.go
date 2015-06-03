@@ -5,8 +5,8 @@ import (
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 
 	"fmt"
-	"github.com/cloudfoundry/dropsonde/events"
 	"github.com/cloudfoundry/dropsonde/factories"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -3,7 +3,7 @@ package fake
 import (
 	"sync"
 
-	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 type envelope struct {

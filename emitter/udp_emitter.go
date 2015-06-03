@@ -3,7 +3,7 @@ package emitter
 import (
 	"net"
 
-	"github.com/cloudfoundry/dropsonde/control"
+	"github.com/cloudfoundry/sonde-go/control"
 	"github.com/gogo/protobuf/proto"
 )
 

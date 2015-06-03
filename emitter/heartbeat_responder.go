@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/cloudfoundry/dropsonde/control"
-	"github.com/cloudfoundry/dropsonde/events"
+	"github.com/cloudfoundry/sonde-go/control"
+	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
 
