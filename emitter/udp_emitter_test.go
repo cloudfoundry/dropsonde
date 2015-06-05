@@ -170,7 +170,7 @@ var _ = Describe("UdpEmitter", func() {
 			emitter.Close()
 			err := emitter.ListenForHeartbeatRequest(fakeResponder)
 			Expect(err).To(HaveOccurred())
-			Expect(err).To(MatchError("use of closed network connection"))
+			Expect(err).To(MatchError(ContainSubstring("use of closed network connection")))
 		})
 	})
 })
