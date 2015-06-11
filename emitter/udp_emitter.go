@@ -2,9 +2,6 @@ package emitter
 
 import (
 	"net"
-
-	"github.com/cloudfoundry/sonde-go/control"
-	"github.com/gogo/protobuf/proto"
 )
 
 type udpEmitter struct {
@@ -38,22 +35,4 @@ func (e *udpEmitter) Close() {
 
 func (e *udpEmitter) Address() net.Addr {
 	return e.udpConn.LocalAddr()
-}
-
-func (e *udpEmitter) ListenForHeartbeatRequest(responder func(*control.ControlMessage)) error {
-	buf := make([]byte, 1024)
-	for {
-		n, _, err := e.udpConn.ReadFrom(buf)
-		if err != nil {
-			return err
-		}
-
-		controlMessage := &control.ControlMessage{}
-		err = proto.Unmarshal(buf[:n], controlMessage)
-		if err != nil {
-			return err
-		}
-
-		responder(controlMessage)
-	}
 }

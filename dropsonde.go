@@ -1,9 +1,7 @@
 // Package dropsonde provides sensible defaults for using dropsonde.
 //
 // The default HTTP transport is instrumented, as well as some basic stats about
-// the Go runtime. Additionally, the default emitter is itself instrumented to
-// periodically send "heartbeat" messages containing counts of received and sent
-// events. The default emitter sends events over UDP.
+// the Go runtime. The default emitter sends events over UDP.
 //
 // Use
 //
@@ -113,14 +111,7 @@ func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, err
 		return nil, fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
 	}
 
-	heartbeatResponder, err := emitter.NewHeartbeatResponder(udpEmitter, origin)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
-	}
-
-	go udpEmitter.ListenForHeartbeatRequest(heartbeatResponder.Respond)
-
-	return emitter.NewEventEmitter(heartbeatResponder, origin), nil
+	return emitter.NewEventEmitter(udpEmitter, origin), nil
 }
 
 // NullEventEmitter is used when no event emission is desired. See

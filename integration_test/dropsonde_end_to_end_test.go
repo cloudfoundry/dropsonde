@@ -9,14 +9,11 @@ import (
 	"time"
 
 	"github.com/cloudfoundry/dropsonde"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/sonde-go/control"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
-	uuid "github.com/nu7hatch/gouuid"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -35,7 +32,7 @@ var _ = Describe("Autowire End-to-End", func() {
 			metrics.Initialize(sender, batcher)
 		})
 
-		It("emits HTTP client/server events and heartbeats", func() {
+		It("emits HTTP client/server events", func() {
 			udpListener, err := net.ListenPacket("udp4", ":3457")
 			Expect(err).ToNot(HaveOccurred())
 			defer udpListener.Close()
@@ -44,23 +41,14 @@ var _ = Describe("Autowire End-to-End", func() {
 			var receivedEvents []eventTracker
 
 			lock := sync.RWMutex{}
-			heartbeatRequest := newHeartbeatRequest()
-			marshalledHeartbeatRequest, _ := proto.Marshal(heartbeatRequest)
 
-			requestedHeartbeat := false
 			go func() {
 				defer close(udpDataChan)
 				for {
 					buffer := make([]byte, 1024)
-					n, addr, err := udpListener.ReadFrom(buffer)
+					n, _, err := udpListener.ReadFrom(buffer)
 					if err != nil {
 						return
-					}
-
-					if !requestedHeartbeat {
-
-						udpListener.WriteTo(marshalledHeartbeatRequest, addr)
-						requestedHeartbeat = true
 					}
 
 					if n == 0 {
@@ -81,8 +69,6 @@ var _ = Describe("Autowire End-to-End", func() {
 						tracker.name = envelope.GetHttpStart().GetPeerType().String()
 					case events.Envelope_HttpStop:
 						tracker.name = envelope.GetHttpStop().GetPeerType().String()
-					case events.Envelope_Heartbeat:
-						tracker.name = envelope.GetHeartbeat().GetControlMessageIdentifier().String()
 					case events.Envelope_ValueMetric:
 						tracker.name = envelope.GetValueMetric().GetName()
 					case events.Envelope_CounterEvent:
@@ -126,7 +112,6 @@ var _ = Describe("Autowire End-to-End", func() {
 				{eventType: "ValueMetric", name: "TestMetric"},
 				{eventType: "CounterEvent", name: "TestIncrementCounter"},
 				{eventType: "CounterEvent", name: "TestBatchedCounter"},
-				{eventType: "Heartbeat", name: heartbeatRequest.GetIdentifier().String()},
 			}
 
 			for _, tracker := range expectedEvents {
@@ -151,15 +136,4 @@ type FakeRoundTripper struct{}
 
 func (frt FakeRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	return nil, nil
-}
-
-func newHeartbeatRequest() *control.ControlMessage {
-	id, _ := uuid.NewV4()
-
-	return &control.ControlMessage{
-		Origin:      proto.String("MET"),
-		Identifier:  factories.NewControlUUID(id),
-		Timestamp:   proto.Int64(time.Now().UnixNano()),
-		ControlType: control.ControlMessage_HeartbeatRequest.Enum(),
-	}
 }
