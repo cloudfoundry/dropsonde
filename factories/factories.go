@@ -64,11 +64,11 @@ func NewHttpStop(req *http.Request, statusCode int, contentLength int64, peerTyp
 	return httpStop
 }
 
-func NewHeartbeat(sentCount, receivedCount, errorCount uint64) *events.Heartbeat {
-	return &events.Heartbeat{
-		SentCount:     proto.Uint64(sentCount),
-		ReceivedCount: proto.Uint64(receivedCount),
-		ErrorCount:    proto.Uint64(errorCount),
+func NewValueMetric(name string, value float64, unit string) *events.ValueMetric {
+	return &events.ValueMetric{
+		Name:  proto.String(name),
+		Value: proto.Float64(value),
+		Unit:  proto.String(unit),
 	}
 }
 

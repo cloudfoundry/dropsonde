@@ -69,16 +69,6 @@ var _ = Describe("EnvelopeExtensions", func() {
 			})
 		})
 
-		Context("Heartbeat", func() {
-			It("returns the system app ID", func() {
-				envelope := &events.Envelope{
-					EventType: events.Envelope_Heartbeat.Enum(),
-				}
-				appId := envelope_extensions.GetAppId(envelope)
-				Expect(appId).To(Equal(envelope_extensions.SystemAppId))
-			})
-		})
-
 		Context("ContainerMetric", func() {
 			It("returns the App ID ", func() {
 				envelope := &events.Envelope{

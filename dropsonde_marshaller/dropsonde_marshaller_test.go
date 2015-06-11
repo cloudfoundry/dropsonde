@@ -38,9 +38,9 @@ var _ = Describe("DropsondeMarshaller", func() {
 
 	It("marshals envelopes into bytes", func() {
 		envelope := &events.Envelope{
-			Origin:    proto.String("fake-origin-3"),
-			EventType: events.Envelope_Heartbeat.Enum(),
-			Heartbeat: factories.NewHeartbeat(1, 2, 3),
+			Origin:     proto.String("fake-origin-1"),
+			EventType:  events.Envelope_LogMessage.Enum(),
+			LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "message", "appid", "sourceType"),
 		}
 		message, _ := proto.Marshal(envelope)
 
@@ -52,17 +52,6 @@ var _ = Describe("DropsondeMarshaller", func() {
 	Context("metrics", func() {
 		It("emits the correct metrics context", func() {
 			Expect(marshaller.Emit().Name).To(Equal("dropsondeMarshaller"))
-		})
-
-		It("emits a heartbeat counter", func() {
-			envelope := &events.Envelope{
-				Origin:    proto.String("fake-origin-3"),
-				EventType: events.Envelope_Heartbeat.Enum(),
-				Heartbeat: factories.NewHeartbeat(1, 2, 3),
-			}
-
-			inputChan <- envelope
-			testhelpers.EventuallyExpectMetric(marshaller, "heartbeatMarshalled", 1)
 		})
 
 		It("emits a marshal error counter", func() {

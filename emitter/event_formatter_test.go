@@ -26,13 +26,6 @@ var _ = Describe("EventFormatter", func() {
 			origin = "testEventFormatter/42"
 		})
 
-		It("works with dropsonde status (Heartbeat) events", func() {
-			statusEvent := &events.Heartbeat{SentCount: proto.Uint64(1), ErrorCount: proto.Uint64(0)}
-			envelope, _ := emitter.Wrap(statusEvent, origin)
-			Expect(envelope.GetEventType()).To(Equal(events.Envelope_Heartbeat))
-			Expect(envelope.GetHeartbeat()).To(Equal(statusEvent))
-		})
-
 		It("works with HttpStart events", func() {
 			id, _ := uuid.NewV4()
 			testEvent := &events.HttpStart{RequestId: factories.NewUUID(id)}

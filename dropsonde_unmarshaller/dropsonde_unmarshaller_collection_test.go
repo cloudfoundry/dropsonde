@@ -116,9 +116,9 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 
 			for n := 0; n < 7; n++ {
 				envelope := &events.Envelope{
-					Origin:    proto.String("fake-origin-1"),
-					EventType: events.Envelope_Heartbeat.Enum(),
-					Heartbeat: factories.NewHeartbeat(1, 2, 3),
+					Origin:      proto.String("fake-origin-1"),
+					EventType:   events.Envelope_ValueMetric.Enum(),
+					ValueMetric: factories.NewValueMetric("metricName", 1.0, "unit"),
 				}
 				message, _ := proto.Marshal(envelope)
 
@@ -138,9 +138,9 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 				metricsNameMap[m.Name]++
 			}
 
-			Expect(metricsNameMap["heartbeatReceived"]).To(Equal(1))
+			Expect(metricsNameMap["valueMetricReceived"]).To(Equal(1))
 			for _, metric := range metrics {
-				if metric.Name == "heartbeatReceived" {
+				if metric.Name == "valueMetricReceived" {
 					Expect(metric.Value.(uint64)).To(Equal(uint64(7)))
 				}
 			}

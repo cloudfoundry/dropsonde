@@ -33,9 +33,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 		It("unmarshalls bytes", func() {
 			input := &events.Envelope{
-				Origin:    proto.String("fake-origin-3"),
-				EventType: events.Envelope_Heartbeat.Enum(),
-				Heartbeat: factories.NewHeartbeat(1, 2, 3),
+				Origin:      proto.String("fake-origin-3"),
+				EventType:   events.Envelope_ValueMetric.Enum(),
+				ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
 			}
 			message, _ := proto.Marshal(input)
 
@@ -72,9 +72,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 		It("unmarshals bytes into envelopes", func() {
 			envelope := &events.Envelope{
-				Origin:    proto.String("fake-origin-3"),
-				EventType: events.Envelope_Heartbeat.Enum(),
-				Heartbeat: factories.NewHeartbeat(1, 2, 3),
+				Origin:      proto.String("fake-origin-3"),
+				EventType:   events.Envelope_ValueMetric.Enum(),
+				ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
 			}
 			message, _ := proto.Marshal(envelope)
 
@@ -106,20 +106,20 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			Expect(unmarshaller.Emit().Name).To(Equal("dropsondeUnmarshaller"))
 		})
 
-		It("emits a heartbeat counter", func() {
+		It("emits a value metric counter", func() {
 			envelope := &events.Envelope{
-				Origin:    proto.String("fake-origin-3"),
-				EventType: events.Envelope_Heartbeat.Enum(),
-				Heartbeat: factories.NewHeartbeat(1, 2, 3),
+				Origin:      proto.String("fake-origin-3"),
+				EventType:   events.Envelope_ValueMetric.Enum(),
+				ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
 			}
 			message, _ := proto.Marshal(envelope)
 
 			inputChan <- message
-			testhelpers.EventuallyExpectMetric(unmarshaller, "heartbeatReceived", 1)
+			testhelpers.EventuallyExpectMetric(unmarshaller, "valueMetricReceived", 1)
 
 			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.heartbeatReceived"),
+				Name:  proto.String("dropsondeUnmarshaller.valueMetricReceived"),
 				Delta: proto.Uint64(1),
 			}))
 		})
