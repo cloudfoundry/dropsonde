@@ -19,6 +19,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var (
+	lock           sync.RWMutex
+	receivedEvents []eventTracker
+	udpListener    net.PacketConn
+)
+
 // these tests need to be invoked individually from an external script,
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
@@ -26,70 +32,22 @@ var _ = Describe("Autowire End-to-End", func() {
 		origin := []string{"test-origin"}
 
 		BeforeEach(func() {
+			var err error
+			udpListener, err = net.ListenPacket("udp4", ":3457")
+			Expect(err).ToNot(HaveOccurred())
+
+			go listenForEvents(origin)
 			dropsonde.Initialize("localhost:3457", origin...)
 			sender := metric_sender.NewMetricSender(dropsonde.AutowiredEmitter())
 			batcher := metricbatcher.New(sender, 100*time.Millisecond)
 			metrics.Initialize(sender, batcher)
 		})
 
+		AfterEach(func() {
+			udpListener.Close()
+		})
+
 		It("emits HTTP client/server events", func() {
-			udpListener, err := net.ListenPacket("udp4", ":3457")
-			Expect(err).ToNot(HaveOccurred())
-			defer udpListener.Close()
-			udpDataChan := make(chan []byte, 16)
-
-			var receivedEvents []eventTracker
-
-			lock := sync.RWMutex{}
-
-			go func() {
-				defer close(udpDataChan)
-				for {
-					buffer := make([]byte, 1024)
-					n, _, err := udpListener.ReadFrom(buffer)
-					if err != nil {
-						return
-					}
-
-					if n == 0 {
-						panic("Received empty packet")
-					}
-					envelope := new(events.Envelope)
-					err = proto.Unmarshal(buffer[0:n], envelope)
-					if err != nil {
-						panic(err)
-					}
-
-					var eventId = envelope.GetEventType().String()
-
-					tracker := eventTracker{eventType: eventId}
-
-					switch envelope.GetEventType() {
-					case events.Envelope_HttpStart:
-						tracker.name = envelope.GetHttpStart().GetPeerType().String()
-					case events.Envelope_HttpStop:
-						tracker.name = envelope.GetHttpStop().GetPeerType().String()
-					case events.Envelope_ValueMetric:
-						tracker.name = envelope.GetValueMetric().GetName()
-					case events.Envelope_CounterEvent:
-						tracker.name = envelope.GetCounterEvent().GetName()
-					default:
-						panic("Unexpected message type")
-
-					}
-
-					if envelope.GetOrigin() != strings.Join(origin, "/") {
-						panic("origin not as expected")
-					}
-
-					func() {
-						lock.Lock()
-						defer lock.Unlock()
-						receivedEvents = append(receivedEvents, tracker)
-					}()
-				}
-			}()
-
 			httpListener, err := net.Listen("tcp", "localhost:0")
 			Expect(err).ToNot(HaveOccurred())
 			defer httpListener.Close()
@@ -115,11 +73,58 @@ var _ = Describe("Autowire End-to-End", func() {
 			}
 
 			for _, tracker := range expectedEvents {
-				Eventually(func() []eventTracker { lock.Lock(); defer lock.Unlock(); return receivedEvents }).Should(ContainElement(tracker))
+				Eventually(func() []eventTracker { lock.Lock(); defer lock.Unlock(); return receivedEvents }, 5).Should(ContainElement(tracker))
 			}
 		})
 	})
 })
+
+func listenForEvents(origin []string) {
+	for {
+		buffer := make([]byte, 1024)
+		n, _, err := udpListener.ReadFrom(buffer)
+		if err != nil {
+			return
+		}
+
+		if n == 0 {
+			panic("Received empty packet")
+		}
+		envelope := new(events.Envelope)
+		err = proto.Unmarshal(buffer[0:n], envelope)
+		if err != nil {
+			panic(err)
+		}
+
+		var eventId = envelope.GetEventType().String()
+
+		tracker := eventTracker{eventType: eventId}
+
+		switch envelope.GetEventType() {
+		case events.Envelope_HttpStart:
+			tracker.name = envelope.GetHttpStart().GetPeerType().String()
+		case events.Envelope_HttpStop:
+			tracker.name = envelope.GetHttpStop().GetPeerType().String()
+		case events.Envelope_ValueMetric:
+			tracker.name = envelope.GetValueMetric().GetName()
+		case events.Envelope_CounterEvent:
+			tracker.name = envelope.GetCounterEvent().GetName()
+		default:
+			panic("Unexpected message type")
+
+		}
+
+		if envelope.GetOrigin() != strings.Join(origin, "/") {
+			panic("origin not as expected")
+		}
+
+		func() {
+			lock.Lock()
+			defer lock.Unlock()
+			receivedEvents = append(receivedEvents, tracker)
+		}()
+	}
+}
 
 type eventTracker struct {
 	eventType string
