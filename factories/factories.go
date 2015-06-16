@@ -67,6 +67,13 @@ func NewValueMetric(name string, value float64, unit string) *events.ValueMetric
 	}
 }
 
+func NewCounterEvent(name string, delta uint64) *events.CounterEvent {
+	return &events.CounterEvent{
+		Name:  proto.String(name),
+		Delta: proto.Uint64(delta),
+	}
+}
+
 func NewLogMessage(messageType events.LogMessage_MessageType, messageString, appId, sourceType string) *events.LogMessage {
 	currentTime := time.Now()
 
