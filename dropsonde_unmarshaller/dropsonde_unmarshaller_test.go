@@ -52,7 +52,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 	})
 
 	Context("Run", func() {
-
 		BeforeEach(func() {
 			inputChan = make(chan []byte, 10)
 			outputChan = make(chan *events.Envelope, 10)
@@ -195,6 +194,26 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				Name:  proto.String("dropsondeUnmarshaller.unmarshalErrors"),
 				Delta: proto.Uint64(1),
 			}))
+		})
+
+		It("counts unknown message types", func() {
+			unexpectedMessageType := events.Envelope_EventType(1)
+			envelope1 := &events.Envelope{
+				Origin:     proto.String("fake-origin-3"),
+				EventType:  &unexpectedMessageType,
+				LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message 1", "fake-app-id-1", "DEA"),
+			}
+			message1, err := proto.Marshal(envelope1)
+			Expect(err).NotTo(HaveOccurred())
+
+			inputChan <- message1
+
+			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+				Name:  proto.String("dropsondeUnmarshaller.unknownEventTypeReceived"),
+				Delta: proto.Uint64(1),
+			}))
+
 		})
 	})
 })

@@ -109,7 +109,15 @@ func (u *dropsondeUnmarshaller) incrementLogMessageReceiveCount(appID string) {
 }
 
 func (u *dropsondeUnmarshaller) incrementReceiveCount(eventType events.Envelope_EventType) {
-	modifiedEventName := []rune(eventType.String())
+	name, ok := events.Envelope_EventType_name[int32(eventType)]
+
+	if !ok {
+		var newCounter uint64
+		u.receiveCounts[eventType] = &newCounter
+		name = "unknownEventType"
+	}
+
+	modifiedEventName := []rune(name)
 	modifiedEventName[0] = unicode.ToLower(modifiedEventName[0])
 	metricName := string(modifiedEventName) + "Received"
 
