@@ -27,18 +27,21 @@ func New(metricSender metric_sender.MetricSender, batchDuration time.Duration) *
 	go func() {
 		for {
 			<-mb.batchTicker.C
-			mb.lock.Lock()
-
-			for name, delta := range mb.metrics {
-				metricSender.AddToCounter(name, delta)
-			}
-			mb.unsafeReset()
-
-			mb.lock.Unlock()
+			mb.sendBatch()
 		}
 	}()
 
 	return mb
+}
+
+func (mb *MetricBatcher) sendBatch() {
+	mb.lock.Lock()
+	defer mb.lock.Unlock()
+
+	for name, delta := range mb.metrics {
+		mb.metricSender.AddToCounter(name, delta)
+	}
+	mb.unsafeReset()
 }
 
 // BatchIncrementCounter increments the named counter by 1, but does not immediately send a
