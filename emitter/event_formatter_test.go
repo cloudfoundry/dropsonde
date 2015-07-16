@@ -60,6 +60,29 @@ var _ = Describe("EventFormatter", func() {
 			Expect(envelope.GetCounterEvent()).To(Equal(testEvent))
 		})
 
+		It("works with HttpStartStop events", func() {
+			testEvent := &events.HttpStartStop{
+				StartTimestamp: proto.Int64(200),
+				StopTimestamp:  proto.Int64(500),
+				RequestId: &events.UUID{
+					Low:  proto.Uint64(200),
+					High: proto.Uint64(300),
+				},
+				PeerType:      events.PeerType_Client.Enum(),
+				Method:        events.Method_GET.Enum(),
+				Uri:           proto.String("http://some.example.com"),
+				RemoteAddress: proto.String("http://remote.address"),
+				UserAgent:     proto.String("some user agent"),
+				ContentLength: proto.Int64(200),
+				StatusCode:    proto.Int32(200),
+			}
+
+			envelope, err := emitter.Wrap(testEvent, origin)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(envelope.GetEventType()).To(Equal(events.Envelope_HttpStartStop))
+			Expect(envelope.GetHttpStartStop()).To(Equal(testEvent))
+		})
+
 		It("errors with unknown events", func() {
 			envelope, err := emitter.Wrap(new(unknownEvent), origin)
 			Expect(envelope).To(BeNil())

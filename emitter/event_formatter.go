@@ -25,6 +25,9 @@ func Wrap(event events.Event, origin string) (*events.Envelope, error) {
 	case *events.HttpStop:
 		envelope.EventType = events.Envelope_HttpStop.Enum()
 		envelope.HttpStop = event
+	case *events.HttpStartStop:
+		envelope.EventType = events.Envelope_HttpStartStop.Enum()
+		envelope.HttpStartStop = event
 	case *events.ValueMetric:
 		envelope.EventType = events.Envelope_ValueMetric.Enum()
 		envelope.ValueMetric = event

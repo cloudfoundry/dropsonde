@@ -85,8 +85,8 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 	Context("metrics", func() {
 		BeforeEach(func() {
-			inputChan = make(chan []byte, 10)
-			outputChan = make(chan *events.Envelope, 10)
+			inputChan = make(chan []byte, 1000)
+			outputChan = make(chan *events.Envelope, 1000)
 			runComplete = make(chan struct{})
 			unmarshaller = dropsonde_unmarshaller.NewDropsondeUnmarshaller(loggertesthelper.Logger())
 
@@ -213,14 +213,89 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				Name:  proto.String("dropsondeUnmarshaller.unknownEventTypeReceived"),
 				Delta: proto.Uint64(1),
 			}))
+		})
 
+		Context("when a http start stop message is received", func() {
+			It("emits a counter message with a delta value of 1", func() {
+				envelope := &events.Envelope{
+					Origin:        proto.String("fake-origin-1"),
+					EventType:     events.Envelope_HttpStartStop.Enum(),
+					HttpStartStop: getHTTPStartStopEvent(),
+				}
+
+				message, _ := proto.Marshal(envelope)
+				inputChan <- message
+
+				Eventually(func() uint64 {
+					return getHTTPStartStopCount(unmarshaller)
+				}).Should(BeNumerically("==", 1))
+
+				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+					Name:  proto.String("dropsondeUnmarshaller.httpStartStopReceived"),
+					Delta: proto.Uint64(1),
+				}))
+			})
+		})
+
+		Context("when multiple http start stop message is received", func() {
+			It("emits one counter message with the right delta value", func() {
+				const totalMessages = 100
+				for i := 0; i < totalMessages; i++ {
+					envelope := &events.Envelope{
+						Origin:        proto.String("fake-origin-1"),
+						EventType:     events.Envelope_HttpStartStop.Enum(),
+						HttpStartStop: getHTTPStartStopEvent(),
+					}
+
+					message, _ := proto.Marshal(envelope)
+					inputChan <- message
+				}
+
+				Eventually(func() uint64 {
+					return getHTTPStartStopCount(unmarshaller)
+				}).Should(BeNumerically("==", totalMessages))
+
+				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
+				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
+					Name:  proto.String("dropsondeUnmarshaller.httpStartStopReceived"),
+					Delta: proto.Uint64(totalMessages),
+				}))
+			})
 		})
 	})
 })
 
+func getHTTPStartStopEvent() *events.HttpStartStop {
+	return &events.HttpStartStop{
+		StartTimestamp: proto.Int64(200),
+		StopTimestamp:  proto.Int64(500),
+		RequestId: &events.UUID{
+			Low:  proto.Uint64(200),
+			High: proto.Uint64(300),
+		},
+		PeerType:      events.PeerType_Client.Enum(),
+		Method:        events.Method_GET.Enum(),
+		Uri:           proto.String("http://some.example.com"),
+		RemoteAddress: proto.String("http://remote.address"),
+		UserAgent:     proto.String("some user agent"),
+		ContentLength: proto.Int64(200),
+		StatusCode:    proto.Int32(200),
+	}
+}
+
 func getTotalLogMessageCount(instrumentable instrumentation.Instrumentable) uint64 {
 	for _, metric := range instrumentable.Emit().Metrics {
 		if metric.Name == "logMessageTotal" {
+			return metric.Value.(uint64)
+		}
+	}
+	return uint64(0)
+}
+
+func getHTTPStartStopCount(instrumentable instrumentation.Instrumentable) uint64 {
+	for _, metric := range instrumentable.Emit().Metrics {
+		if metric.Name == "httpStartStopReceived" {
 			return metric.Value.(uint64)
 		}
 	}
