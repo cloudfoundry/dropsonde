@@ -12,7 +12,7 @@ type MetricBatcher struct {
 	metrics      map[string]uint64
 	batchTicker  *time.Ticker
 	metricSender metric_sender.MetricSender
-	lock         sync.RWMutex
+	lock         sync.Mutex
 }
 
 // New instantiates a running MetricBatcher. Eventswill be emitted once per batchDuration. All
@@ -35,13 +35,11 @@ func New(metricSender metric_sender.MetricSender, batchDuration time.Duration) *
 }
 
 func (mb *MetricBatcher) sendBatch() {
-	mb.lock.Lock()
-	defer mb.lock.Unlock()
+	localMetrics := mb.resetAndReturnMetrics()
 
-	for name, delta := range mb.metrics {
+	for name, delta := range localMetrics {
 		mb.metricSender.AddToCounter(name, delta)
 	}
-	mb.unsafeReset()
 }
 
 // BatchIncrementCounter increments the named counter by 1, but does not immediately send a
@@ -61,12 +59,16 @@ func (mb *MetricBatcher) BatchAddCounter(name string, delta uint64) {
 
 // Reset clears the MetricBatcher's internal state, so that no counters are tracked.
 func (mb *MetricBatcher) Reset() {
+	mb.resetAndReturnMetrics()
+}
+
+func (mb *MetricBatcher) resetAndReturnMetrics() map[string]uint64 {
 	mb.lock.Lock()
 	defer mb.lock.Unlock()
 
-	mb.unsafeReset()
-}
+	localMetrics := mb.metrics
 
-func (mb *MetricBatcher) unsafeReset() {
 	mb.metrics = make(map[string]uint64, len(mb.metrics))
+
+	return localMetrics
 }
