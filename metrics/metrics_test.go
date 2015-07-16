@@ -108,4 +108,26 @@ var _ = Describe("Metrics", func() {
 		})
 
 	})
+
+	Context("Close", func() {
+		It("closes metric batcher", func() {
+			batcher := &FakeMetricBatcher{closed: false}
+			metrics.Initialize(nil, batcher)
+			metrics.Close()
+
+			Expect(batcher.closed).To(BeTrue())
+		})
+	})
 })
+
+type FakeMetricBatcher struct {
+	closed bool
+}
+
+func (mb *FakeMetricBatcher) BatchIncrementCounter(name string) {}
+
+func (mb *FakeMetricBatcher) BatchAddCounter(name string, delta uint64) {}
+
+func (mb *FakeMetricBatcher) Close() {
+	mb.closed = true
+}

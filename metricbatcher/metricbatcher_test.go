@@ -18,10 +18,14 @@ var _ = Describe("MetricBatcher", func() {
 
 	BeforeEach(func() {
 		fakeMetricSender = fake.NewFakeMetricSender()
-		metricBatcher = metricbatcher.New(fakeMetricSender, 50*time.Millisecond)
 	})
 
-	Describe("BatchIncrementCounter", func() {
+	Context("BatchIncrementCounter", func() {
+
+		BeforeEach(func() {
+			metricBatcher = metricbatcher.New(fakeMetricSender, 50*time.Millisecond)
+		})
+
 		It("batches and then sends a single metric", func() {
 			metricBatcher.BatchIncrementCounter("count")
 			Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(0)) // should not increment.
@@ -62,7 +66,12 @@ var _ = Describe("MetricBatcher", func() {
 		})
 	})
 
-	Describe("BatchAddCounter", func() {
+	Context("BatchAddCounter", func() {
+
+		BeforeEach(func() {
+			metricBatcher = metricbatcher.New(fakeMetricSender, 50*time.Millisecond)
+		})
+
 		It("batches and then sends a single metric", func() {
 			metricBatcher.BatchAddCounter("count", 2)
 			Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(0)) // should not increment.
@@ -103,14 +112,35 @@ var _ = Describe("MetricBatcher", func() {
 		})
 	})
 
-	Describe("Reset", func() {
+	Context("Reset", func() {
 		It("cancels any scheduled counter emission", func() {
+			metricBatcher = metricbatcher.New(fakeMetricSender, 50*time.Millisecond)
+
 			metricBatcher.BatchAddCounter("count1", 2)
 			metricBatcher.BatchIncrementCounter("count1")
 
 			metricBatcher.Reset()
 
 			Consistently(func() uint64 { return fakeMetricSender.GetCounter("count1") }).Should(BeZero())
+		})
+	})
+
+	Context("Close", func() {
+		BeforeEach(func() {
+			// Sets ticker to a longer time so that the Flush isn't called automatically from the go routine
+			metricBatcher = metricbatcher.New(fakeMetricSender, 5*time.Second)
+		})
+
+		It("flushes remaining metrics", func() {
+			metricBatcher.BatchAddCounter("count2", 1)
+			metricBatcher.Close()
+
+			Eventually(fakeMetricSender.GetCounter("count2")).Should(BeEquivalentTo(1))
+		})
+
+		It("panics when sending metrics after closing", func() {
+			metricBatcher.Close()
+			Expect(func() { metricBatcher.BatchAddCounter("count3", 3) }).To(Panic())
 		})
 	})
 

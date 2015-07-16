@@ -21,16 +21,26 @@ package metrics
 
 import (
 	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
 )
 
 var metricSender metric_sender.MetricSender
-var metricBatcher *metricbatcher.MetricBatcher
+var metricBatcher MetricBatcher
+
+type MetricBatcher interface {
+	BatchIncrementCounter(name string)
+	BatchAddCounter(name string, delta uint64)
+	Close()
+}
 
 // Initialize prepares the metrics package for use with the automatic Emitter.
-func Initialize(ms metric_sender.MetricSender, mb *metricbatcher.MetricBatcher) {
+func Initialize(ms metric_sender.MetricSender, mb MetricBatcher) {
 	metricSender = ms
 	metricBatcher = mb
+}
+
+// Closes the metrics system and flushes any batch metrics.
+func Close() {
+	metricBatcher.Close()
 }
 
 // SendValue sends a value event for the named metric. See
