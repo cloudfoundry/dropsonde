@@ -7,10 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
 	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
+	"net"
+	"syscall"
 )
 
 // A LogSender emits log events.
@@ -85,8 +88,7 @@ func (l *logSender) ScanErrorLogStream(appID, sourceType, sourceInstance string,
 func (l *logSender) scanLogStream(appID, sourceType, sourceInstance string, sender func(string, string, string, string) error, reader io.Reader) {
 	for {
 		err := sendScannedLines(appID, sourceType, sourceInstance, bufio.NewScanner(reader), sender)
-		if err == bufio.ErrTooLong {
-			l.SendAppErrorLog(appID, "Dropped log message: message too long (>64K without a newline)", sourceType, sourceInstance)
+		if l.isMessageTooLong(err, appID, sourceType, sourceInstance) {
 			continue
 		}
 		if err == nil {
@@ -96,6 +98,22 @@ func (l *logSender) scanLogStream(appID, sourceType, sourceInstance string, send
 		}
 		return
 	}
+}
+
+func (l *logSender) isMessageTooLong(err error, appID string, sourceType string, sourceInstance string) bool {
+	if err == bufio.ErrTooLong {
+		l.SendAppErrorLog(appID, "Dropped log message: message too long (>64K without a newline)", sourceType, sourceInstance)
+		return true
+	}
+
+	opErr, ok := err.(*net.OpError)
+
+	if ok && opErr.Err == syscall.EMSGSIZE {
+		l.SendAppErrorLog(appID, fmt.Sprintf("Dropped log message: message could not fit in UDP packet"), sourceType, sourceInstance)
+		return true
+	}
+
+	return false
 }
 
 func (l *logSender) emitCounters() {
@@ -128,7 +146,10 @@ func sendScannedLines(appID, sourceType, sourceInstance string, scanner *bufio.S
 			continue
 		}
 
-		send(appID, line, sourceType, sourceInstance)
+		err := send(appID, line, sourceType, sourceInstance)
+		if err != nil {
+			return err
+		}
 	}
 	return scanner.Err()
 }
