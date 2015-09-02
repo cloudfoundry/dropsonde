@@ -25,6 +25,7 @@ go:
 
 matrix:
   allow_failures:
+  - go: 1.5
   - go: tip
 
 env:
