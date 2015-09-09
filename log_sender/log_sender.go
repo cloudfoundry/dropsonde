@@ -12,7 +12,6 @@ import (
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
-	"net"
 	"syscall"
 )
 
@@ -101,14 +100,16 @@ func (l *logSender) scanLogStream(appID, sourceType, sourceInstance string, send
 }
 
 func (l *logSender) isMessageTooLong(err error, appID string, sourceType string, sourceInstance string) bool {
+	if err == nil {
+		return false
+	}
+
 	if err == bufio.ErrTooLong {
 		l.SendAppErrorLog(appID, "Dropped log message: message too long (>64K without a newline)", sourceType, sourceInstance)
 		return true
 	}
 
-	opErr, ok := err.(*net.OpError)
-
-	if ok && opErr.Err == syscall.EMSGSIZE {
+	if strings.Contains(err.Error(), syscall.EMSGSIZE.Error()) {
 		l.SendAppErrorLog(appID, fmt.Sprintf("Dropped log message: message could not fit in UDP packet"), sourceType, sourceInstance)
 		return true
 	}
