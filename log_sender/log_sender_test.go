@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cloudfoundry/dropsonde/metric_sender"
+	"github.com/cloudfoundry/dropsonde/metricbatcher"
+	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -26,7 +29,10 @@ var _ = Describe("LogSender", func() {
 
 	BeforeEach(func() {
 		emitter = fake.NewFakeEventEmitter("origin")
-		sender = log_sender.NewLogSender(emitter, 50*time.Millisecond, loggertesthelper.Logger())
+		metricSender := metric_sender.NewMetricSender(emitter)
+		batcher := metricbatcher.New(metricSender, time.Millisecond)
+		metrics.Initialize(metricSender, batcher)
+		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
 	})
 
 	AfterEach(func() {
@@ -55,7 +61,7 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(2)}))
 		})
 	})
 
@@ -78,21 +84,21 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(2)}))
 		})
 	})
 
 	Describe("counter emission", func() {
 		It("emits on a timer", func() {
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(0), Unit: proto.String("count")}))
-			Eventually(func() int { return len(emitter.GetEvents()) }).Should(BeNumerically(">", 3))
+			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(1)}))
 
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(1), Unit: proto.String("count")}))
+			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(1)}))
+		})
 
-			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.ValueMetric{Name: proto.String("logSenderTotalMessagesRead"), Value: proto.Float64(2), Unit: proto.String("count")}))
-
+		It("does not emit when no logs are written", func() {
+			Consistently(emitter.GetEvents, 1).Should(HaveLen(0))
 		})
 	})
 
@@ -180,7 +186,7 @@ var _ = Describe("LogSender", func() {
 				close(doneChan)
 			}()
 
-			Eventually(emitter.GetMessages).Should(HaveLen(3))
+			Eventually(emitter.GetMessages).Should(HaveLen(4))
 
 			Eventually(doneChan).Should(BeClosed())
 

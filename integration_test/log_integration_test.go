@@ -47,7 +47,7 @@ var _ = Describe("LogIntegration", func() {
 		})
 
 		It("sends dropped error message for messages which are just under 64k and don't fit in UDP packet", func() {
-			logSender := log_sender.NewLogSender(dropsonde.AutowiredEmitter(), time.Second, loggertesthelper.Logger())
+			logSender := log_sender.NewLogSender(dropsonde.AutowiredEmitter(), loggertesthelper.Logger())
 
 			const length = 64*1024 - 1
 			reader := strings.NewReader(strings.Repeat("s", length) + "\n")
@@ -65,7 +65,7 @@ var _ = Describe("LogIntegration", func() {
 		})
 
 		It("sends dropped error message for messages which are over 64k", func() {
-			logSender := log_sender.NewLogSender(dropsonde.AutowiredEmitter(), time.Second, loggertesthelper.Logger())
+			logSender := log_sender.NewLogSender(dropsonde.AutowiredEmitter(), loggertesthelper.Logger())
 
 			const length = 64*1024 + 1
 			reader := strings.NewReader(strings.Repeat("s", length) + "\n")

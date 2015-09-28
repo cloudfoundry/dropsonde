@@ -92,7 +92,7 @@ func initialize() {
 	sender := metric_sender.NewMetricSender(AutowiredEmitter())
 	batcher := metricbatcher.New(sender, defaultBatchInterval)
 	metrics.Initialize(sender, batcher)
-	logs.Initialize(log_sender.NewLogSender(AutowiredEmitter(), statsInterval, gosteno.NewLogger("dropsonde/logs")))
+	logs.Initialize(log_sender.NewLogSender(AutowiredEmitter(), gosteno.NewLogger("dropsonde/logs")))
 	go runtime_stats.NewRuntimeStats(autowiredEmitter, statsInterval).Run(nil)
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }
