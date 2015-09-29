@@ -3,8 +3,6 @@ package dropsonde_unmarshaller_test
 import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
 	"github.com/cloudfoundry/dropsonde/factories"
-	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation"
-	"github.com/cloudfoundry/loggregatorlib/cfcomponent/instrumentation/testhelpers"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
@@ -101,10 +99,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			Eventually(runComplete).Should(BeClosed())
 		})
 
-		It("emits the correct metrics context", func() {
-			Expect(unmarshaller.Emit().Name).To(Equal("dropsondeUnmarshaller"))
-		})
-
 		It("emits a value metric counter", func() {
 			envelope := &events.Envelope{
 				Origin:      proto.String("fake-origin-3"),
@@ -114,7 +108,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			message, _ := proto.Marshal(envelope)
 
 			inputChan <- message
-			testhelpers.EventuallyExpectMetric(unmarshaller, "valueMetricReceived", 1)
 
 			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
@@ -143,10 +136,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			inputChan <- message1
 			inputChan <- message2
 
-			Eventually(func() uint64 {
-				return getTotalLogMessageCount(unmarshaller)
-			}).Should(BeNumerically("==", 3))
-
 			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
 				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
@@ -174,10 +163,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			inputChan <- message1
 			inputChan <- message2
 
-			Eventually(func() uint64 {
-				return getTotalLogMessageCount(unmarshaller)
-			}).Should(BeNumerically("==", 3))
-
 			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
 				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
@@ -187,7 +172,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 		It("emits an unmarshal error counter", func() {
 			inputChan <- []byte{1, 2, 3}
-			testhelpers.EventuallyExpectMetric(unmarshaller, "unmarshalErrors", 1)
 
 			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
@@ -226,10 +210,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				message, _ := proto.Marshal(envelope)
 				inputChan <- message
 
-				Eventually(func() uint64 {
-					return getHTTPStartStopCount(unmarshaller)
-				}).Should(BeNumerically("==", 1))
-
 				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
 					Name:  proto.String("dropsondeUnmarshaller.httpStartStopReceived"),
@@ -251,10 +231,6 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 					message, _ := proto.Marshal(envelope)
 					inputChan <- message
 				}
-
-				Eventually(func() uint64 {
-					return getHTTPStartStopCount(unmarshaller)
-				}).Should(BeNumerically("==", totalMessages))
 
 				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
 				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
@@ -282,22 +258,4 @@ func getHTTPStartStopEvent() *events.HttpStartStop {
 		ContentLength: proto.Int64(200),
 		StatusCode:    proto.Int32(200),
 	}
-}
-
-func getTotalLogMessageCount(instrumentable instrumentation.Instrumentable) uint64 {
-	for _, metric := range instrumentable.Emit().Metrics {
-		if metric.Name == "logMessageTotal" {
-			return metric.Value.(uint64)
-		}
-	}
-	return uint64(0)
-}
-
-func getHTTPStartStopCount(instrumentable instrumentation.Instrumentable) uint64 {
-	for _, metric := range instrumentable.Emit().Metrics {
-		if metric.Name == "httpStartStopReceived" {
-			return metric.Value.(uint64)
-		}
-	}
-	return uint64(0)
 }

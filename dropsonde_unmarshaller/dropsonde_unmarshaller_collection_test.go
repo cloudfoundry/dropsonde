@@ -4,10 +4,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 
-	"fmt"
-	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"runtime"
@@ -40,114 +37,6 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 			startingCountGoroutines := runtime.NumGoroutine()
 			collection.Run(inputChan, outputChan, waitGroup)
 			Expect(startingCountGoroutines + 5).To(Equal(runtime.NumGoroutine()))
-		})
-	})
-
-	Context("metrics", func() {
-		It("emits a total log messages concatenated from the different unmarshallers", func() {
-			for n := 0; n < 5; n++ {
-				envelope := &events.Envelope{
-					Origin:     proto.String("fake-origin-3"),
-					EventType:  events.Envelope_LogMessage.Enum(),
-					LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message "+string(n), "fake-app-id-1", "DEA"),
-				}
-				message, _ := proto.Marshal(envelope)
-
-				inputChan <- message
-			}
-
-			collection.Run(inputChan, outputChan, waitGroup)
-
-			for n := 0; n < 5; n++ {
-				<-outputChan
-			}
-
-			metrics := collection.Emit().Metrics
-
-			Expect(metrics).NotTo(BeNil())
-
-			metricsNameMap := make(map[string]int)
-			for _, m := range metrics {
-				metricsNameMap[m.Name]++
-			}
-
-			Expect(metricsNameMap["logMessageTotal"]).To(Equal(1))
-			for _, metric := range metrics {
-				if metric.Name == "logMessageTotal" {
-					Expect(metric.Value.(uint64)).To(Equal(uint64(5)))
-				}
-			}
-
-			for name, count := range metricsNameMap {
-				Expect(count).To(Equal(1), fmt.Sprintf("%v has %v metrics, expected only ONE", name, count))
-			}
-		})
-
-		It("emits log messages metrics per app concatenated from the different unmarshallers", func() {
-			collection.Run(inputChan, outputChan, waitGroup)
-
-			for n := 0; n < 25; n++ {
-				envelope := &events.Envelope{
-					Origin:     proto.String("fake-origin-3"),
-					EventType:  events.Envelope_LogMessage.Enum(),
-					LogMessage: factories.NewLogMessage(events.LogMessage_OUT, "test log message "+string(n), "fake-app-id-"+string(n%5), "DEA"),
-				}
-				message, _ := proto.Marshal(envelope)
-
-				inputChan <- message
-			}
-
-			for n := 0; n < 25; n++ {
-				<-outputChan
-			}
-
-			metrics := collection.Emit().Metrics
-
-			Expect(metrics).NotTo(BeNil())
-
-			metricsNameMap := make(map[string]int)
-			for _, m := range metrics {
-				metricsNameMap[m.Name]++
-			}
-		})
-
-		It("emits event type metrics concatenated from the different unmarshallers", func() {
-			collection.Run(inputChan, outputChan, waitGroup)
-
-			for n := 0; n < 7; n++ {
-				envelope := &events.Envelope{
-					Origin:      proto.String("fake-origin-1"),
-					EventType:   events.Envelope_ValueMetric.Enum(),
-					ValueMetric: factories.NewValueMetric("metricName", 1.0, "unit"),
-				}
-				message, _ := proto.Marshal(envelope)
-
-				inputChan <- message
-			}
-
-			for n := 0; n < 7; n++ {
-				<-outputChan
-			}
-
-			metrics := collection.Emit().Metrics
-
-			Expect(metrics).NotTo(BeNil())
-
-			metricsNameMap := make(map[string]int)
-			for _, m := range metrics {
-				metricsNameMap[m.Name]++
-			}
-
-			Expect(metricsNameMap["valueMetricReceived"]).To(Equal(1))
-			for _, metric := range metrics {
-				if metric.Name == "valueMetricReceived" {
-					Expect(metric.Value.(uint64)).To(Equal(uint64(7)))
-				}
-			}
-		})
-
-		It("emits the correct metrics context", func() {
-			Expect(collection.Emit().Name).To(Equal("dropsondeUnmarshaller"))
 		})
 	})
 })
