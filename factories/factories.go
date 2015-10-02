@@ -59,6 +59,31 @@ func NewHttpStop(req *http.Request, statusCode int, contentLength int64, peerTyp
 	return httpStop
 }
 
+func NewHttpStartStop(req *http.Request, statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStartStop {
+	httpStartStop := &events.HttpStartStop{
+		StartTimestamp: proto.Int64(time.Now().UnixNano()),
+		StopTimestamp:  proto.Int64(time.Now().UnixNano()),
+		RequestId:      NewUUID(requestId),
+		PeerType:       &peerType,
+		Method:         events.Method(events.Method_value[req.Method]).Enum(),
+		Uri:            proto.String(fmt.Sprintf("%s%s", req.Host, req.URL.Path)),
+		RemoteAddress:  proto.String(req.RemoteAddr),
+		UserAgent:      proto.String(req.UserAgent()),
+		StatusCode:     proto.Int(statusCode),
+		ContentLength:  proto.Int64(contentLength),
+	}
+	return httpStartStop
+}
+
+func NewError(source string, code int32, message string) *events.Error {
+	err := &events.Error{
+		Source:  proto.String(source),
+		Code:    proto.Int32(code),
+		Message: proto.String(message),
+	}
+	return err
+}
+
 func NewValueMetric(name string, value float64, unit string) *events.ValueMetric {
 	return &events.ValueMetric{
 		Name:  proto.String(name),
