@@ -1,6 +1,8 @@
 package dropsonde_marshaller_test
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/dropsonde/dropsonde_marshaller"
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
@@ -11,7 +13,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("DropsondeMarshaller", func() {
@@ -81,7 +82,7 @@ var _ = Describe("DropsondeMarshaller", func() {
 		})
 
 		It("counts unknown message types", func() {
-			unexpectedMessageType := events.Envelope_EventType(1)
+			unexpectedMessageType := events.Envelope_EventType(10)
 			envelope1 := &events.Envelope{
 				Origin:     proto.String("fake-origin-3"),
 				EventType:  &unexpectedMessageType,

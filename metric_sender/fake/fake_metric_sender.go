@@ -2,12 +2,15 @@ package fake
 
 import (
 	"sync"
+
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 type FakeMetricSender struct {
 	counters         map[string]uint64
 	values           map[string]Metric
 	containerMetrics map[string]ContainerMetric
+	envelopes        []*events.Envelope
 	sync.RWMutex
 }
 
@@ -36,6 +39,14 @@ func (fms *FakeMetricSender) SendValue(name string, value float64, unit string) 
 	fms.Lock()
 	defer fms.Unlock()
 	fms.values[name] = Metric{Value: value, Unit: unit}
+
+	return nil
+}
+
+func (fms *FakeMetricSender) SendEnvelope(envelope *events.Envelope) error {
+	fms.Lock()
+	defer fms.Unlock()
+	fms.envelopes = append(fms.envelopes, envelope)
 
 	return nil
 }
@@ -91,6 +102,13 @@ func (fms *FakeMetricSender) GetContainerMetric(applicationId string) ContainerM
 	defer fms.RUnlock()
 
 	return fms.containerMetrics[applicationId]
+}
+
+func (fms *FakeMetricSender) GetEnvelopes() []*events.Envelope {
+	fms.RLock()
+	defer fms.RUnlock()
+
+	return fms.envelopes
 }
 
 func (fms *FakeMetricSender) Reset() {
