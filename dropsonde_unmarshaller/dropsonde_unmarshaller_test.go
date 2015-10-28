@@ -181,7 +181,7 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 		})
 
 		It("counts unknown message types", func() {
-			unexpectedMessageType := events.Envelope_EventType(1)
+			unexpectedMessageType := events.Envelope_EventType(10)
 			envelope1 := &events.Envelope{
 				Origin:     proto.String("fake-origin-3"),
 				EventType:  &unexpectedMessageType,

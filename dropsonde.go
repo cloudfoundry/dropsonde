@@ -124,5 +124,11 @@ func (*NullEventEmitter) Emit(events.Event) error {
 	return nil
 }
 
+// EmitEnvelope is called to send an envelope to a remote host. On NullEventEmitter,
+// it is a no-op.
+func (*NullEventEmitter) EmitEnvelope(*events.Envelope) error {
+	return nil
+}
+
 // Close ceases emitter operations. On NullEventEmitter, it is a no-op.
 func (*NullEventEmitter) Close() {}

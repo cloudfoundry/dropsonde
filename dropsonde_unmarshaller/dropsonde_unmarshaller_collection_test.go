@@ -4,11 +4,12 @@ import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 
+	"runtime"
+	"sync"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"runtime"
-	"sync"
 )
 
 var _ = Describe("DropsondeUnmarshallerCollection", func() {

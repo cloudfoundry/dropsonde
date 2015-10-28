@@ -11,6 +11,7 @@ type MetricSender interface {
 	IncrementCounter(name string) error
 	AddToCounter(name string, delta uint64) error
 	SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
+	SendEnvelope(*events.Envelope) error
 }
 
 type metricSender struct {
@@ -27,6 +28,12 @@ func NewMetricSender(eventEmitter emitter.EventEmitter) MetricSender {
 // Returns an error if one occurs while sending the event.
 func (ms *metricSender) SendValue(name string, value float64, unit string) error {
 	return ms.eventEmitter.Emit(&events.ValueMetric{Name: &name, Value: &value, Unit: &unit})
+}
+
+// SendEnvelope sends the given envelope.
+// Returns an error if one occurs while sending the envelope.
+func (ms *metricSender) SendEnvelope(envelope *events.Envelope) error {
+	return ms.eventEmitter.EmitEnvelope(envelope)
 }
 
 // IncrementCounter sends an event to increment the named counter by one.

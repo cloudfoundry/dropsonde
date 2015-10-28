@@ -3,10 +3,12 @@ package metricbatcher_test
 import (
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 
+	"time"
+
 	"github.com/cloudfoundry/dropsonde/metrics"
+	"github.com/cloudfoundry/sonde-go/events"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("Deadlock", func() {
@@ -40,6 +42,10 @@ func NewFakeMetricSender(done *chan struct{}) *FakeMetricSender {
 }
 
 func (fms *FakeMetricSender) SendValue(name string, value float64, unit string) error {
+	return nil
+}
+
+func (fms *FakeMetricSender) SendEnvelope(envelope *events.Envelope) error {
 	return nil
 }
 

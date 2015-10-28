@@ -21,6 +21,8 @@ package metrics
 
 import (
 	"github.com/cloudfoundry/dropsonde/metric_sender"
+
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 var metricSender metric_sender.MetricSender
@@ -50,6 +52,14 @@ func SendValue(name string, value float64, unit string) error {
 		return nil
 	}
 	return metricSender.SendValue(name, value, unit)
+}
+
+// SendEnvelope sends the given Envelope.
+func SendEnvelope(envelope *events.Envelope) error {
+	if metricSender == nil {
+		return nil
+	}
+	return metricSender.SendEnvelope(envelope)
 }
 
 // IncrementCounter sends an event to increment the named counter by one.

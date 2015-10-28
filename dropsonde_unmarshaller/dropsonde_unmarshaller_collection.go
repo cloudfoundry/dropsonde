@@ -1,9 +1,10 @@
 package dropsonde_unmarshaller
 
 import (
+	"sync"
+
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
-	"sync"
 )
 
 // A DropsondeUnmarshallerCollection is a collection of DropsondeUnmarshaller instances.

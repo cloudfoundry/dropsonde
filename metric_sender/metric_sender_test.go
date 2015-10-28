@@ -7,6 +7,9 @@ import (
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 	"github.com/cloudfoundry/sonde-go/events"
 
+	"time"
+
+	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -31,6 +34,34 @@ var _ = Describe("MetricSender", func() {
 		Expect(metric.GetName()).To(Equal("metric-name"))
 		Expect(metric.GetValue()).To(BeNumerically("==", 42))
 		Expect(metric.GetUnit()).To(Equal("answers"))
+	})
+
+	It("sends an Envelope to its emitter", func() {
+		envOrigin := "original-origin"
+		testEnvelope := events.Envelope{
+			Origin:     proto.String(envOrigin),
+			EventType:  events.Envelope_ValueMetric.Enum(),
+			Timestamp:  proto.Int64(time.Now().Unix() * 1000),
+			Deployment: proto.String("some-deployment"),
+			Job:        proto.String("some-job"),
+			Index:      proto.String("some-index"),
+			ValueMetric: &events.ValueMetric{
+				Name:  proto.String("metric-name"),
+				Value: proto.Float64(42),
+				Unit:  proto.String("answers"),
+			},
+		}
+
+		err := sender.SendEnvelope(&testEnvelope)
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+		envelope := emitter.GetEnvelopes()[0]
+		metric := envelope.ValueMetric
+		Expect(metric.GetName()).To(Equal("metric-name"))
+		Expect(metric.GetValue()).To(BeNumerically("==", 42))
+		Expect(metric.GetUnit()).To(Equal("answers"))
+		Expect(envelope.Origin).To(Equal(proto.String(envOrigin)))
 	})
 
 	It("returns an error if it can't send metric value", func() {
