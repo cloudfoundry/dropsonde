@@ -1,6 +1,8 @@
 package dropsonde_marshaller_test
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/dropsonde/dropsonde_marshaller"
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
@@ -11,7 +13,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("DropsondeMarshaller", func() {

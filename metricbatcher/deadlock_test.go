@@ -3,10 +3,11 @@ package metricbatcher_test
 import (
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 
+	"time"
+
 	"github.com/cloudfoundry/dropsonde/metrics"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 )
 
 var _ = Describe("Deadlock", func() {
