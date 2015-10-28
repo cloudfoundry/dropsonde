@@ -2,6 +2,11 @@ package integration_test
 
 import (
 	"fmt"
+	"net"
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/cloudfoundry/dropsonde"
 	"github.com/cloudfoundry/dropsonde/log_sender"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
@@ -12,10 +17,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net"
-	"strings"
-	"sync"
-	"time"
 )
 
 var (
