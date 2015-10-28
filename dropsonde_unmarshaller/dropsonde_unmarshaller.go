@@ -16,7 +16,9 @@
 package dropsonde_unmarshaller
 
 import (
+	"fmt"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/gosteno"
@@ -24,6 +26,18 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
 )
+
+var metricNames map[events.Envelope_EventType]string
+
+func init() {
+	metricNames = make(map[events.Envelope_EventType]string)
+	for eventType, eventName := range events.Envelope_EventType_name {
+		r, n := utf8.DecodeRuneInString(eventName)
+		modifiedName := string(unicode.ToLower(r)) + eventName[n:]
+		metricName := "dropsondeUnmarshaller." + modifiedName + "Received"
+		metricNames[events.Envelope_EventType(eventType)] = metricName
+	}
+}
 
 // A DropsondeUnmarshaller is an self-instrumenting tool for converting Protocol
 // Buffer-encoded dropsonde messages to Envelope instances.
@@ -68,29 +82,29 @@ func (u *dropsondeUnmarshaller) UnmarshallMessage(message []byte) (*events.Envel
 
 	u.logger.Debugf("dropsondeUnmarshaller: received message %v", spew.Sprintf("%v", envelope))
 
-	if envelope.GetEventType() == events.Envelope_LogMessage {
-		u.incrementLogMessageReceiveCount(envelope.GetLogMessage().GetAppId())
-	} else {
-		u.incrementReceiveCount(envelope.GetEventType())
+	if err := u.incrementReceiveCount(envelope.GetEventType()); err != nil {
+		u.logger.Debug(err.Error())
+		return nil, err
 	}
 
 	return envelope, nil
 }
 
-func (u *dropsondeUnmarshaller) incrementLogMessageReceiveCount(appID string) {
-	metrics.BatchIncrementCounter("dropsondeUnmarshaller.logMessageTotal")
-}
-
-func (u *dropsondeUnmarshaller) incrementReceiveCount(eventType events.Envelope_EventType) {
-	name, ok := events.Envelope_EventType_name[int32(eventType)]
-
-	if !ok {
-		name = "unknownEventType"
+func (u *dropsondeUnmarshaller) incrementReceiveCount(eventType events.Envelope_EventType) error {
+	var err error
+	switch eventType {
+	case events.Envelope_LogMessage:
+		// LogMessage is a special case. `logMessageReceived` used to be broken out by app ID, and
+		// `logMessageTotal` was the sum of all of those.
+		metrics.BatchIncrementCounter("dropsondeUnmarshaller.logMessageTotal")
+	default:
+		metricName := metricNames[eventType]
+		if metricName == "" {
+			metricName = "dropsondeUnmarshaller.unknownEventTypeReceived"
+			err = fmt.Errorf("dropsondeUnmarshaller: received unknown event type %#v", eventType)
+		}
+		metrics.BatchIncrementCounter(metricName)
 	}
 
-	modifiedEventName := []rune(name)
-	modifiedEventName[0] = unicode.ToLower(modifiedEventName[0])
-	metricName := string(modifiedEventName) + "Received"
-
-	metrics.BatchIncrementCounter("dropsondeUnmarshaller." + metricName)
+	return err
 }

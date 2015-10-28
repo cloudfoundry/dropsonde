@@ -16,13 +16,27 @@
 package dropsonde_marshaller
 
 import (
+	"unicode"
+	"unicode/utf8"
+
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
-	"unicode"
 )
+
+var metricNames map[events.Envelope_EventType]string
+
+func init() {
+	metricNames = make(map[events.Envelope_EventType]string)
+	for eventType, eventName := range events.Envelope_EventType_name {
+		r, n := utf8.DecodeRuneInString(eventName)
+		modifiedName := string(unicode.ToLower(r)) + eventName[n:]
+		metricName := "dropsondeMarshaller." + modifiedName + "Received"
+		metricNames[events.Envelope_EventType(eventType)] = metricName
+	}
+}
 
 // A DropsondeMarshaller is an self-instrumenting tool for converting dropsonde
 // Envelopes to binary (Protocol Buffer) messages.
@@ -71,15 +85,10 @@ func (u *dropsondeMarshaller) Run(inputChan <-chan *events.Envelope, outputChan 
 }
 
 func (u *dropsondeMarshaller) incrementMessageCount(eventType events.Envelope_EventType) {
-	name, ok := events.Envelope_EventType_name[int32(eventType)]
-
-	if !ok {
-		name = "unknownEventType"
+	metricName := metricNames[eventType]
+	if metricName == "" {
+		metricName = "dropsondeMarshaller.unknownEventTypeReceived"
 	}
 
-	modifiedEventName := []rune(name)
-	modifiedEventName[0] = unicode.ToLower(modifiedEventName[0])
-	metricName := string(modifiedEventName) + "Received"
-
-	metrics.BatchIncrementCounter("dropsondeMarshaller." + metricName)
+	metrics.BatchIncrementCounter(metricName)
 }
