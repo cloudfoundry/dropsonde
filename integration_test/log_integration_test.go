@@ -19,23 +19,22 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var (
-	logLock     sync.RWMutex
-	logMessages []*events.LogMessage
-	udpConn     net.PacketConn
-)
-
 var _ = Describe("LogIntegration", func() {
 	Context("with standard initialization", func() {
+		var (
+			udpConn     net.PacketConn
+			logMessages *LogMessages
+		)
+
 		origin := []string{"test-origin"}
 
 		BeforeEach(func() {
 			var err error
-			logMessages = nil
+			logMessages = &LogMessages{}
 			udpConn, err = net.ListenPacket("udp4", ":0")
 			Expect(err).ToNot(HaveOccurred())
 
-			go listenForLogs()
+			go listenForLogs(udpConn, logMessages)
 			udpAddr := udpConn.LocalAddr().(*net.UDPAddr)
 			dropsonde.Initialize(fmt.Sprintf("localhost:%d", udpAddr.Port), origin...)
 			sender := metric_sender.NewMetricSender(dropsonde.AutowiredEmitter())
@@ -54,15 +53,11 @@ var _ = Describe("LogIntegration", func() {
 			reader := strings.NewReader(strings.Repeat("s", length) + "\n")
 			logSender.ScanErrorLogStream("someId", "app", "0", reader)
 
-			Eventually(func() []*events.LogMessage {
-				logLock.RLock()
-				defer logLock.RUnlock()
-				return logMessages
-			}).Should(HaveLen(1))
+			Eventually(logMessages.Length).Should(Equal(1))
 
-			Expect(logMessages[0].MessageType).To(Equal(events.LogMessage_ERR.Enum()))
-			Expect(string(logMessages[0].GetMessage())).To(ContainSubstring("message could not fit in UDP packet"))
-
+			msg := logMessages.Get(0)
+			Expect(msg.MessageType).To(Equal(events.LogMessage_ERR.Enum()))
+			Expect(string(msg.GetMessage())).To(ContainSubstring("message could not fit in UDP packet"))
 		})
 
 		It("sends dropped error message for messages which are over 64k", func() {
@@ -72,20 +67,40 @@ var _ = Describe("LogIntegration", func() {
 			reader := strings.NewReader(strings.Repeat("s", length) + "\n")
 			logSender.ScanErrorLogStream("someId", "app", "0", reader)
 
-			Eventually(func() []*events.LogMessage {
-				logLock.RLock()
-				defer logLock.RUnlock()
-				return logMessages
-			}).Should(HaveLen(2))
+			Eventually(logMessages.Length).Should(Equal(2))
 
-			Expect(logMessages[0].MessageType).To(Equal(events.LogMessage_ERR.Enum()))
-			Expect(string(logMessages[0].GetMessage())).To(ContainSubstring(" message too long (>64K without a newline)"))
-			Expect(string(logMessages[1].GetMessage())).To(ContainSubstring("s"))
+			msg := logMessages.Get(0)
+			Expect(msg.MessageType).To(Equal(events.LogMessage_ERR.Enum()))
+			Expect(string(msg.GetMessage())).To(ContainSubstring(" message too long (>64K without a newline)"))
+			Expect(string(logMessages.Get(1).GetMessage())).To(ContainSubstring("s"))
 		})
 	})
 })
 
-func listenForLogs() {
+type LogMessages struct {
+	sync.Mutex
+	messages []*events.LogMessage
+}
+
+func (logs *LogMessages) Append(log *events.LogMessage) {
+	logs.Lock()
+	logs.messages = append(logs.messages, log)
+	logs.Unlock()
+}
+
+func (logs *LogMessages) Length() int {
+	defer logs.Unlock()
+	logs.Lock()
+	return len(logs.messages)
+}
+
+func (logs *LogMessages) Get(i int) *events.LogMessage {
+	defer logs.Unlock()
+	logs.Lock()
+	return logs.messages[i]
+}
+
+func listenForLogs(udpConn net.PacketConn, logMessages *LogMessages) {
 	for {
 		buffer := make([]byte, 1024)
 		n, _, err := udpConn.ReadFrom(buffer)
@@ -103,10 +118,7 @@ func listenForLogs() {
 		}
 
 		if envelope.GetEventType() == events.Envelope_LogMessage {
-			logLock.Lock()
-			logMessages = append(logMessages, envelope.GetLogMessage())
-			logLock.Unlock()
-
+			logMessages.Append(envelope.GetLogMessage())
 		}
 	}
 }
