@@ -101,10 +101,31 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	})
 
 	Context("event emission", func() {
-		It("should emit a start event", func() {
-			rt.RoundTrip(req)
-			Expect(fakeEmitter.GetMessages()[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-			Expect(fakeEmitter.GetMessages()[0].Origin).To(Equal("testRoundtripper/42"))
+		Context("if round tripper does not return an error", func() {
+			It("should emit a startstop event with the round tripper's response", func() {
+				rt.RoundTrip(req)
+
+				Expect(fakeEmitter.GetMessages()[0].Event).To(BeAssignableToTypeOf(new(events.HttpStartStop)))
+
+				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
+				Expect(startStopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+				Expect(startStopEvent.GetContentLength()).To(BeNumerically("==", 1234))
+				Expect(startStopEvent.GetParentRequestId()).To(BeNil())
+				Expect(startStopEvent.StartTimestamp).NotTo(Equal(startStopEvent.StopTimestamp))
+			})
+		})
+
+		Context("if round tripper returns an error", func() {
+			It("should emit a stop event with blank response fields", func() {
+				fakeRoundTripper.fakeError = errors.New("fakeEmitter error")
+				rt.RoundTrip(req)
+
+				Expect(fakeEmitter.GetMessages()[0].Event).To(BeAssignableToTypeOf(new(events.HttpStartStop)))
+
+				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
+				Expect(startStopEvent.GetStatusCode()).To(BeNumerically("==", 0))
+				Expect(startStopEvent.GetContentLength()).To(BeNumerically("==", 0))
+			})
 		})
 
 		Context("if request ID already exists", func() {
@@ -117,37 +138,11 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 
 			It("should emit the existing request ID as the parent request ID", func() {
 				rt.RoundTrip(req)
-				startEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStart)
-				Expect(startEvent.GetParentRequestId()).To(Equal(factories.NewUUID(existingRequestId)))
-			})
-		})
-
-		Context("if round tripper returns an error", func() {
-			It("should emit a stop event with blank response fields", func() {
-				fakeRoundTripper.fakeError = errors.New("fakeEmitter error")
-				rt.RoundTrip(req)
-
-				Expect(fakeEmitter.GetMessages()[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-
-				stopEvent := fakeEmitter.GetMessages()[1].Event.(*events.HttpStop)
-				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 0))
-				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 0))
-			})
-		})
-
-		Context("if round tripper does not return an error", func() {
-			It("should emit a stop event with the round tripper's response", func() {
-				rt.RoundTrip(req)
-
-				Expect(fakeEmitter.GetMessages()[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-
-				stopEvent := fakeEmitter.GetMessages()[1].Event.(*events.HttpStop)
-				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
-				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 1234))
+				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
+				Expect(startStopEvent.GetParentRequestId()).To(Equal(factories.NewUUID(existingRequestId)))
 			})
 		})
 	})
-
 })
 
 type FakeRoundTripper struct {

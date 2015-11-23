@@ -90,16 +90,14 @@ var _ = Describe("InstrumentedHandler", func() {
 				h.ServeHTTP(httptest.NewRecorder(), req)
 			})
 
-			It("should emit a start event with the right origin", func() {
-				Expect(fakeEmitter.GetMessages()[0].Event).To(BeAssignableToTypeOf(new(events.HttpStart)))
-				Expect(fakeEmitter.GetMessages()[0].Origin).To(Equal("testHandler/41"))
-			})
-
-			It("should emit a stop event", func() {
-				Expect(fakeEmitter.GetMessages()[1].Event).To(BeAssignableToTypeOf(new(events.HttpStop)))
-				stopEvent := fakeEmitter.GetMessages()[1].Event.(*events.HttpStop)
-				Expect(stopEvent.GetStatusCode()).To(BeNumerically("==", 123))
-				Expect(stopEvent.GetContentLength()).To(BeNumerically("==", 12))
+			It("should emit a startstop event", func() {
+				messages := fakeEmitter.GetMessages()
+				Expect(messages).To(HaveLen(1))
+				Expect(messages[0].Event).To(BeAssignableToTypeOf(new(events.HttpStartStop)))
+				startStopEvent := messages[0].Event.(*events.HttpStartStop)
+				Expect(startStopEvent.GetStatusCode()).To(BeNumerically("==", 123))
+				Expect(startStopEvent.GetContentLength()).To(BeNumerically("==", 12))
+				Expect(startStopEvent.StartTimestamp).NotTo(Equal(startStopEvent.StopTimestamp))
 			})
 		})
 	})
