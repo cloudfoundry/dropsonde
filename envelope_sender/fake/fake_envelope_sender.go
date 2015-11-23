@@ -7,7 +7,7 @@ import (
 )
 
 type FakeEnvelopeSender struct {
-	envelopes        []*events.Envelope
+	envelopes []*events.Envelope
 	sync.RWMutex
 }
 

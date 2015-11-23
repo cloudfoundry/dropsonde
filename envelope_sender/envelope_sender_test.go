@@ -5,18 +5,17 @@ import (
 
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/cloudfoundry/dropsonde/envelope_sender"
 	"github.com/gogo/protobuf/proto"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("EnvelopeSender", func() {
 	var (
-		emitter *fake.FakeEventEmitter
-		sender  envelope_sender.EnvelopeSender
-	envOrigin string
+		emitter   *fake.FakeEventEmitter
+		sender    envelope_sender.EnvelopeSender
+		envOrigin string
 	)
 
 	BeforeEach(func() {
