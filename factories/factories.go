@@ -60,9 +60,10 @@ func NewHttpStop(req *http.Request, statusCode int, contentLength int64, peerTyp
 }
 
 func NewHttpStartStop(req *http.Request, statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStartStop {
+	now := proto.Int64(time.Now().UnixNano())
 	httpStartStop := &events.HttpStartStop{
-		StartTimestamp: proto.Int64(time.Now().UnixNano()),
-		StopTimestamp:  proto.Int64(time.Now().UnixNano()),
+		StartTimestamp: now,
+		StopTimestamp:  now,
 		RequestId:      NewUUID(requestId),
 		PeerType:       &peerType,
 		Method:         events.Method(events.Method_value[req.Method]).Enum(),

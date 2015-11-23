@@ -62,10 +62,8 @@ var _ = Describe("Autowire End-to-End", func() {
 			metrics.BatchIncrementCounter("TestBatchedCounter")
 
 			expectedEvents := []eventTracker{
-				{eventType: "HttpStart", name: "Client"},
-				{eventType: "HttpStart", name: "Server"},
-				{eventType: "HttpStop", name: "Client"},
-				{eventType: "HttpStop", name: "Server"},
+				{eventType: "HttpStartStop", name: "Client"},
+				{eventType: "HttpStartStop", name: "Server"},
 				{eventType: "ValueMetric", name: "numCPUS"},
 				{eventType: "ValueMetric", name: "TestMetric"},
 				{eventType: "CounterEvent", name: "TestIncrementCounter"},
@@ -101,16 +99,14 @@ func listenForEvents(origin []string) {
 		tracker := eventTracker{eventType: eventId}
 
 		switch envelope.GetEventType() {
-		case events.Envelope_HttpStart:
-			tracker.name = envelope.GetHttpStart().GetPeerType().String()
-		case events.Envelope_HttpStop:
-			tracker.name = envelope.GetHttpStop().GetPeerType().String()
+		case events.Envelope_HttpStartStop:
+			tracker.name = envelope.GetHttpStartStop().GetPeerType().String()
 		case events.Envelope_ValueMetric:
 			tracker.name = envelope.GetValueMetric().GetName()
 		case events.Envelope_CounterEvent:
 			tracker.name = envelope.GetCounterEvent().GetName()
 		default:
-			panic("Unexpected message type")
+			panic("Unexpected message type: " + envelope.GetEventType().String())
 
 		}
 
