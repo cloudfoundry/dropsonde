@@ -118,6 +118,17 @@ var _ = Describe("Metrics", func() {
 
 			Expect(batcher.closed).To(BeTrue())
 		})
+
+		It("calls close on previous batcher when initializing with a new one", func() {
+			oldBatcher := &FakeMetricBatcher{}
+			metrics.Initialize(nil, oldBatcher)
+
+			newBatcher := &FakeMetricBatcher{}
+			metrics.Initialize(nil, newBatcher)
+
+			Expect(oldBatcher.closed).To(BeTrue())
+			Expect(newBatcher.closed).To(BeFalse())
+		})
 	})
 })
 
