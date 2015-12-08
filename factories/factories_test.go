@@ -33,6 +33,31 @@ var _ = Describe("HTTP event creation", func() {
 		req.Header.Set("User-Agent", "our-testing-client")
 	})
 
+	Describe("NewHttpStartStop", func() {
+
+		It("should extract ApplicationId from request header", func() {
+			applicationId, _ := uuid.NewV4()
+			req.Header.Set("X-CF-ApplicationID", applicationId.String())
+
+			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(startStopEvent.GetApplicationId()).To(Equal(factories.NewUUID(applicationId)))
+		})
+		It("should extract InstanceIndex from request header", func() {
+			instanceIndex := "1"
+			req.Header.Set("X-CF-InstanceIndex", instanceIndex)
+
+			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(startStopEvent.GetInstanceIndex()).To(BeNumerically("==", 1))
+		})
+		It("should extract InstanceID from request header", func() {
+			instanceId := "fake-id"
+			req.Header.Set("X-CF-InstanceID", instanceId)
+
+			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(startStopEvent.GetInstanceId()).To(Equal(instanceId))
+		})
+	})
+
 	Describe("NewHttpStart", func() {
 
 		Context("without an application ID or instanceIndex", func() {
