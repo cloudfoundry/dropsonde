@@ -22,7 +22,7 @@ func NewHttpStart(req *http.Request, peerType events.PeerType, requestId *uuid.U
 		RequestId:     NewUUID(requestId),
 		PeerType:      &peerType,
 		Method:        events.Method(events.Method_value[req.Method]).Enum(),
-		Uri:           proto.String(fmt.Sprintf("%s%s", req.Host, req.URL.Path)),
+		Uri:           proto.String(fmt.Sprintf("%s://%s%s", scheme(req), req.Host, req.URL.Path)),
 		RemoteAddress: proto.String(req.RemoteAddr),
 		UserAgent:     proto.String(req.UserAgent()),
 	}
@@ -45,7 +45,7 @@ func NewHttpStart(req *http.Request, peerType events.PeerType, requestId *uuid.U
 func NewHttpStop(req *http.Request, statusCode int, contentLength int64, peerType events.PeerType, requestId *uuid.UUID) *events.HttpStop {
 	httpStop := &events.HttpStop{
 		Timestamp:     proto.Int64(time.Now().UnixNano()),
-		Uri:           proto.String(fmt.Sprintf("%s%s", req.Host, req.URL.Path)),
+		Uri:           proto.String(fmt.Sprintf("%s://%s%s", scheme(req), req.Host, req.URL.Path)),
 		RequestId:     NewUUID(requestId),
 		PeerType:      &peerType,
 		StatusCode:    proto.Int(statusCode),
@@ -67,7 +67,7 @@ func NewHttpStartStop(req *http.Request, statusCode int, contentLength int64, pe
 		RequestId:      NewUUID(requestId),
 		PeerType:       &peerType,
 		Method:         events.Method(events.Method_value[req.Method]).Enum(),
-		Uri:            proto.String(fmt.Sprintf("%s%s", req.Host, req.URL.Path)),
+		Uri:            proto.String(fmt.Sprintf("%s://%s%s", scheme(req), req.Host, req.URL.Path)),
 		RemoteAddress:  proto.String(req.RemoteAddr),
 		UserAgent:      proto.String(req.UserAgent()),
 		StatusCode:     proto.Int(statusCode),
@@ -135,4 +135,11 @@ func NewContainerMetric(applicationId string, instanceIndex int32, cpuPercentage
 		MemoryBytes:   &memoryBytes,
 		DiskBytes:     &diskBytes,
 	}
+}
+
+func scheme(req *http.Request) string {
+	if req.TLS == nil {
+		return "http"
+	}
+	return "https"
 }

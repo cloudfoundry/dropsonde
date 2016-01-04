@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"net/http"
+	"net/url"
 
 	"github.com/cloudfoundry/dropsonde/factories"
 	"github.com/cloudfoundry/sonde-go/events"
@@ -29,6 +30,12 @@ var _ = Describe("HTTP event creation", func() {
 	JustBeforeEach(func() {
 		req, _ = http.NewRequest(reqMethod, "http://foo.example.com/", nil)
 
+		// According to the godoc for http.Request, server requests only contain
+		// Path and RawQuery fields.
+		req.URL = &url.URL{
+			Path: "/",
+		}
+
 		req.RemoteAddr = "127.0.0.1"
 		req.Header.Set("User-Agent", "our-testing-client")
 	})
@@ -42,6 +49,7 @@ var _ = Describe("HTTP event creation", func() {
 			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
 			Expect(startStopEvent.GetApplicationId()).To(Equal(factories.NewUUID(applicationId)))
 		})
+
 		It("should extract InstanceIndex from request header", func() {
 			instanceIndex := "1"
 			req.Header.Set("X-CF-InstanceIndex", instanceIndex)
@@ -49,12 +57,35 @@ var _ = Describe("HTTP event creation", func() {
 			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
 			Expect(startStopEvent.GetInstanceIndex()).To(BeNumerically("==", 1))
 		})
+
 		It("should extract InstanceID from request header", func() {
 			instanceId := "fake-id"
 			req.Header.Set("X-CF-InstanceID", instanceId)
 
 			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
 			Expect(startStopEvent.GetInstanceId()).To(Equal(instanceId))
+		})
+
+		It("should set appropriate fields", func() {
+			expectedEvent := &events.HttpStartStop{
+				RequestId:     factories.NewUUID(requestId),
+				PeerType:      events.PeerType_Server.Enum(),
+				Method:        events.Method_GET.Enum(),
+				Uri:           proto.String("http://foo.example.com/"),
+				RemoteAddress: proto.String("127.0.0.1"),
+				UserAgent:     proto.String("our-testing-client"),
+				StatusCode:    proto.Int32(http.StatusOK),
+				ContentLength: proto.Int64(1234),
+			}
+
+			event := factories.NewHttpStartStop(req, http.StatusOK, 1234, events.PeerType_Server, requestId)
+
+			Expect(event.GetStartTimestamp()).ToNot(BeZero())
+			event.StartTimestamp = nil
+			Expect(event.GetStopTimestamp()).ToNot(BeZero())
+			event.StopTimestamp = nil
+
+			Expect(event).To(Equal(expectedEvent))
 		})
 	})
 
@@ -67,7 +98,7 @@ var _ = Describe("HTTP event creation", func() {
 					RequestId:     factories.NewUUID(requestId),
 					PeerType:      events.PeerType_Server.Enum(),
 					Method:        events.Method_GET.Enum(),
-					Uri:           proto.String("foo.example.com/"),
+					Uri:           proto.String("http://foo.example.com/"),
 					RemoteAddress: proto.String("127.0.0.1"),
 					UserAgent:     proto.String("our-testing-client"),
 				}
@@ -130,7 +161,7 @@ var _ = Describe("HTTP event creation", func() {
 			expectedStopEvent := &events.HttpStop{
 				ApplicationId: factories.NewUUID(applicationId),
 				RequestId:     factories.NewUUID(requestId),
-				Uri:           proto.String("foo.example.com/"),
+				Uri:           proto.String("http://foo.example.com/"),
 				PeerType:      events.PeerType_Server.Enum(),
 				StatusCode:    proto.Int32(200),
 				ContentLength: proto.Int64(3),
