@@ -190,11 +190,11 @@ var _ = Describe("LogSender", func() {
 
 			Eventually(doneChan).Should(BeClosed())
 
-			messages := emitter.GetMessages()
+			messages := getLogMessages(emitter.GetMessages())
 
-			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
-			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
-			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
+			Expect(messages[0]).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
+			Expect(messages[1]).To(Equal("x"))
+			Expect(messages[2]).To(Equal("small message"))
 		})
 
 		It("ignores empty lines", func() {
@@ -203,10 +203,10 @@ var _ = Describe("LogSender", func() {
 			sender.ScanLogStream("someId", "app", "0", reader)
 
 			Expect(emitter.GetMessages()).To(HaveLen(2))
-			messages := emitter.GetMessages()
+			messages := getLogMessages(emitter.GetMessages())
 
-			Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
-			Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
+			Expect(messages[0]).To(Equal("one"))
+			Expect(messages[1]).To(Equal("two"))
 		})
 	})
 
@@ -271,11 +271,11 @@ var _ = Describe("LogSender", func() {
 
 			Eventually(emitter.GetMessages).Should(HaveLen(3))
 
-			messages := emitter.GetMessages()
+			messages := getLogMessages(emitter.GetMessages())
 
-			Expect(getLogmessage(messages[0].Event)).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
-			Expect(getLogmessage(messages[1].Event)).To(Equal("x"))
-			Expect(getLogmessage(messages[2].Event)).To(Equal("small message"))
+			Expect(messages[0]).To(ContainSubstring("Dropped log message: message too long (>64K without a newline)"))
+			Expect(messages[1]).To(Equal("x"))
+			Expect(messages[2]).To(Equal("small message"))
 		})
 
 		It("ignores empty lines", func() {
@@ -284,10 +284,10 @@ var _ = Describe("LogSender", func() {
 			sender.ScanErrorLogStream("someId", "app", "0", reader)
 
 			Expect(emitter.GetMessages()).To(HaveLen(2))
-			messages := emitter.GetMessages()
+			messages := getLogMessages(emitter.GetMessages())
 
-			Expect(getLogmessage(messages[0].Event)).To(Equal("one"))
-			Expect(getLogmessage(messages[1].Event)).To(Equal("two"))
+			Expect(messages[0]).To(Equal("one"))
+			Expect(messages[1]).To(Equal("two"))
 		})
 	})
 })
@@ -325,10 +325,13 @@ func (i infiniteReader) Read(p []byte) (int, error) {
 	return copy(p, "hello\n"), nil
 }
 
-func getLogmessage(e events.Event) string {
-	log, ok := e.(*events.LogMessage)
-	if !ok {
-		panic("Could not cast to events.LogMessage")
+func getLogMessages(messages []fake.Message) []string {
+	var logMessages []string
+	for _, msg := range messages {
+		log, ok := msg.Event.(*events.LogMessage)
+		if ok {
+			logMessages = append(logMessages, string(log.GetMessage()))
+		}
 	}
-	return string(log.GetMessage())
+	return logMessages
 }
