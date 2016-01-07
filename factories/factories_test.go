@@ -1,6 +1,8 @@
 package factories_test
 
 import (
+	"fmt"
+
 	uuid "github.com/nu7hatch/gouuid"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -41,6 +43,14 @@ var _ = Describe("HTTP event creation", func() {
 	})
 
 	Describe("NewHttpStartStop", func() {
+
+		It("should extract X-Forwarded-For from header", func() {
+			forwardedAddress := "123.123.123.123"
+			req.Header.Set("X-Forwarded-For", forwardedAddress)
+
+			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(startStopEvent.GetUri()).To(Equal(fmt.Sprintf("http://%s/", forwardedAddress)))
+		})
 
 		It("should extract ApplicationId from request header", func() {
 			applicationId, _ := uuid.NewV4()
@@ -92,6 +102,14 @@ var _ = Describe("HTTP event creation", func() {
 	Describe("NewHttpStart", func() {
 
 		Context("without an application ID or instanceIndex", func() {
+
+			It("should extract X-Forwarded-For from header", func() {
+				forwardedAddress := "123.123.123.123"
+				req.Header.Set("X-Forwarded-For", forwardedAddress)
+
+				startEvent := factories.NewHttpStart(req, events.PeerType_Server, requestId)
+				Expect(startEvent.GetUri()).To(Equal(fmt.Sprintf("http://%s/", forwardedAddress)))
+			})
 
 			It("should set appropriate fields", func() {
 				expectedStartEvent := &events.HttpStart{
@@ -156,6 +174,15 @@ var _ = Describe("HTTP event creation", func() {
 	})
 
 	Describe("NewHttpStop", func() {
+
+		It("should extract X-Forwarded-For from header", func() {
+			forwardedAddress := "123.123.123.123"
+			req.Header.Set("X-Forwarded-For", forwardedAddress)
+
+			stopEvent := factories.NewHttpStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(stopEvent.GetUri()).To(Equal(fmt.Sprintf("http://%s/", forwardedAddress)))
+		})
+
 		It("should set appropriate fields", func() {
 			req.Header.Set("X-CF-ApplicationID", applicationId.String())
 			expectedStopEvent := &events.HttpStop{
