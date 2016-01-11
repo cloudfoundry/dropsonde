@@ -23,7 +23,6 @@ import (
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -79,8 +78,9 @@ func (u *dropsondeUnmarshaller) UnmarshallMessage(message []byte) (*events.Envel
 		metrics.BatchIncrementCounter("dropsondeUnmarshaller.unmarshalErrors")
 		return nil, err
 	}
-
-	u.logger.Debugf("dropsondeUnmarshaller: received message %v", spew.Sprintf("%v", envelope))
+	if u.isDebugLog() {
+		u.logger.Debugf("dropsondeUnmarshaller: received message %v", envelope)
+	}
 
 	if err := u.incrementReceiveCount(envelope.GetEventType()); err != nil {
 		u.logger.Debug(err.Error())
@@ -107,4 +107,12 @@ func (u *dropsondeUnmarshaller) incrementReceiveCount(eventType events.Envelope_
 	}
 
 	return err
+}
+
+func (u *dropsondeUnmarshaller) isDebugLog() bool {
+	switch u.logger.Level() {
+	case gosteno.LOG_DEBUG, gosteno.LOG_DEBUG1, gosteno.LOG_DEBUG2:
+		return true
+	}
+	return false
 }
