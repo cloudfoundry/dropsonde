@@ -19,10 +19,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/cloudfoundry/dropsonde/logging"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/gosteno"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gogo/protobuf/proto"
 )
 
@@ -77,7 +77,7 @@ func (u *dropsondeMarshaller) Run(inputChan <-chan *events.Envelope, outputChan 
 			continue
 		}
 
-		u.logger.Debugf("dropsondeMarshaller: marshalled message %v", spew.Sprintf("%v", message))
+		logging.Debugf(u.logger, "dropsondeMarshaller: marshalled message %v", message)
 
 		u.incrementMessageCount(message.GetEventType())
 		outputChan <- messageBytes
