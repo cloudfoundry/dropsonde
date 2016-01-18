@@ -75,11 +75,10 @@ func (u *dropsondeUnmarshaller) UnmarshallMessage(message []byte) (*events.Envel
 	envelope := &events.Envelope{}
 	err := proto.Unmarshal(message, envelope)
 	if err != nil {
-		logging.Debugf(u.logger, "dropsondeUnmarshaller: unmarshal error %v for message %v", err, message)
+		logging.Debugf(u.logger, "dropsondeUnmarshaller: unmarshal error %v ", err)
 		metrics.BatchIncrementCounter("dropsondeUnmarshaller.unmarshalErrors")
 		return nil, err
 	}
-	logging.Debugf(u.logger, "dropsondeUnmarshaller: received message %v", envelope)
 
 	if err := u.incrementReceiveCount(envelope.GetEventType()); err != nil {
 		logging.Debugf(u.logger, err.Error())
