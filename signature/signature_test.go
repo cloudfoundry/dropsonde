@@ -47,7 +47,7 @@ var _ = Describe("Verifier", func() {
 		inputChan <- message
 		Consistently(outputChan).ShouldNot(Receive())
 
-		Expect(loggertesthelper.TestLoggerSink.LogContents()).To(ContainSubstring("missing signature for message"))
+		Expect(loggertesthelper.TestLoggerSink.LogContents()).To(ContainSubstring("missing signature"))
 	})
 
 	It("discards messages when verification fails", func() {
@@ -58,7 +58,7 @@ var _ = Describe("Verifier", func() {
 		inputChan <- message
 		Consistently(outputChan).ShouldNot(Receive())
 
-		Expect(loggertesthelper.TestLoggerSink.LogContents()).To(ContainSubstring("invalid signature for message"))
+		Expect(loggertesthelper.TestLoggerSink.LogContents()).To(ContainSubstring("invalid signature"))
 	})
 
 	It("passes through messages with valid signature", func() {
