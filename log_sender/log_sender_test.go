@@ -268,8 +268,8 @@ var _ = Describe("LogSender", func() {
 			// Scanner can't handle tokens over 64K
 			bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
 			sender.ScanErrorLogStream("someId", "app", "0", bigReader)
-
-			Eventually(emitter.GetMessages).Should(HaveLen(3))
+			var lenMessages = func() int { return len(emitter.GetMessages()) }
+			Eventually(lenMessages).Should(BeNumerically(">=", 3))
 
 			messages := getLogMessages(emitter.GetMessages())
 
