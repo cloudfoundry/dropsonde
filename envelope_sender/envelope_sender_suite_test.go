@@ -1,11 +1,12 @@
 package envelope_sender_test
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"time"
 
 	"testing"
 )

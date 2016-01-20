@@ -6,17 +6,41 @@ import (
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
+	"github.com/pivotal-golang/localip"
 )
 
 var ErrorMissingOrigin = errors.New("Event not emitted due to missing origin information")
+var ErrorMissingDeployment = errors.New("Event not emitted due to missing deployment information")
+var ErrorMissingJob = errors.New("Event not emitted due to missing job information")
+var ErrorMissingIndex = errors.New("Event not emitted due to missing index information")
 var ErrorUnknownEventType = errors.New("Cannot create envelope for unknown event type")
 
-func Wrap(event events.Event, origin string) (*events.Envelope, error) {
+func Wrap(event events.Event, origin, deployment, job, index string) (*events.Envelope, error) {
 	if origin == "" {
 		return nil, ErrorMissingOrigin
 	}
+	if deployment == "" {
+		return nil, ErrorMissingDeployment
+	}
+	if job == "" {
+		return nil, ErrorMissingJob
+	}
+	if index == "" {
+		return nil, ErrorMissingIndex
+	}
+	ip, err := localip.LocalIP()
+	if err != nil {
+		return nil, err
+	}
 
-	envelope := &events.Envelope{Origin: proto.String(origin), Timestamp: proto.Int64(time.Now().UnixNano())}
+	envelope := &events.Envelope{
+		Origin:     proto.String(origin),
+		Timestamp:  proto.Int64(time.Now().UnixNano()),
+		Deployment: proto.String(deployment),
+		Job:        proto.String(job),
+		Index:      proto.String(index),
+		Ip:         proto.String(ip),
+	}
 
 	switch event := event.(type) {
 	case *events.HttpStart:

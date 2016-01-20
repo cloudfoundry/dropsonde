@@ -10,28 +10,41 @@ import (
 	"time"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("EventEmitter", func() {
+	var origin, deployment, job, index string
+
+	BeforeEach(func() {
+		origin = "fake-origin"
+		deployment = "fake-deployment"
+		job = "fake-job"
+		index = "0"
+	})
+
 	Describe("Emit", func() {
-		Context("without an origin", func() {
-			It("returns an error", func() {
+		DescribeTable("returning errors for empty properties",
+			func(origin, deployment, job, index string) {
 				innerEmitter := fake.NewFakeByteEmitter()
-				eventEmitter := emitter.NewEventEmitter(innerEmitter, "")
+				eventEmitter := emitter.NewEventEmitter(innerEmitter, origin, deployment, job, index)
 
 				testEvent := factories.NewValueMetric("metric-name", 2.0, "metric-unit")
 				err := eventEmitter.Emit(testEvent)
 
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("Wrap: "))
-			})
-		})
+			},
+			Entry("empty origin", "", "deployment", "job", "index"),
+			Entry("empty deployment", "origin", "", "job", "index"),
+			Entry("empty job", "origin", "deployment", "", "index"),
+			Entry("empty index", "origin", "deployment", "job", ""),
+		)
 
 		It("marshals events and delegates to the inner emitter", func() {
 			innerEmitter := fake.NewFakeByteEmitter()
-			origin := "fake-origin"
-			eventEmitter := emitter.NewEventEmitter(innerEmitter, origin)
+			eventEmitter := emitter.NewEventEmitter(innerEmitter, origin, deployment, job, index)
 
 			testEvent := factories.NewValueMetric("metric-name", 2.0, "metric-unit")
 			err := eventEmitter.Emit(testEvent)
@@ -50,8 +63,7 @@ var _ = Describe("EventEmitter", func() {
 	Describe("EmitEnvelope", func() {
 		It("marshals events and delegates to the inner emitter with same origin", func() {
 			innerEmitter := fake.NewFakeByteEmitter()
-			origin := "fake-origin"
-			eventEmitter := emitter.NewEventEmitter(innerEmitter, origin)
+			eventEmitter := emitter.NewEventEmitter(innerEmitter, origin, deployment, job, index)
 
 			envOrigin := "original-origin"
 			testEnvelope := events.Envelope{
@@ -85,7 +97,7 @@ var _ = Describe("EventEmitter", func() {
 	Describe("Close", func() {
 		It("closes the inner emitter", func() {
 			innerEmitter := fake.NewFakeByteEmitter()
-			eventEmitter := emitter.NewEventEmitter(innerEmitter, "")
+			eventEmitter := emitter.NewEventEmitter(innerEmitter, "", deployment, job, index)
 
 			eventEmitter.Close()
 			Expect(innerEmitter.IsClosed()).To(BeTrue())

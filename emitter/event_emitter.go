@@ -16,14 +16,23 @@ type EventEmitter interface {
 type eventEmitter struct {
 	innerEmitter ByteEmitter
 	origin       string
+	deployment   string
+	job          string
+	index        string
 }
 
-func NewEventEmitter(byteEmitter ByteEmitter, origin string) EventEmitter {
-	return &eventEmitter{innerEmitter: byteEmitter, origin: origin}
+func NewEventEmitter(byteEmitter ByteEmitter, origin, deployment, job, index string) EventEmitter {
+	return &eventEmitter{
+		innerEmitter: byteEmitter,
+		origin:       origin,
+		deployment:   deployment,
+		job:          job,
+		index:        index,
+	}
 }
 
 func (e *eventEmitter) Emit(event events.Event) error {
-	envelope, err := Wrap(event, e.origin)
+	envelope, err := Wrap(event, e.origin, e.deployment, e.job, e.index)
 	if err != nil {
 		return fmt.Errorf("Wrap: %v", err)
 	}

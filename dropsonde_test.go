@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/dropsonde"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -20,17 +21,21 @@ var _ = Describe("Autowire", func() {
 	})
 
 	Describe("CreateDefaultEmitter", func() {
-		Context("with origin missing", func() {
-			It("returns a NullEventEmitter", func() {
-				err := dropsonde.Initialize("localhost:2343", "")
+		DescribeTable("returns a NullEventEmitter",
+			func(origin, deployment, job, index string) {
+				err := dropsonde.Initialize("localhost:2343", origin, deployment, job, index)
 				Expect(err).To(HaveOccurred())
 
 				emitter := dropsonde.AutowiredEmitter()
 				Expect(emitter).ToNot(BeNil())
 				nullEmitter := &dropsonde.NullEventEmitter{}
 				Expect(emitter).To(BeAssignableToTypeOf(nullEmitter))
-			})
-		})
+			},
+			Entry("empty origin", "", "deployment", "job", "index"),
+			Entry("empty deployment", "origin", "", "job", "index"),
+			Entry("empty job", "origin", "deployment", "", "index"),
+			Entry("empty index", "origin", "deployment", "job", ""),
+		)
 	})
 })
 

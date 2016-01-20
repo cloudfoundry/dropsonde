@@ -24,11 +24,16 @@ var _ = Describe("LogIntegration", func() {
 		var (
 			udpConn     net.PacketConn
 			logMessages *LogMessages
+
+			origin, deployment, job, index string
 		)
 
-		origin := []string{"test-origin"}
-
 		BeforeEach(func() {
+			origin = "test-origin"
+			deployment = "fake-deployment"
+			job = "fake-job"
+			index = "0"
+
 			var err error
 			logMessages = &LogMessages{}
 			udpConn, err = net.ListenPacket("udp4", ":0")
@@ -36,7 +41,8 @@ var _ = Describe("LogIntegration", func() {
 
 			go listenForLogs(udpConn, logMessages)
 			udpAddr := udpConn.LocalAddr().(*net.UDPAddr)
-			dropsonde.Initialize(fmt.Sprintf("localhost:%d", udpAddr.Port), origin...)
+			host := fmt.Sprintf("localhost:%d", udpAddr.Port)
+			dropsonde.Initialize(host, origin, deployment, job, index)
 			sender := metric_sender.NewMetricSender(dropsonde.AutowiredEmitter())
 			batcher := metricbatcher.New(sender, 100*time.Millisecond)
 			metrics.Initialize(sender, batcher)

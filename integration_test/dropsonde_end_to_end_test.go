@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -29,15 +28,20 @@ var (
 // since environment variables need to be set/unset before starting the tests
 var _ = Describe("Autowire End-to-End", func() {
 	Context("with standard initialization", func() {
-		origin := []string{"test-origin"}
+		var origin, deployment, job, index string
 
 		BeforeEach(func() {
+			origin = "test-origin"
+			deployment = "fake-deployment"
+			job = "fake-job"
+			index = "0"
+
 			var err error
 			udpListener, err = net.ListenPacket("udp4", ":3457")
 			Expect(err).ToNot(HaveOccurred())
 
 			go listenForEvents(origin)
-			dropsonde.Initialize("localhost:3457", origin...)
+			dropsonde.Initialize("localhost:3457", origin, deployment, job, index)
 			sender := metric_sender.NewMetricSender(dropsonde.AutowiredEmitter())
 			batcher := metricbatcher.New(sender, 100*time.Millisecond)
 			metrics.Initialize(sender, batcher)
@@ -77,7 +81,7 @@ var _ = Describe("Autowire End-to-End", func() {
 	})
 })
 
-func listenForEvents(origin []string) {
+func listenForEvents(origin string) {
 	for {
 		buffer := make([]byte, 1024)
 		n, _, err := udpListener.ReadFrom(buffer)
@@ -110,7 +114,7 @@ func listenForEvents(origin []string) {
 
 		}
 
-		if envelope.GetOrigin() != strings.Join(origin, "/") {
+		if envelope.GetOrigin() != origin {
 			panic("origin not as expected")
 		}
 

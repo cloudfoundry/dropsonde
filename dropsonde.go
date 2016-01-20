@@ -11,10 +11,8 @@
 package dropsonde
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter"
@@ -53,8 +51,8 @@ func init() {
 //
 // The destination variable sets the host and port to
 // which metrics are sent. It is optional, and defaults to DefaultDestination.
-func Initialize(destination string, origin ...string) error {
-	emitter, err := createDefaultEmitter(strings.Join(origin, originDelimiter), destination)
+func Initialize(destination, origin, deployment, job, index string) error {
+	emitter, err := createDefaultEmitter(origin, destination, deployment, job, index)
 	if err != nil {
 		autowiredEmitter = &NullEventEmitter{}
 		return err
@@ -101,13 +99,21 @@ func initialize() {
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }
 
-func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, error) {
+func createDefaultEmitter(origin, destination, deployment, job, index string) (emitter.EventEmitter, error) {
 	if len(origin) == 0 {
-		return nil, errors.New("Failed to initialize dropsonde: origin variable not set")
+		return nil, MissingRequiredProperty{name: "origin"}
 	}
-
 	if len(destination) == 0 {
-		return nil, errors.New("Failed to initialize dropsonde: destination variable not set")
+		return nil, MissingRequiredProperty{name: "destination"}
+	}
+	if len(deployment) == 0 {
+		return nil, MissingRequiredProperty{name: "deployment"}
+	}
+	if len(job) == 0 {
+		return nil, MissingRequiredProperty{name: "job"}
+	}
+	if len(index) == 0 {
+		return nil, MissingRequiredProperty{name: "index"}
 	}
 
 	udpEmitter, err := emitter.NewUdpEmitter(destination)
@@ -115,7 +121,7 @@ func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, err
 		return nil, fmt.Errorf("Failed to initialize dropsonde: %v", err.Error())
 	}
 
-	return emitter.NewEventEmitter(udpEmitter, origin), nil
+	return emitter.NewEventEmitter(udpEmitter, origin, deployment, job, index), nil
 }
 
 // NullEventEmitter is used when no event emission is desired. See
@@ -136,3 +142,11 @@ func (*NullEventEmitter) EmitEnvelope(*events.Envelope) error {
 
 // Close ceases emitter operations. On NullEventEmitter, it is a no-op.
 func (*NullEventEmitter) Close() {}
+
+type MissingRequiredProperty struct {
+	name string
+}
+
+func (err MissingRequiredProperty) Error() string {
+	return fmt.Sprintf("Failed to initialize dropsonde: %s variable not set", err.name)
+}
