@@ -78,7 +78,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	})
 
 	Describe("request ID", func() {
-		FIt("should generate a new request ID", func() {
+		It("should generate a new request ID", func() {
 			rt.RoundTrip(req)
 			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(BeEmpty())
 		})
