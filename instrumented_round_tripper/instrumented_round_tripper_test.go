@@ -78,9 +78,9 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	})
 
 	Describe("request ID", func() {
-		It("should generate a new request ID", func() {
+		FIt("should generate a new request ID", func() {
 			rt.RoundTrip(req)
-			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(BeEmpty())
 		})
 
 		Context("if request ID can't be generated", func() {
@@ -95,7 +95,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 
 			It("defaults to an empty request ID", func() {
 				rt.RoundTrip(req)
-				Expect(req.Header.Get("X-CF-RequestID")).To(Equal("00000000-0000-0000-0000-000000000000"))
+				Expect(req.Header.Get("X-Vcap-Request-Id")).To(Equal("00000000-0000-0000-0000-000000000000"))
 			})
 		})
 	})
@@ -133,7 +133,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 
 			BeforeEach(func() {
 				existingRequestId, _ = uuid.NewV4()
-				req.Header.Set("X-CF-RequestID", existingRequestId.String())
+				req.Header.Set("X-Vcap-Request-Id", existingRequestId.String())
 			})
 
 			It("should emit the existing request ID as the parent request ID", func() {

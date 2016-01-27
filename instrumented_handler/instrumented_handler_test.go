@@ -43,29 +43,29 @@ var _ = Describe("InstrumentedHandler", func() {
 	Describe("request ID", func() {
 		It("should add it to the request", func() {
 			h.ServeHTTP(httptest.NewRecorder(), req)
-			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(BeEmpty())
 		})
 
 		It("should not add it to the request if it's already there", func() {
 			id, _ := uuid.NewV4()
-			req.Header.Set("X-CF-RequestID", id.String())
+			req.Header.Set("X-Vcap-Request-Id", id.String())
 			h.ServeHTTP(httptest.NewRecorder(), req)
-			Expect(req.Header.Get("X-CF-RequestID")).To(Equal(id.String()))
+			Expect(req.Header.Get("X-Vcap-Request-Id")).To(Equal(id.String()))
 		})
 
 		It("should create a valid one if it's given an invalid one", func() {
-			req.Header.Set("X-CF-RequestID", "invalid")
+			req.Header.Set("X-Vcap-Request-Id", "invalid")
 			h.ServeHTTP(httptest.NewRecorder(), req)
-			Expect(req.Header.Get("X-CF-RequestID")).ToNot(Equal("invalid"))
-			Expect(req.Header.Get("X-CF-RequestID")).ToNot(BeEmpty())
+			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(Equal("invalid"))
+			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(BeEmpty())
 		})
 
 		It("should add it to the response", func() {
 			id, _ := uuid.NewV4()
-			req.Header.Set("X-CF-RequestID", id.String())
+			req.Header.Set("X-Vcap-Request-Id", id.String())
 			response := httptest.NewRecorder()
 			h.ServeHTTP(response, req)
-			Expect(response.Header().Get("X-CF-RequestID")).To(Equal(id.String()))
+			Expect(response.Header().Get("X-Vcap-Request-Id")).To(Equal(id.String()))
 		})
 
 		It("should use an empty request ID if generating a new one fails", func() {
@@ -73,7 +73,7 @@ var _ = Describe("InstrumentedHandler", func() {
 				return nil, errors.New("test error")
 			}
 			h.ServeHTTP(httptest.NewRecorder(), req)
-			Expect(req.Header.Get("X-CF-RequestID")).To(Equal("00000000-0000-0000-0000-000000000000"))
+			Expect(req.Header.Get("X-Vcap-Request-Id")).To(Equal("00000000-0000-0000-0000-000000000000"))
 		})
 	})
 
@@ -82,7 +82,7 @@ var _ = Describe("InstrumentedHandler", func() {
 
 		BeforeEach(func() {
 			requestId, _ = uuid.NewV4()
-			req.Header.Set("X-CF-RequestID", requestId.String())
+			req.Header.Set("X-Vcap-Request-Id", requestId.String())
 		})
 
 		Context("without an application ID or instanceIndex", func() {
