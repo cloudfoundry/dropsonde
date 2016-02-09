@@ -16,16 +16,21 @@ import (
 )
 
 var _ = Describe("InstrumentedRoundTripper", func() {
-	var fakeRoundTripper *FakeRoundTripper
-	var rt http.RoundTripper
-	var req *http.Request
-	var fakeEmitter *fake.FakeEventEmitter
+	var (
+		fakeRoundTripper *FakeRoundTripper
+		rt               http.RoundTripper
+		req              *http.Request
+		fakeEmitter      *fake.FakeEventEmitter
+		requestUUID      *uuid.UUID
 
-	var origin = "testRoundtripper/42"
+		origin = "testRoundtripper/42"
+	)
 
 	BeforeEach(func() {
 		var err error
 		fakeEmitter = fake.NewFakeEventEmitter(origin)
+		requestUUID, err = uuid.NewV4()
+		Expect(err).ToNot(HaveOccurred())
 
 		fakeRoundTripper = &FakeRoundTripper{}
 		rt = instrumented_round_tripper.InstrumentedRoundTripper(fakeRoundTripper, fakeEmitter)
@@ -34,6 +39,7 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 		Expect(err).ToNot(HaveOccurred())
 		req.RemoteAddr = "127.0.0.1"
 		req.Header.Set("User-Agent", "our-testing-client")
+		req.Header.Set("X-Vcap-Request-Id", requestUUID.String())
 	})
 
 	Context("when the round tripper is a cancelable round tripper", func() {
@@ -78,24 +84,28 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 	})
 
 	Describe("request ID", func() {
-		It("should generate a new request ID", func() {
-			rt.RoundTrip(req)
-			Expect(req.Header.Get("X-Vcap-Request-Id")).ToNot(BeEmpty())
+		It("forwards the request id", func() {
+			_, err := rt.RoundTrip(req)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req.Header.Get("X-Vcap-Request-Id")).To(Equal(requestUUID.String()))
 		})
 
-		Context("if request ID can't be generated", func() {
+		It("emits an HttpStartStop event with the request ID", func() {
+			_, err := rt.RoundTrip(req)
+			Expect(err).ToNot(HaveOccurred())
+			startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
+			Expect(startStopEvent.GetRequestId()).To(Equal(factories.NewUUID(requestUUID)))
+		})
+
+		Context("if there is no request ID", func() {
 			BeforeEach(func() {
-				instrumented_round_tripper.GenerateUuid = func() (u *uuid.UUID, err error) {
-					return nil, errors.New("test error")
-				}
-			})
-			AfterEach(func() {
-				instrumented_round_tripper.GenerateUuid = uuid.NewV4
+				req.Header.Set("X-Vcap-Request-Id", "")
 			})
 
-			It("defaults to an empty request ID", func() {
-				rt.RoundTrip(req)
-				Expect(req.Header.Get("X-Vcap-Request-Id")).To(Equal("00000000-0000-0000-0000-000000000000"))
+			It("populates the request Id with a new guid", func() {
+				_, err := rt.RoundTrip(req)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(req.Header.Get("X-Vcap-Request-Id")).NotTo(Equal(""))
 			})
 		})
 	})
@@ -110,7 +120,6 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
 				Expect(startStopEvent.GetStatusCode()).To(BeNumerically("==", 123))
 				Expect(startStopEvent.GetContentLength()).To(BeNumerically("==", 1234))
-				Expect(startStopEvent.GetParentRequestId()).To(BeNil())
 				Expect(startStopEvent.StartTimestamp).NotTo(Equal(startStopEvent.StopTimestamp))
 			})
 		})
@@ -125,21 +134,6 @@ var _ = Describe("InstrumentedRoundTripper", func() {
 				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
 				Expect(startStopEvent.GetStatusCode()).To(BeNumerically("==", 0))
 				Expect(startStopEvent.GetContentLength()).To(BeNumerically("==", 0))
-			})
-		})
-
-		Context("if request ID already exists", func() {
-			var existingRequestId *uuid.UUID
-
-			BeforeEach(func() {
-				existingRequestId, _ = uuid.NewV4()
-				req.Header.Set("X-Vcap-Request-Id", existingRequestId.String())
-			})
-
-			It("should emit the existing request ID as the parent request ID", func() {
-				rt.RoundTrip(req)
-				startStopEvent := fakeEmitter.GetMessages()[0].Event.(*events.HttpStartStop)
-				Expect(startStopEvent.GetParentRequestId()).To(Equal(factories.NewUUID(existingRequestId)))
 			})
 		})
 	})
