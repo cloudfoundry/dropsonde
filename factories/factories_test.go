@@ -87,6 +87,14 @@ var _ = Describe("HTTP event creation", func() {
 
 			Expect(event).To(Equal(expectedEvent))
 		})
+
+		It("should extract X-Forwarded-For from header", func() {
+			forwarded := "123.123.123.123, 10.10.10.10"
+			req.Header.Set("X-Forwarded-For", forwarded)
+
+			startStopEvent := factories.NewHttpStartStop(req, http.StatusOK, 3, events.PeerType_Server, requestId)
+			Expect(startStopEvent.GetForwarded()).To(Equal(forwarded))
+		})
 	})
 
 	Describe("NewHttpStart", func() {
