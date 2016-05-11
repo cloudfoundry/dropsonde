@@ -4,15 +4,17 @@ package metricbatcher
 import (
 	"sync"
 	"time"
-
-	"github.com/cloudfoundry/dropsonde/metric_sender"
 )
+
+type MetricSender interface {
+	AddToCounter(string, uint64) error
+}
 
 // MetricBatcher batches counter increment/add calls into periodic, aggregate events.
 type MetricBatcher struct {
 	metrics      map[string]uint64
 	batchTicker  *time.Ticker
-	metricSender metric_sender.MetricSender
+	metricSender MetricSender
 	lock         sync.Mutex
 	closed       bool
 	closedChan   chan struct{}
@@ -20,7 +22,7 @@ type MetricBatcher struct {
 
 // New instantiates a running MetricBatcher. Eventswill be emitted once per batchDuration. All
 // updates to a given counter name will be combined into a single event and sent to metricSender.
-func New(metricSender metric_sender.MetricSender, batchDuration time.Duration) *MetricBatcher {
+func New(metricSender MetricSender, batchDuration time.Duration) *MetricBatcher {
 	mb := &MetricBatcher{
 		metrics:      make(map[string]uint64),
 		batchTicker:  time.NewTicker(batchDuration),

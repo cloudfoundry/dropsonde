@@ -23,8 +23,19 @@ import (
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 )
 
-var metricSender metric_sender.MetricSender
-var metricBatcher MetricBatcher
+var (
+	metricSender  MetricSender
+	metricBatcher MetricBatcher
+)
+
+type MetricSender interface {
+	Value(name string, value float64, unit string) metric_sender.ValueChainer
+	ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) metric_sender.ContainerMetricChainer
+	SendValue(name string, value float64, unit string) error
+	IncrementCounter(name string) error
+	AddToCounter(name string, delta uint64) error
+	SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
+}
 
 type MetricBatcher interface {
 	BatchIncrementCounter(name string)
@@ -33,7 +44,7 @@ type MetricBatcher interface {
 }
 
 // Initialize prepares the metrics package for use with the automatic Emitter.
-func Initialize(ms metric_sender.MetricSender, mb MetricBatcher) {
+func Initialize(ms MetricSender, mb MetricBatcher) {
 	if metricBatcher != nil {
 		metricBatcher.Close()
 	}

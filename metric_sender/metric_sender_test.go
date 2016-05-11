@@ -14,7 +14,7 @@ import (
 var _ = Describe("MetricSender", func() {
 	var (
 		emitter *fake.FakeEventEmitter
-		sender  metric_sender.MetricSender
+		sender  *metric_sender.MetricSender
 	)
 
 	BeforeEach(func() {

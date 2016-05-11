@@ -22,42 +22,33 @@ type ContainerMetricChainer interface {
 }
 
 // A MetricSender emits metric events.
-type MetricSender interface {
-	Value(name string, value float64, unit string) ValueChainer
-	ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) ContainerMetricChainer
-	SendValue(name string, value float64, unit string) error
-	IncrementCounter(name string) error
-	AddToCounter(name string, delta uint64) error
-	SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
-}
-
-type metricSender struct {
+type MetricSender struct {
 	eventEmitter EventEmitter
 }
 
-// NewMetricSender instantiates a metricSender with the given EventEmitter.
-func NewMetricSender(eventEmitter EventEmitter) MetricSender {
-	return &metricSender{eventEmitter: eventEmitter}
+// NewMetricSender instantiates a MetricSender with the given EventEmitter.
+func NewMetricSender(eventEmitter EventEmitter) *MetricSender {
+	return &MetricSender{eventEmitter: eventEmitter}
 }
 
 // SendValue sends a metric with the given name, value and unit. See
 // http://metrics20.org/spec/#units for a specification of acceptable units.
 // Returns an error if one occurs while sending the event.
-func (ms *metricSender) SendValue(name string, value float64, unit string) error {
+func (ms *MetricSender) SendValue(name string, value float64, unit string) error {
 	return ms.eventEmitter.Emit(&events.ValueMetric{Name: &name, Value: &value, Unit: &unit})
 }
 
 // IncrementCounter sends an event to increment the named counter by one.
 // Maintaining the value of the counter is the responsibility of the receiver of
 // the event, not the process that includes this package.
-func (ms *metricSender) IncrementCounter(name string) error {
+func (ms *MetricSender) IncrementCounter(name string) error {
 	return ms.AddToCounter(name, 1)
 }
 
 // AddToCounter sends an event to increment the named counter by the specified
 // (positive) delta. Maintaining the value of the counter is the responsibility
 // of the receiver, as with IncrementCounter.
-func (ms *metricSender) AddToCounter(name string, delta uint64) error {
+func (ms *MetricSender) AddToCounter(name string, delta uint64) error {
 	return ms.eventEmitter.Emit(&events.CounterEvent{Name: &name, Delta: &delta})
 }
 
@@ -65,11 +56,11 @@ func (ms *metricSender) AddToCounter(name string, delta uint64) error {
 // The container is identified by the applicationId and the instanceIndex. The resource
 // metrics are CPU percentage, memory and disk usage in bytes. Returns an error if one occurs
 // when sending the metric.
-func (ms *metricSender) SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
+func (ms *MetricSender) SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
 	return ms.eventEmitter.Emit(&events.ContainerMetric{ApplicationId: &applicationId, InstanceIndex: &instanceIndex, CpuPercentage: &cpuPercentage, MemoryBytes: &memoryBytes, DiskBytes: &diskBytes})
 }
 
-func (ms *metricSender) Value(name string, value float64, unit string) ValueChainer {
+func (ms *MetricSender) Value(name string, value float64, unit string) ValueChainer {
 	chainer := valueChainer{}
 	chainer.emitter = ms.eventEmitter
 	chainer.envelope = &events.Envelope{
@@ -85,7 +76,7 @@ func (ms *metricSender) Value(name string, value float64, unit string) ValueChai
 }
 
 // doc bytes % etc
-func (ms *metricSender) ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) ContainerMetricChainer {
+func (ms *MetricSender) ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) ContainerMetricChainer {
 	chainer := containerMetricChainer{}
 	chainer.emitter = ms.eventEmitter
 	chainer.envelope = &events.Envelope{
