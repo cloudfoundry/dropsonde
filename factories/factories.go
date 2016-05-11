@@ -83,7 +83,11 @@ func NewHttpStartStop(req *http.Request, statusCode int, contentLength int64, pe
 	}
 
 	if instanceId := req.Header.Get("X-CF-InstanceID"); instanceId != "" {
-		httpStartStop.InstanceId = &instanceId
+		httpStartStop.InstanceId = proto.String(instanceId)
+	}
+
+	if forwarded := req.Header.Get("X-Forwarded-For"); forwarded != "" {
+		httpStartStop.Forwarded = proto.String(forwarded)
 	}
 
 	return httpStartStop
