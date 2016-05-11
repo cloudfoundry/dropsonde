@@ -20,7 +20,7 @@ var _ = Describe("DropsondeMarshaller", func() {
 		inputChan   chan *events.Envelope
 		outputChan  chan []byte
 		runComplete chan struct{}
-		marshaller  dropsonde_marshaller.DropsondeMarshaller
+		marshaller  *dropsonde_marshaller.DropsondeMarshaller
 		fakeSender  *fake.FakeMetricSender
 	)
 

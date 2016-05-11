@@ -24,7 +24,7 @@ import (
 var _ = Describe("LogSender", func() {
 	var (
 		emitter *fake.FakeEventEmitter
-		sender  log_sender.LogSender
+		sender  *log_sender.LogSender
 	)
 
 	BeforeEach(func() {

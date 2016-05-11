@@ -9,10 +9,6 @@ import (
 
 const SystemAppId = "system"
 
-type hasAppId interface {
-	GetApplicationId() *events.UUID
-}
-
 func GetAppId(envelope *events.Envelope) string {
 	if envelope.GetEventType() == events.Envelope_LogMessage {
 		return envelope.GetLogMessage().GetAppId()
@@ -39,6 +35,10 @@ func GetAppId(envelope *events.Envelope) string {
 		return formatUUID(uuid)
 	}
 	return SystemAppId
+}
+
+type hasAppId interface {
+	GetApplicationId() *events.UUID
 }
 
 func formatUUID(uuid *events.UUID) string {

@@ -15,17 +15,20 @@
 //		logs.SendAppErrorLog(appID, message, sourceType, sourceInstance)
 package logs
 
-import (
-	"io"
+import "io"
 
-	"github.com/cloudfoundry/dropsonde/log_sender"
-)
+type LogSender interface {
+	SendAppLog(appID, message, sourceType, sourceInstance string) error
+	SendAppErrorLog(appID, message, sourceType, sourceInstance string) error
+	ScanLogStream(appID, sourceType, sourceInstance string, reader io.Reader)
+	ScanErrorLogStream(appID, sourceType, sourceInstance string, reader io.Reader)
+}
 
-var logSender log_sender.LogSender
+var logSender LogSender
 
 // Initialize prepares the logs package for use with the automatic Emitter
 // from dropsonde.
-func Initialize(ls log_sender.LogSender) {
+func Initialize(ls LogSender) {
 	logSender = ls
 }
 

@@ -1,10 +1,15 @@
 package metric_sender
 
 import (
-	"github.com/cloudfoundry/dropsonde/emitter"
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
+
+type EventEmitter interface {
+	Emit(events.Event) error
+	EmitEnvelope(*events.Envelope) error
+	Origin() string
+}
 
 type ValueChainer interface {
 	SetTag(key, value string) ValueChainer
@@ -27,11 +32,11 @@ type MetricSender interface {
 }
 
 type metricSender struct {
-	eventEmitter emitter.EventEmitter
+	eventEmitter EventEmitter
 }
 
 // NewMetricSender instantiates a metricSender with the given EventEmitter.
-func NewMetricSender(eventEmitter emitter.EventEmitter) MetricSender {
+func NewMetricSender(eventEmitter EventEmitter) MetricSender {
 	return &metricSender{eventEmitter: eventEmitter}
 }
 

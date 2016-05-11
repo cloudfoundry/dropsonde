@@ -16,7 +16,7 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 		inputChan    chan []byte
 		outputChan   chan *events.Envelope
 		runComplete  chan struct{}
-		unmarshaller dropsonde_unmarshaller.DropsondeUnmarshaller
+		unmarshaller *dropsonde_unmarshaller.DropsondeUnmarshaller
 	)
 
 	BeforeEach(func() {

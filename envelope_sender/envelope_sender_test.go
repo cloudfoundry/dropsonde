@@ -14,7 +14,7 @@ import (
 var _ = Describe("EnvelopeSender", func() {
 	var (
 		emitter   *fake.FakeEventEmitter
-		sender    envelope_sender.EnvelopeSender
+		sender    *envelope_sender.EnvelopeSender
 		envOrigin string
 	)
 

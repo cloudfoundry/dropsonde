@@ -32,7 +32,13 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 )
 
-var autowiredEmitter emitter.EventEmitter
+type EventEmitter interface {
+	Emit(events.Event) error
+	EmitEnvelope(*events.Envelope) error
+	Origin() string
+}
+
+var autowiredEmitter EventEmitter
 
 const (
 	statsInterval        = 10 * time.Second
@@ -68,13 +74,13 @@ func Initialize(destination string, origin ...string) error {
 
 // InitializeWithEmitter sets up Dropsonde with the passed emitter, instead of
 // creating one.
-func InitializeWithEmitter(emitter emitter.EventEmitter) {
+func InitializeWithEmitter(emitter EventEmitter) {
 	autowiredEmitter = emitter
 	initialize()
 }
 
 // AutowiredEmitter exposes the emitter used by Dropsonde after its initialization.
-func AutowiredEmitter() emitter.EventEmitter {
+func AutowiredEmitter() EventEmitter {
 	return autowiredEmitter
 }
 
@@ -101,7 +107,7 @@ func initialize() {
 	http.DefaultTransport = InstrumentedRoundTripper(http.DefaultTransport)
 }
 
-func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, error) {
+func createDefaultEmitter(origin, destination string) (EventEmitter, error) {
 	if len(origin) == 0 {
 		return nil, errors.New("Failed to initialize dropsonde: origin variable not set")
 	}
