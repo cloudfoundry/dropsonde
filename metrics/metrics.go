@@ -28,6 +28,8 @@ var (
 	metricBatcher MetricBatcher
 )
 
+//go:generate hel --type MetricSender --output mock_metric_sender_test.go
+
 type MetricSender interface {
 	Value(name string, value float64, unit string) metric_sender.ValueChainer
 	ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) metric_sender.ContainerMetricChainer
@@ -36,6 +38,8 @@ type MetricSender interface {
 	AddToCounter(name string, delta uint64) error
 	SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error
 }
+
+//go:generate hel --type MetricBatcher --output mock_metric_batcher_test.go
 
 type MetricBatcher interface {
 	BatchIncrementCounter(name string)
@@ -116,4 +120,20 @@ func SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentag
 	}
 
 	return metricSender.SendContainerMetric(applicationId, instanceIndex, cpuPercentage, memoryBytes, diskBytes)
+}
+
+// Value creates a value metric that can be manipulated via cascading calls and then sent.
+func Value(name string, value float64, unit string) metric_sender.ValueChainer {
+	if metricSender == nil {
+		return nil
+	}
+	return metricSender.Value(name, value, unit)
+}
+
+// ContainerMetric creates a container metric that can be manipulated via cascading calls and then sent.
+func ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) metric_sender.ContainerMetricChainer {
+	if metricSender == nil {
+		return nil
+	}
+	return metricSender.ContainerMetric(appID, instance, cpu, mem, disk)
 }

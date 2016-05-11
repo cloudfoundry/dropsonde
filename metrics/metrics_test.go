@@ -1,145 +1,126 @@
 package metrics_test
 
 import (
-	"time"
-
-	"github.com/cloudfoundry/dropsonde/metric_sender/fake"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
+	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/dropsonde/metrics"
 )
 
 var _ = Describe("Metrics", func() {
-	var fakeMetricSender *fake.FakeMetricSender
+	var (
+		metricSender  *mockMetricSender
+		metricBatcher *mockMetricBatcher
+	)
 
 	BeforeEach(func() {
-		fakeMetricSender = fake.NewFakeMetricSender()
-		metricBatcher := metricbatcher.New(fakeMetricSender, time.Millisecond)
-		metrics.Initialize(fakeMetricSender, metricBatcher)
+		metricSender = newMockMetricSender()
+		metricBatcher = newMockMetricBatcher()
+		metrics.Initialize(metricSender, metricBatcher)
+	})
+
+	It("delegates Value", func() {
+		metricSender.ValueOutput.Ret0 <- nil
+		metrics.Value("metric", 42.42, "answers")
+		Expect(metricSender.ValueInput).To(BeCalled(With("metric", 42.42, "answers")))
+	})
+
+	It("delegates ContainerMetric", func() {
+		metricSender.ContainerMetricOutput.Ret0 <- nil
+		appGuid := "some_app_guid"
+		metrics.ContainerMetric(appGuid, 7, 42.42, 1234, 123412341234)
+		Expect(metricSender.ContainerMetricInput).To(BeCalled(
+			With(appGuid, int32(7), 42.42, uint64(1234), uint64(123412341234)),
+		))
 	})
 
 	It("delegates SendValue", func() {
+		metricSender.SendValueOutput.Ret0 <- nil
 		metrics.SendValue("metric", 42.42, "answers")
-
-		Expect(fakeMetricSender.GetValue("metric").Value).To(Equal(42.42))
-		Expect(fakeMetricSender.GetValue("metric").Unit).To(Equal("answers"))
+		Eventually(metricSender.SendValueInput).Should(BeCalled(With("metric", 42.42, "answers")))
 	})
 
 	It("delegates IncrementCounter", func() {
+		metricSender.IncrementCounterOutput.Ret0 <- nil
 		metrics.IncrementCounter("count")
-
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(1))
-
-		metrics.IncrementCounter("count")
-
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(2))
+		Eventually(metricSender.IncrementCounterInput).Should(BeCalled(With("count")))
 	})
 
 	It("delegates BatchIncrementCounter", func() {
 		metrics.BatchIncrementCounter("count")
-		time.Sleep(2 * time.Millisecond)
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(1))
-
-		metrics.BatchIncrementCounter("count")
-		time.Sleep(2 * time.Millisecond)
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(2))
+		Eventually(metricBatcher.BatchIncrementCounterInput).Should(BeCalled(With("count")))
 	})
 
 	It("delegates AddToCounter", func() {
+		metricSender.AddToCounterOutput.Ret0 <- nil
 		metrics.AddToCounter("count", 5)
-
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(5))
-
-		metrics.AddToCounter("count", 10)
-
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(15))
+		Eventually(metricSender.AddToCounterInput).Should(BeCalled(With("count", uint64(5))))
 	})
 
 	It("delegates BatchAddCounter", func() {
 		metrics.BatchAddCounter("count", 3)
-		time.Sleep(2 * time.Millisecond)
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(3))
-
-		metrics.BatchAddCounter("count", 7)
-		time.Sleep(2 * time.Millisecond)
-		Expect(fakeMetricSender.GetCounter("count")).To(BeEquivalentTo(10))
+		Eventually(metricBatcher.BatchAddCounterInput).Should(BeCalled(With("count", uint64(3))))
 	})
 
 	It("delegates SendContainerMetric", func() {
+		metricSender.SendContainerMetricOutput.Ret0 <- nil
 		appGuid := "some_app_guid"
 		metrics.SendContainerMetric(appGuid, 7, 42.42, 1234, 123412341234)
-
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).ApplicationId).To(Equal(appGuid))
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).InstanceIndex).To(BeEquivalentTo(7))
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).CpuPercentage).To(BeEquivalentTo(42.42))
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).MemoryBytes).To(BeEquivalentTo(1234))
-		Expect(fakeMetricSender.GetContainerMetric(appGuid).DiskBytes).To(BeEquivalentTo(123412341234))
+		Eventually(metricSender.SendContainerMetricInput).Should(
+			BeCalled(With(appGuid, int32(7), 42.42, uint64(1234), uint64(123412341234))),
+		)
 	})
 
-	Context("when Metric Sender is not initialized", func() {
-
+	Context("with a metrics package that is not initialized", func() {
 		BeforeEach(func() {
 			metrics.Initialize(nil, nil)
 		})
 
 		It("SendValue is a no-op", func() {
 			err := metrics.SendValue("metric", 42.42, "answers")
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("IncrementCounter is a no-op", func() {
 			err := metrics.IncrementCounter("count")
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("AddToCounter is a no-op", func() {
 			err := metrics.AddToCounter("count", 10)
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("SendContainerMetric is a no-op", func() {
 			appGuid := "some_app_guid"
 			err := metrics.SendContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
-
 			Expect(err).ToNot(HaveOccurred())
 		})
 
+		It("Value is a no-op", func() {
+			value := metrics.Value("metric", 42.42, "answers")
+			Expect(value).To(BeNil())
+		})
+
+		It("ContainerMetric is a no-op", func() {
+			appGuid := "some_app_guid"
+			containerMetric := metrics.ContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
+			Expect(containerMetric).To(BeNil())
+		})
 	})
 
 	Context("Close", func() {
 		It("closes metric batcher", func() {
-			batcher := &FakeMetricBatcher{closed: false}
-			metrics.Initialize(nil, batcher)
 			metrics.Close()
-
-			Expect(batcher.closed).To(BeTrue())
+			Eventually(metricBatcher.CloseCalled).Should(BeCalled())
 		})
 
 		It("calls close on previous batcher when initializing with a new one", func() {
-			oldBatcher := &FakeMetricBatcher{}
-			metrics.Initialize(nil, oldBatcher)
-
-			newBatcher := &FakeMetricBatcher{}
-			metrics.Initialize(nil, newBatcher)
-
-			Expect(oldBatcher.closed).To(BeTrue())
-			Expect(newBatcher.closed).To(BeFalse())
+			newMetricBatcher := newMockMetricBatcher()
+			metrics.Initialize(nil, newMetricBatcher)
+			Eventually(metricBatcher.CloseCalled).Should(BeCalled())
+			Consistently(newMetricBatcher.CloseCalled).ShouldNot(BeCalled())
 		})
 	})
 })
-
-type FakeMetricBatcher struct {
-	closed bool
-}
-
-func (mb *FakeMetricBatcher) BatchIncrementCounter(name string) {}
-
-func (mb *FakeMetricBatcher) BatchAddCounter(name string, delta uint64) {}
-
-func (mb *FakeMetricBatcher) Close() {
-	mb.closed = true
-}
