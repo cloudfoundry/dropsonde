@@ -10,6 +10,7 @@ import (
 type EventEmitter interface {
 	Emit(events.Event) error
 	EmitEnvelope(*events.Envelope) error
+	Origin() string
 	Close()
 }
 
@@ -20,6 +21,10 @@ type eventEmitter struct {
 
 func NewEventEmitter(byteEmitter ByteEmitter, origin string) EventEmitter {
 	return &eventEmitter{innerEmitter: byteEmitter, origin: origin}
+}
+
+func (e *eventEmitter) Origin() string {
+	return e.origin
 }
 
 func (e *eventEmitter) Emit(event events.Event) error {

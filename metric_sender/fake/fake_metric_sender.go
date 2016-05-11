@@ -2,6 +2,8 @@ package fake
 
 import (
 	"sync"
+
+	"github.com/cloudfoundry/dropsonde/metric_sender"
 )
 
 type FakeMetricSender struct {
@@ -100,4 +102,12 @@ func (fms *FakeMetricSender) Reset() {
 	fms.counters = make(map[string]uint64)
 	fms.values = make(map[string]Metric)
 	fms.containerMetrics = make(map[string]ContainerMetric)
+}
+
+func (fms *FakeMetricSender) Value(string, float64, string) metric_sender.ValueChainer {
+	return nil
+}
+
+func (fms *FakeMetricSender) ContainerMetric(string, int32, float64, uint64, uint64) metric_sender.ContainerMetricChainer {
+	return nil
 }

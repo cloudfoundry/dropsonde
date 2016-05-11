@@ -122,6 +122,11 @@ func createDefaultEmitter(origin, destination string) (emitter.EventEmitter, err
 // http://en.wikipedia.org/wiki/Null_Object_pattern.
 type NullEventEmitter struct{}
 
+// Origin returns the origin that is set on the event.Envelope
+func (*NullEventEmitter) Origin() string {
+	return ""
+}
+
 // Emit is called to send an event to a remote host. On NullEventEmitter,
 // it is a no-op.
 func (*NullEventEmitter) Emit(events.Event) error {

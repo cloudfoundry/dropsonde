@@ -22,6 +22,59 @@ var _ = Describe("MetricSender", func() {
 		sender = metric_sender.NewMetricSender(emitter)
 	})
 
+	Describe("Value", func() {
+		It("sets the required properties", func() {
+			err := sender.Value("foo", 1.2, "bar").Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			metric := emitter.GetEnvelopes()[0].ValueMetric
+
+			Expect(metric.GetName()).To(Equal("foo"))
+			Expect(metric.GetValue()).To(Equal(1.2))
+			Expect(metric.GetUnit()).To(Equal("bar"))
+		})
+
+		It("can send tags", func() {
+			err := sender.Value("foo", 1.2, "bar").SetTag("baz", "qux").Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+	})
+
+	Describe("ContainerMetric", func() {
+		It("sets the required properties", func() {
+			err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
+				Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			metric := emitter.GetEnvelopes()[0].ContainerMetric
+
+			Expect(metric.GetApplicationId()).To(Equal("test-app-id"))
+			Expect(metric.GetInstanceIndex()).To(BeEquivalentTo(1234))
+			Expect(metric.GetCpuPercentage()).To(Equal(1.2))
+			Expect(metric.GetMemoryBytes()).To(BeEquivalentTo(2345))
+			Expect(metric.GetDiskBytes()).To(BeEquivalentTo(3456))
+		})
+
+		It("can send tags", func() {
+			err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
+				SetTag("baz", "qux").
+				Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+	})
+
 	It("sends a metric to its emitter", func() {
 		err := sender.SendValue("metric-name", 42, "answers")
 		Expect(err).NotTo(HaveOccurred())

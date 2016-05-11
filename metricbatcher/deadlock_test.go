@@ -1,6 +1,7 @@
 package metricbatcher_test
 
 import (
+	"github.com/cloudfoundry/dropsonde/metric_sender"
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 
 	"time"
@@ -57,5 +58,13 @@ func (fms *FakeMetricSender) AddToCounter(name string, delta uint64) error {
 }
 
 func (fms *FakeMetricSender) SendContainerMetric(applicationId string, instanceIndex int32, cpuPercentage float64, memoryBytes uint64, diskBytes uint64) error {
+	return nil
+}
+
+func (fms *FakeMetricSender) Value(string, float64, string) metric_sender.ValueChainer {
+	return nil
+}
+
+func (fms *FakeMetricSender) ContainerMetric(string, int32, float64, uint64, uint64) metric_sender.ContainerMetricChainer {
 	return nil
 }

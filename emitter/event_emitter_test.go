@@ -14,6 +14,13 @@ import (
 )
 
 var _ = Describe("EventEmitter", func() {
+	Describe("Origin", func() {
+		It("returns the origin", func() {
+			eventEmitter := emitter.NewEventEmitter(fake.NewFakeByteEmitter(), "foo")
+			Expect(eventEmitter.Origin()).To(Equal("foo"))
+		})
+	})
+
 	Describe("Emit", func() {
 		Context("without an origin", func() {
 			It("returns an error", func() {
