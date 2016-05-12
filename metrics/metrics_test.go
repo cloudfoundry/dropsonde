@@ -35,6 +35,12 @@ var _ = Describe("Metrics", func() {
 		))
 	})
 
+	It("delegates Counter", func() {
+		metricSender.CounterOutput.Ret0 <- nil
+		metrics.Counter("requests")
+		Expect(metricSender.CounterInput).To(BeCalled(With("requests")))
+	})
+
 	It("delegates SendValue", func() {
 		metricSender.SendValueOutput.Ret0 <- nil
 		metrics.SendValue("metric", 42.42, "answers")
@@ -107,6 +113,11 @@ var _ = Describe("Metrics", func() {
 			appGuid := "some_app_guid"
 			containerMetric := metrics.ContainerMetric(appGuid, 0, 42.42, 1234, 123412341234)
 			Expect(containerMetric).To(BeNil())
+		})
+
+		It("Counter is a no-op", func() {
+			counter := metrics.Counter("requests")
+			Expect(counter).To(BeNil())
 		})
 	})
 

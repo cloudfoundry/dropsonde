@@ -21,6 +21,12 @@ type ContainerMetricChainer interface {
 	Send() error
 }
 
+type CounterChainer interface {
+	SetTag(key, value string) CounterChainer
+	Increment() error
+	Add(delta uint64) error
+}
+
 // A MetricSender emits metric events.
 type MetricSender struct {
 	eventEmitter EventEmitter
@@ -60,6 +66,8 @@ func (ms *MetricSender) SendContainerMetric(applicationId string, instanceIndex 
 	return ms.eventEmitter.Emit(&events.ContainerMetric{ApplicationId: &applicationId, InstanceIndex: &instanceIndex, CpuPercentage: &cpuPercentage, MemoryBytes: &memoryBytes, DiskBytes: &diskBytes})
 }
 
+// Value creates a value metric that can be manipulated via cascading calls
+// and then sent.
 func (ms *MetricSender) Value(name string, value float64, unit string) ValueChainer {
 	chainer := valueChainer{}
 	chainer.emitter = ms.eventEmitter
@@ -75,7 +83,8 @@ func (ms *MetricSender) Value(name string, value float64, unit string) ValueChai
 	return chainer
 }
 
-// doc bytes % etc
+// ContainerMetric creates a container metric that can be manipulated via
+// cascading calls and then sent.
 func (ms *MetricSender) ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) ContainerMetricChainer {
 	chainer := containerMetricChainer{}
 	chainer.emitter = ms.eventEmitter
@@ -88,6 +97,21 @@ func (ms *MetricSender) ContainerMetric(appID string, instance int32, cpu float6
 			CpuPercentage: proto.Float64(cpu),
 			MemoryBytes:   proto.Uint64(mem),
 			DiskBytes:     proto.Uint64(disk),
+		},
+	}
+	return chainer
+}
+
+// Counter creates a counter event that can be manipulated via cascading calls
+// and then sent via Increment or Add.
+func (ms *MetricSender) Counter(name string) CounterChainer {
+	chainer := counterChainer{}
+	chainer.emitter = ms.eventEmitter
+	chainer.envelope = &events.Envelope{
+		Origin:    proto.String(ms.eventEmitter.Origin()),
+		EventType: events.Envelope_CounterEvent.Enum(),
+		CounterEvent: &events.CounterEvent{
+			Name: proto.String(name),
 		},
 	}
 	return chainer
@@ -130,4 +154,22 @@ type containerMetricChainer struct {
 func (c containerMetricChainer) SetTag(key, value string) ContainerMetricChainer {
 	c.chainer.SetTag(key, value)
 	return c
+}
+
+type counterChainer struct {
+	chainer
+}
+
+func (c counterChainer) SetTag(key, value string) CounterChainer {
+	c.chainer.SetTag(key, value)
+	return c
+}
+
+func (c counterChainer) Add(delta uint64) error {
+	c.envelope.CounterEvent.Delta = proto.Uint64(delta)
+	return c.emitter.EmitEnvelope(c.envelope)
+}
+
+func (c counterChainer) Increment() error {
+	return c.Add(1)
 }

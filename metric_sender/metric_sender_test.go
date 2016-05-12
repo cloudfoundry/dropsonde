@@ -75,6 +75,37 @@ var _ = Describe("MetricSender", func() {
 		})
 	})
 
+	Describe("Counter", func() {
+		It("sets the required properties", func() {
+			err := sender.Counter("requests").Increment()
+			Expect(err).ToNot(HaveOccurred())
+			err = sender.Counter("requests").Add(3)
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(2))
+
+			counter := emitter.GetEnvelopes()[0].CounterEvent
+			Expect(counter.GetName()).To(Equal("requests"))
+			Expect(counter.GetDelta()).To(BeEquivalentTo(1))
+
+			counter = emitter.GetEnvelopes()[1].CounterEvent
+			Expect(counter.GetName()).To(Equal("requests"))
+			Expect(counter.GetDelta()).To(BeEquivalentTo(3))
+		})
+
+		It("can send tags", func() {
+			err := sender.Counter("requests").
+				SetTag("baz", "qux").
+				Increment()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+	})
+
 	It("sends a metric to its emitter", func() {
 		err := sender.SendValue("metric-name", 42, "answers")
 		Expect(err).NotTo(HaveOccurred())

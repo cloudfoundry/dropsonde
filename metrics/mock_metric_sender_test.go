@@ -22,6 +22,13 @@ type mockMetricSender struct {
 	ContainerMetricOutput struct {
 		Ret0 chan metric_sender.ContainerMetricChainer
 	}
+	CounterCalled chan bool
+	CounterInput  struct {
+		Name chan string
+	}
+	CounterOutput struct {
+		Ret0 chan metric_sender.CounterChainer
+	}
 	SendValueCalled chan bool
 	SendValueInput  struct {
 		Name  chan string
@@ -73,6 +80,9 @@ func newMockMetricSender() *mockMetricSender {
 	m.ContainerMetricInput.Mem = make(chan uint64, 100)
 	m.ContainerMetricInput.Disk = make(chan uint64, 100)
 	m.ContainerMetricOutput.Ret0 = make(chan metric_sender.ContainerMetricChainer, 100)
+	m.CounterCalled = make(chan bool, 100)
+	m.CounterInput.Name = make(chan string, 100)
+	m.CounterOutput.Ret0 = make(chan metric_sender.CounterChainer, 100)
 	m.SendValueCalled = make(chan bool, 100)
 	m.SendValueInput.Name = make(chan string, 100)
 	m.SendValueInput.Value = make(chan float64, 100)
@@ -109,6 +119,11 @@ func (m *mockMetricSender) ContainerMetric(appID string, instance int32, cpu flo
 	m.ContainerMetricInput.Mem <- mem
 	m.ContainerMetricInput.Disk <- disk
 	return <-m.ContainerMetricOutput.Ret0
+}
+func (m *mockMetricSender) Counter(name string) metric_sender.CounterChainer {
+	m.CounterCalled <- true
+	m.CounterInput.Name <- name
+	return <-m.CounterOutput.Ret0
 }
 func (m *mockMetricSender) SendValue(name string, value float64, unit string) error {
 	m.SendValueCalled <- true
