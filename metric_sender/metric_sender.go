@@ -1,6 +1,8 @@
 package metric_sender
 
 import (
+	"time"
+
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
@@ -135,6 +137,7 @@ func (c chainer) SetTag(key, value string) chainer {
 }
 
 func (c chainer) Send() error {
+	c.envelope.Timestamp = proto.Int64(time.Now().UnixNano())
 	return c.emitter.EmitEnvelope(c.envelope)
 }
 
@@ -167,7 +170,7 @@ func (c counterChainer) SetTag(key, value string) CounterChainer {
 
 func (c counterChainer) Add(delta uint64) error {
 	c.envelope.CounterEvent.Delta = proto.Uint64(delta)
-	return c.emitter.EmitEnvelope(c.envelope)
+	return c.chainer.Send()
 }
 
 func (c counterChainer) Increment() error {

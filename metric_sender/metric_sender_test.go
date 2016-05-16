@@ -2,6 +2,7 @@ package metric_sender_test
 
 import (
 	"errors"
+	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
@@ -18,7 +19,7 @@ var _ = Describe("MetricSender", func() {
 	)
 
 	BeforeEach(func() {
-		emitter = fake.NewFakeEventEmitter("origin")
+		emitter = fake.NewFakeEventEmitter("test-origin")
 		sender = metric_sender.NewMetricSender(emitter)
 	})
 
@@ -43,6 +44,27 @@ var _ = Describe("MetricSender", func() {
 			envelope := emitter.GetEnvelopes()[0]
 
 			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+
+		It("sets origin", func() {
+			err := sender.Value("foo", 1.2, "bar").Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetOrigin()).To(Equal("test-origin"))
+		})
+
+		It("sets the timestamp", func() {
+			err := sender.Value("foo", 1.2, "bar").Send()
+			now := time.Now().UnixNano()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTimestamp()).To(BeNumerically("~", now, time.Second))
 		})
 	})
 
@@ -72,6 +94,29 @@ var _ = Describe("MetricSender", func() {
 			envelope := emitter.GetEnvelopes()[0]
 
 			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+
+		It("sets origin", func() {
+			err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
+				Send()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetOrigin()).To(Equal("test-origin"))
+		})
+
+		It("sets the timestamp", func() {
+			err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
+				Send()
+			now := time.Now().UnixNano()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTimestamp()).To(BeNumerically("~", now, time.Second))
 		})
 	})
 
@@ -103,6 +148,27 @@ var _ = Describe("MetricSender", func() {
 			envelope := emitter.GetEnvelopes()[0]
 
 			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+		})
+
+		It("sets origin", func() {
+			err := sender.Counter("requests").Increment()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetOrigin()).To(Equal("test-origin"))
+		})
+
+		It("sets the timestamp", func() {
+			err := sender.Counter("requests").Increment()
+			now := time.Now().UnixNano()
+			Expect(err).ToNot(HaveOccurred())
+
+			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+			envelope := emitter.GetEnvelopes()[0]
+
+			Expect(envelope.GetTimestamp()).To(BeNumerically("~", now, time.Second))
 		})
 	})
 
