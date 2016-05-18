@@ -3,10 +3,13 @@ package dropsonde_unmarshaller_test
 import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
 	"github.com/cloudfoundry/dropsonde/factories"
+	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	"github.com/cloudfoundry/sonde-go/events"
+
 	"github.com/gogo/protobuf/proto"
 
+	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -17,11 +20,12 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 		outputChan   chan *events.Envelope
 		runComplete  chan struct{}
 		unmarshaller *dropsonde_unmarshaller.DropsondeUnmarshaller
+		mockBatcher  *mockMetricBatcher
 	)
 
 	BeforeEach(func() {
-		fakeEventEmitter.Reset()
-		metricBatcher.Reset()
+		mockBatcher = newMockMetricBatcher()
+		metrics.Initialize(nil, mockBatcher)
 	})
 
 	Context("UnmarshallMessage", func() {
@@ -109,11 +113,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 			inputChan <- message
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.valueMetricReceived"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("dropsondeUnmarshaller.valueMetricReceived"),
+			))
 		})
 
 		It("emits a total log message counter", func() {
@@ -136,11 +138,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			inputChan <- message1
 			inputChan <- message2
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
-				Delta: proto.Uint64(3),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("dropsondeUnmarshaller.logMessageTotal"),
+			))
 		})
 
 		It("has consistency between total log message counter and per-app counters", func() {
@@ -163,21 +163,17 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 			inputChan <- message1
 			inputChan <- message2
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.logMessageTotal"),
-				Delta: proto.Uint64(3),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("dropsondeUnmarshaller.logMessageTotal"),
+			))
 		})
 
 		It("emits an unmarshal error counter", func() {
 			inputChan <- []byte{1, 2, 3}
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.unmarshalErrors"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("dropsondeUnmarshaller.unmarshalErrors"),
+			))
 		})
 
 		It("counts unknown message types", func() {
@@ -192,11 +188,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 
 			inputChan <- message1
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("dropsondeUnmarshaller.unknownEventTypeReceived"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("dropsondeUnmarshaller.unknownEventTypeReceived"),
+			))
 		})
 
 		Context("when a http start stop message is received", func() {
@@ -210,11 +204,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				message, _ := proto.Marshal(envelope)
 				inputChan <- message
 
-				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-					Name:  proto.String("dropsondeUnmarshaller.httpStartStopReceived"),
-					Delta: proto.Uint64(1),
-				}))
+				Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+					With("dropsondeUnmarshaller.httpStartStopReceived"),
+				))
 			})
 		})
 
@@ -232,11 +224,9 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 					inputChan <- message
 				}
 
-				Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-				Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-					Name:  proto.String("dropsondeUnmarshaller.httpStartStopReceived"),
-					Delta: proto.Uint64(totalMessages),
-				}))
+				Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+					With("dropsondeUnmarshaller.httpStartStopReceived"),
+				))
 			})
 		})
 	})

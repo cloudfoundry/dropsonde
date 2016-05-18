@@ -3,35 +3,33 @@ package log_sender_test
 import (
 	"bytes"
 	"errors"
-
-	"github.com/cloudfoundry/dropsonde/emitter/fake"
-	"github.com/cloudfoundry/dropsonde/log_sender"
-	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
-
 	"io"
+	"reflect"
 	"strings"
 	"time"
 
-	"github.com/cloudfoundry/dropsonde/metric_sender"
-	"github.com/cloudfoundry/dropsonde/metricbatcher"
-	"github.com/cloudfoundry/dropsonde/metrics"
-	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
+	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/dropsonde/emitter/fake"
+	"github.com/cloudfoundry/dropsonde/log_sender"
+	"github.com/cloudfoundry/dropsonde/metrics"
+	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 var _ = Describe("LogSender", func() {
 	var (
-		emitter *fake.FakeEventEmitter
-		sender  *log_sender.LogSender
+		mockBatcher *mockMetricBatcher
+		emitter     *fake.FakeEventEmitter
+		sender      *log_sender.LogSender
 	)
 
 	BeforeEach(func() {
+		mockBatcher = newMockMetricBatcher()
 		emitter = fake.NewFakeEventEmitter("origin")
-		metricSender := metric_sender.NewMetricSender(emitter)
-		batcher := metricbatcher.New(metricSender, time.Millisecond)
-		metrics.Initialize(metricSender, batcher)
+		metrics.Initialize(nil, mockBatcher)
 		sender = log_sender.NewLogSender(emitter, loggertesthelper.Logger())
 	})
 
@@ -61,7 +59,10 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(2)}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("logSenderTotalMessagesRead"),
+				With("logSenderTotalMessagesRead"),
+			))
 		})
 	})
 
@@ -84,17 +85,24 @@ var _ = Describe("LogSender", func() {
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 			sender.SendAppErrorLog("app-id", "custom-log-message", "App", "0")
 
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(2)}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("logSenderTotalMessagesRead"),
+				With("logSenderTotalMessagesRead"),
+			))
 		})
 	})
 
 	Describe("counter emission", func() {
 		It("emits on a timer", func() {
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(1)}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("logSenderTotalMessagesRead"),
+			))
 
 			sender.SendAppLog("app-id", "custom-log-message", "App", "0")
-			Eventually(emitter.GetEvents).Should(ContainElement(&events.CounterEvent{Name: proto.String("logSenderTotalMessagesRead"), Delta: proto.Uint64(1)}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("logSenderTotalMessagesRead"),
+			))
 		})
 
 		It("does not emit when no logs are written", func() {
@@ -162,14 +170,20 @@ var _ = Describe("LogSender", func() {
 		})
 
 		It("stops when reader returns EOF", func() {
-			var reader infiniteReader
-			reader.stopChan = make(chan struct{})
+			reader := infiniteReader{
+				stopChan: make(chan struct{}),
+			}
 			doneChan := make(chan struct{})
 
 			go func() {
 				sender.ScanLogStream("someId", "app", "0", reader)
 				close(doneChan)
 			}()
+			go keepMockChansDrained(
+				reader.stopChan,
+				mockBatcher.BatchIncrementCounterCalled,
+				mockBatcher.BatchIncrementCounterInput,
+			)
 
 			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
 			close(reader.stopChan)
@@ -256,12 +270,16 @@ var _ = Describe("LogSender", func() {
 				sender.ScanErrorLogStream("someId", "app", "0", reader)
 				close(doneChan)
 			}()
+			go keepMockChansDrained(
+				reader.stopChan,
+				mockBatcher.BatchIncrementCounterCalled,
+				mockBatcher.BatchIncrementCounterInput,
+			)
 
 			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">", 1))
 
 			close(reader.stopChan)
 			Eventually(doneChan).Should(BeClosed())
-
 		})
 
 		It("drops over-length messages and resumes scanning", func() {
@@ -334,4 +352,22 @@ func getLogMessages(messages []fake.Message) []string {
 		}
 	}
 	return logMessages
+}
+
+func keepMockChansDrained(stop chan struct{}, called chan bool, inputs interface{}) {
+	for {
+		select {
+		case <-stop:
+			return
+		case <-called:
+			drainInputs(inputs)
+		}
+	}
+}
+
+func drainInputs(inputs interface{}) {
+	v := reflect.ValueOf(inputs)
+	for i := 0; i < v.NumField(); i++ {
+		v.Field(i).Recv()
+	}
 }

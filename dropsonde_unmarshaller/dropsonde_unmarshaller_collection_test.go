@@ -2,6 +2,7 @@ package dropsonde_unmarshaller_test
 
 import (
 	"github.com/cloudfoundry/dropsonde/dropsonde_unmarshaller"
+	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 	"github.com/gogo/protobuf/proto"
 
@@ -13,18 +14,11 @@ import (
 )
 
 var _ = Describe("DropsondeUnmarshallerCollection", func() {
-	var (
-		inputChan  chan []byte
-		outputChan chan *events.Envelope
-		collection *dropsonde_unmarshaller.DropsondeUnmarshallerCollection
-		waitGroup  *sync.WaitGroup
-	)
+	var collection *dropsonde_unmarshaller.DropsondeUnmarshallerCollection
 
 	BeforeEach(func() {
-		inputChan = make(chan []byte)
-		outputChan = make(chan *events.Envelope)
 		collection = dropsonde_unmarshaller.NewDropsondeUnmarshallerCollection(loggertesthelper.Logger(), 5)
-		waitGroup = &sync.WaitGroup{}
+		metrics.Initialize(nil, nil)
 	})
 
 	Context("DropsondeUnmarshallerCollection", func() {
@@ -34,7 +28,28 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 	})
 
 	Context("Run", func() {
+		var (
+			inputChan  chan []byte
+			outputChan chan *events.Envelope
+			waitGroup  *sync.WaitGroup
+		)
+
+		BeforeEach(func() {
+			inputChan = make(chan []byte)
+			outputChan = make(chan *events.Envelope)
+			waitGroup = &sync.WaitGroup{}
+		})
+
+		AfterEach(func() {
+			close(inputChan)
+			for i := 0; i < collection.Size(); i++ {
+				<-outputChan
+			}
+			waitGroup.Wait()
+		})
+
 		It("doesn't block while there are unmarshallers idle", func() {
+			waitGroup.Add(collection.Size())
 			collection.Run(inputChan, outputChan, waitGroup)
 			env := &events.Envelope{
 				Origin:    proto.String("foo"),
@@ -56,7 +71,8 @@ var _ = Describe("DropsondeUnmarshallerCollection", func() {
 				inputChan <- bytes
 			}()
 			Consistently(done).ShouldNot(BeClosed())
-			<-outputChan
+
+			Eventually(outputChan).Should(Receive())
 			Eventually(done).Should(BeClosed())
 		})
 	})

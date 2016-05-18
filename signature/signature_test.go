@@ -4,13 +4,13 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 
-	"github.com/cloudfoundry/dropsonde/signature"
-	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
-	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
-
+	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/dropsonde/metrics"
+	"github.com/cloudfoundry/dropsonde/signature"
+	"github.com/cloudfoundry/loggregatorlib/loggertesthelper"
 )
 
 var _ = Describe("Verifier", func() {
@@ -20,6 +20,8 @@ var _ = Describe("Verifier", func() {
 		runComplete chan struct{}
 
 		signatureVerifier *signature.Verifier
+
+		mockBatcher *mockMetricBatcher
 	)
 
 	BeforeEach(func() {
@@ -28,6 +30,9 @@ var _ = Describe("Verifier", func() {
 		runComplete = make(chan struct{})
 
 		signatureVerifier = signature.NewVerifier(loggertesthelper.Logger(), "valid-secret")
+
+		mockBatcher = newMockMetricBatcher()
+		metrics.Initialize(nil, mockBatcher)
 
 		go func() {
 			signatureVerifier.Run(inputChan, outputChan)
@@ -80,28 +85,19 @@ var _ = Describe("Verifier", func() {
 
 	Context("metrics", func() {
 
-		BeforeEach(func() {
-			fakeEventEmitter.Reset()
-			metricBatcher.Reset()
-		})
-
 		It("emits a missing signature error counter", func() {
 			inputChan <- []byte{1, 2, 3}
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("signatureVerifier.missingSignatureErrors"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("signatureVerifier.missingSignatureErrors"),
+			))
 		})
 
 		It("emits an invalid signature error counter", func() {
 			inputChan <- make([]byte, 32)
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("signatureVerifier.invalidSignatureErrors"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("signatureVerifier.invalidSignatureErrors"),
+			))
 		})
 
 		It("emits an valid signature counter", func() {
@@ -113,11 +109,9 @@ var _ = Describe("Verifier", func() {
 			signedMessage := append(signature, message...)
 			inputChan <- signedMessage
 
-			Eventually(fakeEventEmitter.GetMessages).Should(HaveLen(1))
-			Expect(fakeEventEmitter.GetMessages()[0].Event.(*events.CounterEvent)).To(Equal(&events.CounterEvent{
-				Name:  proto.String("signatureVerifier.validSignatures"),
-				Delta: proto.Uint64(1),
-			}))
+			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
+				With("signatureVerifier.validSignatures"),
+			))
 		})
 	})
 })
