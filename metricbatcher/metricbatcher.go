@@ -101,7 +101,7 @@ func (mb *MetricBatcher) add(newBatch batch) {
 // BatchCounter returns a BatchCounterChainer which can be used to prepare
 // a counter event before batching it up.
 func (mb *MetricBatcher) BatchCounter(name string) BatchCounterChainer {
-	return BatchCounterChainer{
+	return batchCounterChainer{
 		batcher: mb,
 		name:    name,
 		tags:    make(map[string]string),
@@ -147,21 +147,27 @@ func (mb *MetricBatcher) unsafeResetAndReturnMetrics() []batch {
 	return localMetrics
 }
 
-type BatchCounterChainer struct {
+type BatchCounterChainer interface {
+	SetTag(key, value string) BatchCounterChainer
+	Increment()
+	Add(value uint64)
+}
+
+type batchCounterChainer struct {
 	batcher *MetricBatcher
 	name    string
 	tags    map[string]string
 }
 
-func (c BatchCounterChainer) SetTag(key, value string) BatchCounterChainer {
+func (c batchCounterChainer) SetTag(key, value string) BatchCounterChainer {
 	c.tags[key] = value
 	return c
 }
 
-func (c BatchCounterChainer) Increment() {
+func (c batchCounterChainer) Increment() {
 	c.batcher.add(batch{name: c.name, value: 1, tags: c.tags})
 }
 
-func (c BatchCounterChainer) Add(value uint64) {
+func (c batchCounterChainer) Add(value uint64) {
 	c.batcher.add(batch{name: c.name, value: value, tags: c.tags})
 }
