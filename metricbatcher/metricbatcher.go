@@ -165,9 +165,13 @@ func (c batchCounterChainer) SetTag(key, value string) BatchCounterChainer {
 }
 
 func (c batchCounterChainer) Increment() {
+	c.batcher.lock.Lock()
+	defer c.batcher.lock.Unlock()
 	c.batcher.add(batch{name: c.name, value: 1, tags: c.tags})
 }
 
 func (c batchCounterChainer) Add(value uint64) {
+	c.batcher.lock.Lock()
+	defer c.batcher.lock.Unlock()
 	c.batcher.add(batch{name: c.name, value: value, tags: c.tags})
 }

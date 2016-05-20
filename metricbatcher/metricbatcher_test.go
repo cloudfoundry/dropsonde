@@ -60,6 +60,22 @@ var _ = Describe("MetricBatcher", func() {
 
 			mockChainer.AddOutput.Ret0 <- nil
 		})
+
+		It("can add while it flushes without a data race", func() {
+			close(mockChainer.AddOutput.Ret0)
+
+			counter := metricBatcher.BatchCounter("count").SetTag("foo", "bar")
+			after := time.After(100 * time.Millisecond)
+			for {
+				select {
+				case <-after:
+					return
+				default:
+					counter.Increment()
+					counter.Add(2)
+				}
+			}
+		})
 	})
 
 	Describe("BatchIncrementCounter", func() {
