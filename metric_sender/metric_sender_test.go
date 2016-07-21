@@ -7,6 +7,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 	"github.com/cloudfoundry/dropsonde/metric_sender"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -172,7 +173,30 @@ var _ = Describe("MetricSender", func() {
 		})
 	})
 
-	It("sends a metric to its emitter", func() {
+	It("sends an event to its emitter", func() {
+		err := sender.Send(&events.ValueMetric{
+			Name:  proto.String("metric-name"),
+			Value: proto.Float64(42),
+			Unit:  proto.String("answers"),
+		})
+		Expect(err).NotTo(HaveOccurred())
+
+		Expect(emitter.GetMessages()).To(HaveLen(1))
+		metric := emitter.GetMessages()[0].Event.(*events.ValueMetric)
+		Expect(metric.GetName()).To(Equal("metric-name"))
+		Expect(metric.GetValue()).To(BeNumerically("==", 42))
+		Expect(metric.GetUnit()).To(Equal("answers"))
+	})
+
+	It("errors out when sending if the emitter errors", func() {
+		emitter.ReturnError = errors.New("some error")
+
+		err := sender.Send(nil)
+		Expect(emitter.GetMessages()).To(HaveLen(0))
+		Expect(err.Error()).To(Equal("some error"))
+	})
+
+	It("sends a value metric to its emitter", func() {
 		err := sender.SendValue("metric-name", 42, "answers")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -183,7 +207,7 @@ var _ = Describe("MetricSender", func() {
 		Expect(metric.GetUnit()).To(Equal("answers"))
 	})
 
-	It("returns an error if it can't send metric value", func() {
+	It("returns an error if it can't send value metric", func() {
 		emitter.ReturnError = errors.New("some error")
 
 		err := sender.SendValue("stuff", 12, "no answer")

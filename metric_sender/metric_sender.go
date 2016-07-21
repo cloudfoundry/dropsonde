@@ -39,6 +39,11 @@ func NewMetricSender(eventEmitter EventEmitter) *MetricSender {
 	return &MetricSender{eventEmitter: eventEmitter}
 }
 
+// Send sends an events.Event.
+func (ms *MetricSender) Send(ev events.Event) error {
+	return ms.eventEmitter.Emit(ev)
+}
+
 // SendValue sends a metric with the given name, value and unit. See
 // http://metrics20.org/spec/#units for a specification of acceptable units.
 // Returns an error if one occurs while sending the event.
