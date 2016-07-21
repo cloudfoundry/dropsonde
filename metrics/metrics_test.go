@@ -6,6 +6,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry/dropsonde/metrics"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 var _ = Describe("Metrics", func() {
@@ -18,6 +19,13 @@ var _ = Describe("Metrics", func() {
 		metricSender = newMockMetricSender()
 		metricBatcher = newMockMetricBatcher()
 		metrics.Initialize(metricSender, metricBatcher)
+	})
+
+	It("delegates Send", func() {
+		metricSender.SendOutput.Ret0 <- nil
+		event := &events.ValueMetric{}
+		metrics.Send(event)
+		Expect(metricSender.SendInput).To(BeCalled(With(event)))
 	})
 
 	It("delegates Value", func() {

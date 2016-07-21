@@ -21,6 +21,7 @@ package metrics
 
 import (
 	"github.com/cloudfoundry/dropsonde/metric_sender"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 var (
@@ -31,6 +32,8 @@ var (
 //go:generate hel --type MetricSender --output mock_metric_sender_test.go
 
 type MetricSender interface {
+	Send(event events.Event) error
+
 	// new chanining functions
 	Value(name string, value float64, unit string) metric_sender.ValueChainer
 	ContainerMetric(appID string, instance int32, cpu float64, mem, disk uint64) metric_sender.ContainerMetricChainer
@@ -63,6 +66,11 @@ func Initialize(ms MetricSender, mb MetricBatcher) {
 // Closes the metrics system and flushes any batch metrics.
 func Close() {
 	metricBatcher.Close()
+}
+
+// Send sends an events.Event.
+func Send(ev events.Event) error {
+	return metricSender.Send(ev)
 }
 
 // SendValue sends a value event for the named metric. See
