@@ -4,12 +4,14 @@ import (
 	"sync"
 
 	"github.com/cloudfoundry/dropsonde/metric_sender"
+	"github.com/cloudfoundry/sonde-go/events"
 )
 
 type FakeMetricSender struct {
 	counters         map[string]uint64
 	values           map[string]Metric
 	containerMetrics map[string]ContainerMetric
+	events           []events.Event
 	sync.RWMutex
 }
 
@@ -32,6 +34,14 @@ func NewFakeMetricSender() *FakeMetricSender {
 		values:           make(map[string]Metric),
 		containerMetrics: make(map[string]ContainerMetric),
 	}
+}
+
+func (fms *FakeMetricSender) Send(event events.Event) error {
+	fms.Lock()
+	defer fms.Unlock()
+	fms.events = append(fms.events, event)
+
+	return nil
 }
 
 func (fms *FakeMetricSender) SendValue(name string, value float64, unit string) error {
