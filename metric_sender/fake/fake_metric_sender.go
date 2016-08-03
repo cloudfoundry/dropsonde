@@ -44,6 +44,13 @@ func (fms *FakeMetricSender) Send(event events.Event) error {
 	return nil
 }
 
+func (fms *FakeMetricSender) Events() []events.Event {
+	fms.RLock()
+	defer fms.RUnlock()
+
+	return fms.events
+}
+
 func (fms *FakeMetricSender) SendValue(name string, value float64, unit string) error {
 	fms.Lock()
 	defer fms.Unlock()
