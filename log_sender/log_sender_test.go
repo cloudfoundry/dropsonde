@@ -190,7 +190,7 @@ var _ = Describe("LogSender", func() {
 			Eventually(doneChan).Should(BeClosed())
 		})
 
-		PIt("drops over-length messages and resumes scanning", func() {
+		It("drops over-length messages and resumes scanning", func() {
 			// Scanner can't handle tokens over 64K
 			bigReader := strings.NewReader(strings.Repeat("x", 64*1024+1) + "\nsmall message\n")
 
@@ -200,7 +200,7 @@ var _ = Describe("LogSender", func() {
 				close(doneChan)
 			}()
 
-			Eventually(emitter.GetMessages).Should(HaveLen(4))
+			Eventually(func() int { return len(emitter.GetMessages()) }).Should(BeNumerically(">=", 3))
 
 			Eventually(doneChan).Should(BeClosed())
 
