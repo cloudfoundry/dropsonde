@@ -17,6 +17,17 @@ import (
 
 type EventEmitter interface {
 	Emit(events.Event) error
+	EmitEnvelope(*events.Envelope) error
+	Origin() string
+}
+
+type LogChainer interface {
+	SetTimestamp(t int64) LogChainer
+	SetTag(key, value string) LogChainer
+	SetAppId(id string) LogChainer
+	SetSourceType(s string) LogChainer
+	SetSourceInstance(s string) LogChainer
+	Send() error
 }
 
 // A LogSender emits log events.
@@ -59,6 +70,21 @@ func (l *LogSender) ScanLogStream(appID, sourceType, sourceInstance string, read
 // Restarts on read errors and continues until EOF.
 func (l *LogSender) ScanErrorLogStream(appID, sourceType, sourceInstance string, reader io.Reader) {
 	l.scanLogStream(appID, sourceType, sourceInstance, l.SendAppErrorLog, reader)
+}
+
+// LogMessage creates a log message that can be manipulated via cascading calls
+// and then sent.
+func (l *LogSender) LogMessage(message []byte, msgType events.LogMessage_MessageType) LogChainer {
+	return logChainer{
+		emitter: l.eventEmitter,
+		envelope: &events.Envelope{
+			LogMessage: &events.LogMessage{
+				Message:     message,
+				MessageType: msgType.Enum(),
+			},
+			Origin: proto.String(l.eventEmitter.Origin()),
+		},
+	}
 }
 
 func (l *LogSender) scanLogStream(appID, sourceType, sourceInstance string, sender func(string, string, string, string) error, reader io.Reader) {
@@ -119,4 +145,54 @@ func sendScannedLines(appID, sourceType, sourceInstance string, scanner *bufio.S
 		}
 	}
 	return scanner.Err()
+}
+
+type envelopeEmitter interface {
+	EmitEnvelope(*events.Envelope) error
+}
+
+type logChainer struct {
+	emitter  envelopeEmitter
+	envelope *events.Envelope
+}
+
+func (c logChainer) SetTimestamp(t int64) LogChainer {
+	c.envelope.LogMessage.Timestamp = proto.Int64(t)
+	return c
+}
+
+func (c logChainer) SetTag(key, value string) LogChainer {
+	if c.envelope.Tags == nil {
+		c.envelope.Tags = make(map[string]string)
+	}
+	c.envelope.Tags[key] = value
+	return c
+}
+
+func (c logChainer) SetAppId(id string) LogChainer {
+	c.envelope.LogMessage.AppId = proto.String(id)
+	return c
+}
+
+func (c logChainer) SetSourceType(s string) LogChainer {
+	c.envelope.LogMessage.SourceType = proto.String(s)
+	return c
+}
+
+func (c logChainer) SetSourceInstance(s string) LogChainer {
+	c.envelope.LogMessage.SourceInstance = proto.String(s)
+	return c
+}
+
+// Send sends the log message with the envelope timestamp set to now and the
+// log message timestamp set to now if none was provided by SetTimestamp.
+func (c logChainer) Send() error {
+	metrics.BatchIncrementCounter("logSenderTotalMessagesRead")
+
+	c.envelope.Timestamp = proto.Int64(time.Now().UnixNano())
+
+	if c.envelope.LogMessage.Timestamp == nil {
+		c.envelope.LogMessage.Timestamp = proto.Int64(time.Now().UnixNano())
+	}
+	return c.emitter.EmitEnvelope(c.envelope)
 }
