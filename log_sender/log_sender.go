@@ -78,11 +78,12 @@ func (l *LogSender) LogMessage(message []byte, msgType events.LogMessage_Message
 	return logChainer{
 		emitter: l.eventEmitter,
 		envelope: &events.Envelope{
+			Origin:    proto.String(l.eventEmitter.Origin()),
+			EventType: events.Envelope_LogMessage.Enum(),
 			LogMessage: &events.LogMessage{
 				Message:     message,
 				MessageType: msgType.Enum(),
 			},
-			Origin: proto.String(l.eventEmitter.Origin()),
 		},
 	}
 }

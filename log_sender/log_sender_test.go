@@ -80,22 +80,15 @@ var _ = Describe("LogSender", func() {
 			Expect(envelope.GetTags()).To(HaveKeyWithValue("key2", "value2"))
 		})
 
-		It("sets envelope origin", func() {
-			err := sender.LogMessage([]byte(""), events.LogMessage_OUT).Send()
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
-			envelope := emitter.GetEnvelopes()[0]
-			Expect(envelope.GetOrigin()).To(Equal("test-origin"))
-		})
-
-		It("sets the envelope timestamp", func() {
+		It("sets envelope properties", func() {
 			now := time.Now().UnixNano()
 			err := sender.LogMessage([]byte(""), events.LogMessage_OUT).Send()
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
 			envelope := emitter.GetEnvelopes()[0]
+			Expect(envelope.GetOrigin()).To(Equal("test-origin"))
+			Expect(envelope.GetEventType()).To(Equal(events.Envelope_LogMessage))
 			Expect(envelope.GetTimestamp()).To(BeNumerically("~", now, time.Second))
 		})
 
