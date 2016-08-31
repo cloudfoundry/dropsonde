@@ -55,21 +55,17 @@ func (rs *RuntimeStats) emitMemMetrics() {
 	}
 
 	for metric, value := range toEmit {
-		err := rs.emit(metric, value)
-		if err != nil {
-			log.Printf("RuntimeStats: failed to emit %s: %v", metric, err)
-		}
+		rs.emit(metric, value)
 	}
 }
 
-func (rs *RuntimeStats) emit(name string, value float64) error {
+func (rs *RuntimeStats) emit(name string, value float64) {
 	err := rs.emitter.Emit(&events.ValueMetric{
 		Name:  &name,
 		Value: &value,
 		Unit:  proto.String("count"),
 	})
 	if err != nil {
-		return err
+		log.Printf("RuntimeStats: failed to emit %s: %v", name, err)
 	}
-	return nil
 }
