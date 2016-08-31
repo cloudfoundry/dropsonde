@@ -45,21 +45,31 @@ func (rs *RuntimeStats) emitMemMetrics() {
 	stats := new(runtime.MemStats)
 	runtime.ReadMemStats(stats)
 
-	rs.emit("memoryStats.numBytesAllocatedHeap", float64(stats.HeapAlloc))
-	rs.emit("memoryStats.numBytesAllocatedStack", float64(stats.StackInuse))
-	rs.emit("memoryStats.numBytesAllocated", float64(stats.Alloc))
-	rs.emit("memoryStats.numMallocs", float64(stats.Mallocs))
-	rs.emit("memoryStats.numFrees", float64(stats.Frees))
-	rs.emit("memoryStats.lastGCPauseTimeNS", float64(stats.PauseNs[(stats.NumGC+255)%256]))
+	toEmit := map[string]float64{
+		"memoryStats.numBytesAllocatedHeap":  float64(stats.HeapAlloc),
+		"memoryStats.numBytesAllocatedStack": float64(stats.StackInuse),
+		"memoryStats.numBytesAllocated":      float64(stats.Alloc),
+		"memoryStats.numMallocs":             float64(stats.Mallocs),
+		"memoryStats.numFrees":               float64(stats.Frees),
+		"memoryStats.lastGCPauseTimeNS":      float64(stats.PauseNs[(stats.NumGC+255)%256]),
+	}
+
+	for metric, value := range toEmit {
+		err := rs.emit(metric, value)
+		if err != nil {
+			log.Printf("RuntimeStats: failed to emit %s: %v", metric, err)
+		}
+	}
 }
 
-func (rs *RuntimeStats) emit(name string, value float64) {
+func (rs *RuntimeStats) emit(name string, value float64) error {
 	err := rs.emitter.Emit(&events.ValueMetric{
 		Name:  &name,
 		Value: &value,
 		Unit:  proto.String("count"),
 	})
 	if err != nil {
-		log.Printf("RuntimeStats: failed to emit: %v", err)
+		return err
 	}
+	return nil
 }
