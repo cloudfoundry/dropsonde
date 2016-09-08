@@ -84,22 +84,6 @@ var _ = Describe("Verifier", func() {
 	})
 
 	Context("metrics", func() {
-
-		It("emits a missing signature error counter", func() {
-			inputChan <- []byte{1, 2, 3}
-			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
-				With("signatureVerifier.missingSignatureErrors"),
-			))
-		})
-
-		It("emits an invalid signature error counter", func() {
-			inputChan <- make([]byte, 32)
-
-			Eventually(mockBatcher.BatchIncrementCounterInput).Should(BeCalled(
-				With("signatureVerifier.invalidSignatureErrors"),
-			))
-		})
-
 		It("emits an valid signature counter", func() {
 			message := []byte{1, 2, 3}
 			mac := hmac.New(sha256.New, []byte("valid-secret"))

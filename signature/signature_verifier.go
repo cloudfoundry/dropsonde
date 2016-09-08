@@ -42,7 +42,6 @@ func (v *Verifier) Run(inputChan <-chan []byte, outputChan chan<- []byte) {
 	for signedMessage := range inputChan {
 		if len(signedMessage) < SIGNATURE_LENGTH {
 			v.logger.Warn("signatureVerifier: missing signature")
-			metrics.BatchIncrementCounter("signatureVerifier.missingSignatureErrors")
 			continue
 		}
 
@@ -52,7 +51,6 @@ func (v *Verifier) Run(inputChan <-chan []byte, outputChan chan<- []byte) {
 			metrics.BatchIncrementCounter("signatureVerifier.validSignatures")
 		} else {
 			v.logger.Warn("signatureVerifier: invalid signature")
-			metrics.BatchIncrementCounter("signatureVerifier.invalidSignatureErrors")
 		}
 	}
 }
