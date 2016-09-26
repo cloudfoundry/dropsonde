@@ -3,6 +3,7 @@ package log_sender_test
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -123,6 +124,18 @@ var _ = Describe("LogSender", func() {
 					SetTag("key", justRight).
 					Send()
 				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("doesn't allow more than 10 tags", func() {
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+
+				c := sender.LogMessage(msg, msgType)
+				for i := 0; i < 11; i++ {
+					c = c.SetTag(fmt.Sprintf("key-%d", i), "value")
+				}
+				err := c.Send()
+				Expect(err).To(HaveOccurred())
 			})
 		})
 

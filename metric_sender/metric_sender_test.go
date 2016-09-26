@@ -2,6 +2,7 @@ package metric_sender_test
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -81,6 +82,15 @@ var _ = Describe("MetricSender", func() {
 				envelope := emitter.GetEnvelopes()[0]
 
 				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
+
+			It("doesn't allow more than 10 tags", func() {
+				c := sender.Value("foo", 1.2, "bar")
+				for i := 0; i < 11; i++ {
+					c = c.SetTag(fmt.Sprintf("key-%d", i), "value")
+				}
+				err := c.Send()
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -167,6 +177,15 @@ var _ = Describe("MetricSender", func() {
 				envelope := emitter.GetEnvelopes()[0]
 
 				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
+
+			It("doesn't allow more than 10 tags", func() {
+				c := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456)
+				for i := 0; i < 11; i++ {
+					c = c.SetTag(fmt.Sprintf("key-%d", i), "value")
+				}
+				err := c.Send()
+				Expect(err).To(HaveOccurred())
 			})
 		})
 
@@ -271,6 +290,22 @@ var _ = Describe("MetricSender", func() {
 				envelope = emitter.GetEnvelopes()[1]
 
 				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
+
+			It("doesn't allow more than 10 tags", func() {
+				c := sender.Counter("requests")
+				for i := 0; i < 11; i++ {
+					c = c.SetTag(fmt.Sprintf("key-%d", i), "value")
+				}
+				err := c.Increment()
+				Expect(err).To(HaveOccurred())
+
+				c = sender.Counter("requests")
+				for i := 0; i < 11; i++ {
+					c = c.SetTag(fmt.Sprintf("key-%d", i), "value")
+				}
+				err = c.Add(2)
+				Expect(err).To(HaveOccurred())
 			})
 		})
 

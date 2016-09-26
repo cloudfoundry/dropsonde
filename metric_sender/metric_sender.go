@@ -9,7 +9,10 @@ import (
 	"github.com/gogo/protobuf/proto"
 )
 
-const maxTagLen = 256
+const (
+	maxTagLen = 256
+	maxTags   = 10
+)
 
 type EventEmitter interface {
 	Emit(events.Event) error
@@ -147,7 +150,13 @@ func (c chainer) SetTag(key, value string) chainer {
 			err: fmt.Errorf("Tag exceeds max length of %d", maxTagLen),
 		}
 	}
+
 	c.envelope.Tags[key] = value
+	if len(c.envelope.Tags) > maxTags {
+		return chainer{
+			err: fmt.Errorf("Too many tags. Max of %d", maxTags),
+		}
+	}
 	return c
 }
 
