@@ -5,6 +5,7 @@ import (
 	"io"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"fmt"
 	"syscall"
@@ -14,6 +15,8 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
+
+const maxTagLen = 256
 
 type EventEmitter interface {
 	Emit(events.Event) error
@@ -155,6 +158,7 @@ type envelopeEmitter interface {
 type logChainer struct {
 	emitter  envelopeEmitter
 	envelope *events.Envelope
+	err      error
 }
 
 func (c logChainer) SetTimestamp(t int64) LogChainer {
@@ -163,6 +167,12 @@ func (c logChainer) SetTimestamp(t int64) LogChainer {
 }
 
 func (c logChainer) SetTag(key, value string) LogChainer {
+	if utf8.RuneCountInString(key) > maxTagLen || utf8.RuneCountInString(value) > maxTagLen {
+		return logChainer{
+			err: fmt.Errorf("Tag exceeds max length of %d", maxTagLen),
+		}
+	}
+
 	if c.envelope.Tags == nil {
 		c.envelope.Tags = make(map[string]string)
 	}
@@ -188,6 +198,10 @@ func (c logChainer) SetSourceInstance(s string) LogChainer {
 // Send sends the log message with the envelope timestamp set to now and the
 // log message timestamp set to now if none was provided by SetTimestamp.
 func (c logChainer) Send() error {
+	if c.err != nil {
+		return c.err
+	}
+
 	metrics.BatchIncrementCounter("logSenderTotalMessagesRead")
 
 	c.envelope.Timestamp = proto.Int64(time.Now().UnixNano())

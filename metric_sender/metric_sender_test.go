@@ -2,6 +2,7 @@ package metric_sender_test
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
@@ -37,14 +38,50 @@ var _ = Describe("MetricSender", func() {
 			Expect(metric.GetUnit()).To(Equal("bar"))
 		})
 
-		It("can send tags", func() {
-			err := sender.Value("foo", 1.2, "bar").SetTag("baz", "qux").Send()
-			Expect(err).ToNot(HaveOccurred())
+		Context("tags", func() {
+			It("can set tags", func() {
+				err := sender.Value("foo", 1.2, "bar").SetTag("baz", "qux").Send()
+				Expect(err).ToNot(HaveOccurred())
 
-			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
-			envelope := emitter.GetEnvelopes()[0]
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
 
-			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+			})
+
+			It("doesn't allow tag keys over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.Value("foo", 1.2, "bar").SetTag(tooLong, "bar").Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("doesn't allow tag values over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.Value("foo", 1.2, "bar").SetTag("foo", tooLong).Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking key length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.Value("foo", 1.2, "bar").SetTag(justRight, "qux").Send()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue(justRight, "qux"))
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking value length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.Value("foo", 1.2, "bar").SetTag("baz", justRight).Send()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
 		})
 
 		It("sets origin", func() {
@@ -85,16 +122,52 @@ var _ = Describe("MetricSender", func() {
 			Expect(metric.GetDiskBytes()).To(BeEquivalentTo(3456))
 		})
 
-		It("can send tags", func() {
-			err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
-				SetTag("baz", "qux").
-				Send()
-			Expect(err).ToNot(HaveOccurred())
+		Context("tags", func() {
+			It("can set tags", func() {
+				err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).
+					SetTag("baz", "qux").
+					Send()
+				Expect(err).ToNot(HaveOccurred())
 
-			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
-			envelope := emitter.GetEnvelopes()[0]
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
 
-			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+			})
+
+			It("doesn't allow tag keys over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).SetTag(tooLong, "bar").Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("doesn't allow tag values over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).SetTag("foo", tooLong).Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking key length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).SetTag(justRight, "qux").Send()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue(justRight, "qux"))
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking value length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.ContainerMetric("test-app-id", 1234, 1.2, 2345, 3456).SetTag("baz", justRight).Send()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
 		})
 
 		It("sets origin", func() {
@@ -139,16 +212,66 @@ var _ = Describe("MetricSender", func() {
 			Expect(counter.GetDelta()).To(BeEquivalentTo(3))
 		})
 
-		It("can send tags", func() {
-			err := sender.Counter("requests").
-				SetTag("baz", "qux").
-				Increment()
-			Expect(err).ToNot(HaveOccurred())
+		Context("tags", func() {
+			It("can send tags", func() {
+				err := sender.Counter("requests").
+					SetTag("baz", "qux").
+					Increment()
+				Expect(err).ToNot(HaveOccurred())
 
-			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
-			envelope := emitter.GetEnvelopes()[0]
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
 
-			Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", "qux"))
+			})
+
+			It("doesn't allow tag keys over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.Counter("requests").SetTag(tooLong, "bar").Increment()
+				Expect(err).To(HaveOccurred())
+				err = sender.Counter("requests").SetTag(tooLong, "bar").Add(2)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("doesn't allow tag values over 256 characters", func() {
+				tooLong := strings.Repeat("x", 257)
+				err := sender.Counter("requests").SetTag("foo", tooLong).Increment()
+				Expect(err).To(HaveOccurred())
+				err = sender.Counter("requests").SetTag("foo", tooLong).Add(2)
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking key length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.Counter("requests").SetTag(justRight, "qux").Increment()
+				Expect(err).ToNot(HaveOccurred())
+				err = sender.Counter("requests").SetTag(justRight, "qux").Add(2)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(2))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue(justRight, "qux"))
+				envelope = emitter.GetEnvelopes()[1]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue(justRight, "qux"))
+			})
+
+			It("counts multi-byte unicode characters as single characters when checking value length", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				err := sender.Counter("requests").SetTag("baz", justRight).Increment()
+				Expect(err).ToNot(HaveOccurred())
+				err = sender.Counter("requests").SetTag("baz", justRight).Add(2)
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(emitter.GetEnvelopes()).To(HaveLen(2))
+				envelope := emitter.GetEnvelopes()[0]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+				envelope = emitter.GetEnvelopes()[1]
+
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("baz", justRight))
+			})
 		})
 
 		It("sets origin", func() {

@@ -65,19 +65,65 @@ var _ = Describe("LogSender", func() {
 			Expect(logMsg.GetTimestamp()).To(Equal(int64(-123456)))
 		})
 
-		It("can add tags to AppLogs", func() {
-			msg := []byte("custom-log-message")
-			msgType := events.LogMessage_OUT
-			err := sender.LogMessage(msg, msgType).
-				SetTag("key", "value").
-				SetTag("key2", "value2").
-				Send()
-			Expect(err).ToNot(HaveOccurred())
+		Context("tags", func() {
+			It("can add tags to AppLogs", func() {
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+				err := sender.LogMessage(msg, msgType).
+					SetTag("key", "value").
+					SetTag("key2", "value2").
+					Send()
+				Expect(err).ToNot(HaveOccurred())
 
-			Expect(emitter.GetEnvelopes()).To(HaveLen(1))
-			envelope := emitter.GetEnvelopes()[0]
-			Expect(envelope.GetTags()).To(HaveKeyWithValue("key", "value"))
-			Expect(envelope.GetTags()).To(HaveKeyWithValue("key2", "value2"))
+				Expect(emitter.GetEnvelopes()).To(HaveLen(1))
+				envelope := emitter.GetEnvelopes()[0]
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("key", "value"))
+				Expect(envelope.GetTags()).To(HaveKeyWithValue("key2", "value2"))
+			})
+
+			It("doesn't allow tag keys over 256 characters", func() {
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+
+				tooLong := strings.Repeat("x", 257)
+				err := sender.LogMessage(msg, msgType).
+					SetTag(tooLong, "value").
+					Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("doesn't allow tag values over 256 characters", func() {
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+
+				tooLong := strings.Repeat("x", 257)
+				err := sender.LogMessage(msg, msgType).
+					SetTag("key", tooLong).
+					Send()
+				Expect(err).To(HaveOccurred())
+			})
+
+			It("counts the number of runes in the key instead of bytes", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+
+				err := sender.LogMessage(msg, msgType).
+					SetTag(justRight, "value").
+					Send()
+				Expect(err).ToNot(HaveOccurred())
+			})
+
+			It("counts the number of runes in the value instead of bytes", func() {
+				justRight := strings.Repeat("x", 255) + "Ω"
+				msg := []byte("custom-log-message")
+				msgType := events.LogMessage_OUT
+
+				err := sender.LogMessage(msg, msgType).
+					SetTag("key", justRight).
+					Send()
+				Expect(err).ToNot(HaveOccurred())
+			})
 		})
 
 		It("sets envelope properties", func() {

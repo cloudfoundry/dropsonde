@@ -1,11 +1,15 @@
 package metric_sender
 
 import (
+	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
 )
+
+const maxTagLen = 256
 
 type EventEmitter interface {
 	Emit(events.Event) error
@@ -131,17 +135,27 @@ type envelopeEmitter interface {
 type chainer struct {
 	emitter  envelopeEmitter
 	envelope *events.Envelope
+	err      error
 }
 
 func (c chainer) SetTag(key, value string) chainer {
 	if c.envelope.Tags == nil {
 		c.envelope.Tags = make(map[string]string)
 	}
+	if utf8.RuneCountInString(key) > maxTagLen || utf8.RuneCountInString(value) > maxTagLen {
+		return chainer{
+			err: fmt.Errorf("Tag exceeds max length of %d", maxTagLen),
+		}
+	}
 	c.envelope.Tags[key] = value
 	return c
 }
 
 func (c chainer) Send() error {
+	if c.err != nil {
+		return c.err
+	}
+
 	c.envelope.Timestamp = proto.Int64(time.Now().UnixNano())
 	return c.emitter.EmitEnvelope(c.envelope)
 }
@@ -151,7 +165,7 @@ type valueChainer struct {
 }
 
 func (c valueChainer) SetTag(key, value string) ValueChainer {
-	c.chainer.SetTag(key, value)
+	c.chainer = c.chainer.SetTag(key, value)
 	return c
 }
 
@@ -160,7 +174,7 @@ type containerMetricChainer struct {
 }
 
 func (c containerMetricChainer) SetTag(key, value string) ContainerMetricChainer {
-	c.chainer.SetTag(key, value)
+	c.chainer = c.chainer.SetTag(key, value)
 	return c
 }
 
@@ -169,15 +183,23 @@ type counterChainer struct {
 }
 
 func (c counterChainer) SetTag(key, value string) CounterChainer {
-	c.chainer.SetTag(key, value)
+	c.chainer = c.chainer.SetTag(key, value)
 	return c
 }
 
 func (c counterChainer) Add(delta uint64) error {
+	if c.err != nil {
+		return c.err
+	}
+
 	c.envelope.CounterEvent.Delta = proto.Uint64(delta)
 	return c.chainer.Send()
 }
 
 func (c counterChainer) Increment() error {
+	if c.err != nil {
+		return c.err
+	}
+
 	return c.Add(1)
 }
