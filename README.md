@@ -65,6 +65,37 @@ For instrumentation of other metrics, use the `metrics` package.
 * `metrics.SendValue(name, value, unit)` sends an event that records the value of a measurement at an instant in time. (These are often called "gauge" metrics by other libraries.) The value is of type `float64`, and the `unit` is mandatory. We recommend following [this guide](http://metrics20.org/spec/#units) for unit names, and highly encourage SI units and prefixes where appropriate.
 * `metrics.IncrementCounter(name)` and `metrics.AddToCounter(name, delta)` send events that increment the named counter (by one or the specified non-negative `delta`, respectively). Note that the cumulative total is not included in the event message, only the increment.
 
+### Tags
+There are some metric functions/methods which return `Chainer` types, which can be used to apply tags before sending.  In the simplest case, the call will cascade until `Send()`:
+
+```go
+err := metrics.Value(name, value, unit).
+    SetTag("foo", "bar").
+    SetTag("bacon", 12).
+    Send()
+```
+
+In more complicated code, the chainer can be passed around, adding tags until the metric is ready to be sent.  For example, pre-marshal, you may want to add tags about the type:
+
+```go
+chainer := metrics.Value(name, value, unit).
+    SetTag("req-mimetype", "json").
+    SetTag("name", v.Name)
+```
+
+Later, it could tags about the chosen response type:
+
+```go
+chainer = chainer.SetTag("resp-mimetype", respType)
+```
+
+And finally, add tags about the final state:
+
+```go
+err := chainer.SetTag("resp-state", "error").
+    SetTag("resp-code", http.StatusBadRequest).
+    Send()
+```
 
 ## Manual usage
 For details on manual usage of dropsonde, please refer to the
