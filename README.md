@@ -2,7 +2,7 @@
 
 [![Coverage Status](https://img.shields.io/coveralls/cloudfoundry/dropsonde.svg)](https://coveralls.io/r/cloudfoundry/dropsonde?branch=master)
 [![GoDoc](https://godoc.org/github.com/cloudfoundry/dropsonde?status.png)](https://godoc.org/github.com/cloudfoundry/dropsonde)
-[![Concourse Badge](http://crossorigin.me/https://loggregator.ci.cf-app.com/api/v1/pipelines/loggregator/jobs/dropsonde-unit-tests/badge)](https://loggregator.ci.cf-app.com/teams/main/pipelines/loggregator/jobs/dropsonde-unit-tests)
+[![Concourse Badge](https://loggregator.ci.cf-app.com/api/v1/pipelines/loggregator/jobs/dropsonde-unit-tests/badge)](https://loggregator.ci.cf-app.com/teams/main/pipelines/loggregator/jobs/dropsonde-unit-tests)
 
 Go library to collect and emit metric and logging data from CF components.
 https://godoc.org/github.com/cloudfoundry/dropsonde
