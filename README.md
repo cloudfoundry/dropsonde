@@ -97,6 +97,10 @@ err := chainer.SetTag("resp-state", "error").
     Send()
 ```
 
+*Note*: It is important to note that for counter metrics tags are summed individually.
+If you have historically emitted a counter without tags it is best practice to continue 
+to emit that metric without tags, and add additional metrics for tagged versions of the counter. 
+
 ## Manual usage
 For details on manual usage of dropsonde, please refer to the
 [Godocs](https://godoc.org/github.com/cloudfoundry/dropsonde). Pay particular
