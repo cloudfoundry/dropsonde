@@ -181,18 +181,18 @@ var _ = Describe("MetricBatcher", func() {
 		})
 	})
 
-	Describe("SetConsistentlyEmittedMetrics", func() {
+	Describe("AddConsistentlyEmittedMetrics", func() {
 		It("emits zero values for consistenly emitted metrics", func() {
 			close(mockChainer.AddOutput.Ret0)
 
-			metricBatcher.SetConsistentlyEmittedMetrics("count1")
+			metricBatcher.AddConsistentlyEmittedMetrics("count1")
 			Eventually(mockChainer.AddInput).Should(BeCalled(With(uint64(0))))
 		})
 
 		It("continues to emit zero values for consistenly emitted metrics", func() {
 			close(mockChainer.AddOutput.Ret0)
 
-			metricBatcher.SetConsistentlyEmittedMetrics("count1")
+			metricBatcher.AddConsistentlyEmittedMetrics("count1")
 			metricBatcher.BatchAddCounter("count1", 2)
 			Eventually(mockChainer.AddInput).Should(BeCalled(With(uint64(2))))
 			Eventually(mockChainer.AddInput).Should(BeCalled(With(uint64(0))))
@@ -201,7 +201,7 @@ var _ = Describe("MetricBatcher", func() {
 		It("respects tags when emitting zero values", func() {
 			close(mockChainer.AddOutput.Ret0)
 
-			metricBatcher.SetConsistentlyEmittedMetrics("count1")
+			metricBatcher.AddConsistentlyEmittedMetrics("count1")
 			metricBatcher.BatchCounter("count1").SetTag("tag1", "value1").Add(3)
 			metricBatcher.BatchCounter("count1").SetTag("tag2", "value2").Add(5)
 

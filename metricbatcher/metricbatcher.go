@@ -173,13 +173,11 @@ func (mb *MetricBatcher) unsafeResetAndReturnMetrics() []batch {
 	return localMetrics
 }
 
-func (mb *MetricBatcher) SetConsistentlyEmittedMetrics(names ...string) {
+func (mb *MetricBatcher) AddConsistentlyEmittedMetrics(names ...string) {
 	mb.lock.Lock()
 	defer mb.lock.Unlock()
 
-	for _, name := range names {
-		mb.consistentlyEmittedMetricNames = append(mb.consistentlyEmittedMetricNames, name)
-	}
+	mb.consistentlyEmittedMetricNames = append(mb.consistentlyEmittedMetricNames, names...)
 }
 
 type BatchCounterChainer interface {
