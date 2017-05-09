@@ -3,6 +3,7 @@
 [![Coverage Status](https://img.shields.io/coveralls/cloudfoundry/dropsonde.svg)](https://coveralls.io/r/cloudfoundry/dropsonde?branch=master)
 [![GoDoc](https://godoc.org/github.com/cloudfoundry/dropsonde?status.png)](https://godoc.org/github.com/cloudfoundry/dropsonde)
 [![Concourse Badge](https://loggregator.ci.cf-app.com/api/v1/pipelines/submodules/jobs/dropsonde-unit-tests/badge)](https://loggregator.ci.cf-app.com/teams/main/pipelines/submodules/jobs/dropsonde-unit-tests)
+[![slack.cloudfoundry.org][slack-badge]][loggregator-slack]
 
 Go library to collect and emit metric and logging data from CF components.
 https://godoc.org/github.com/cloudfoundry/dropsonde
@@ -114,3 +115,6 @@ above. For programs that wish to process events, we provide the `dropsonde/unmar
 and `dropsonde/marshaller` packages for decoding/reencoding raw Protocol Buffer
 messages. Use [`dropsonde/signature`](signature/signature_verifier.go) to sign
 and validate messages.
+
+[slack-badge]:              https://slack.cloudfoundry.org/badge.svg
+[loggregator-slack]:        https://cloudfoundry.slack.com/archives/loggregator
