@@ -56,7 +56,9 @@ To process a stream of app logs (from, say, a socket of an application's STDOUT 
 logs.ScanLogStream("b7ba6142-6e6a-4e0b-81c1-d7025888cce4", "APP", "0", appLogSocketConnection)
 ```
 
-See the Cloud Foundry [DEA Logging Agent](https://github.com/cloudfoundry/loggregator/blob/develop/src/deaagent/task_listener.go) for an example of production code that scans log streams using these methods.
+See the Cloud Foundry [DEA Logging
+Agent](https://github.com/cloudfoundry-attic/dea_logging_agent/blob/master/src/deaagent/task_listener.go)
+(currently deprecated) for an example code that scans log streams using these methods.
 
 ### Metrics
 As mentioned earlier, initializing Dropsonde automatically instruments the default HTTP server and client objects in the `net/http` package, and will automatically send `HttpStart` and `HttpStop` events for every request served or made.
