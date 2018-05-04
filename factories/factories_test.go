@@ -15,14 +15,12 @@ import (
 
 var _ = Describe("HTTP event creation", func() {
 	var (
-		applicationId *uuid.UUID
-		requestId     *uuid.UUID
-		req           *http.Request
-		reqMethod     string
+		requestId *uuid.UUID
+		req       *http.Request
+		reqMethod string
 	)
 
 	BeforeEach(func() {
-		applicationId, _ = uuid.NewV4()
 		requestId, _ = uuid.NewV4()
 		reqMethod = "GET"
 	})
