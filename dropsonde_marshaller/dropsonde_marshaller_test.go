@@ -6,7 +6,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 
-	"github.com/gogo/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"

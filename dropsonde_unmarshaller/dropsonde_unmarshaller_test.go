@@ -6,7 +6,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
 
-	"github.com/gogo/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	. "github.com/apoydence/eachers"
 	. "github.com/onsi/ginkgo"
@@ -38,11 +38,13 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				EventType:   events.Envelope_ValueMetric.Enum(),
 				ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
 			}
-			message, _ := proto.Marshal(input)
+			message, err := proto.Marshal(input)
+			Expect(err).NotTo(HaveOccurred())
 
-			output, _ := unmarshaller.UnmarshallMessage(message)
+			output, err := unmarshaller.UnmarshallMessage(message)
+			Expect(err).NotTo(HaveOccurred())
 
-			Expect(output).To(Equal(input))
+			Expect(proto.Equal(input, output)).To(BeTrue())
 		})
 
 		It("handles bad input gracefully", func() {
@@ -76,11 +78,12 @@ var _ = Describe("DropsondeUnmarshaller", func() {
 				EventType:   events.Envelope_ValueMetric.Enum(),
 				ValueMetric: factories.NewValueMetric("value-name", 1.0, "units"),
 			}
-			message, _ := proto.Marshal(envelope)
+			message, err := proto.Marshal(envelope)
+			Expect(err).NotTo(HaveOccurred())
 
 			inputChan <- message
 			outputEnvelope := <-outputChan
-			Expect(outputEnvelope).To(Equal(envelope))
+			Expect(proto.Equal(outputEnvelope, envelope)).To(BeTrue())
 		})
 	})
 
