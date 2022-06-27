@@ -6,9 +6,9 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 
 	"github.com/cloudfoundry/dropsonde/envelope_sender"
-	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ = Describe("EnvelopeSender", func() {

@@ -13,9 +13,9 @@ import (
 	"github.com/cloudfoundry/dropsonde/metricbatcher"
 	"github.com/cloudfoundry/dropsonde/metrics"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/gogo/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/proto"
 )
 
 var _ = Describe("LogIntegration", func() {
