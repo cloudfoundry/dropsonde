@@ -6,7 +6,7 @@ github.com/apoydence/eachers/testhelpers
 ## explicit
 github.com/cloudfoundry/gosteno
 github.com/cloudfoundry/gosteno/syslog
-# github.com/cloudfoundry/sonde-go v0.0.0-20220324234026-9851b3a0dce2 => /Users/lcarson/workspace/sonde-go
+# github.com/cloudfoundry/sonde-go v0.0.0-20220627221915-ff36de9c3435
 ## explicit; go 1.17
 github.com/cloudfoundry/sonde-go/events
 # github.com/fsnotify/fsnotify v1.4.9
@@ -130,4 +130,3 @@ gopkg.in/tomb.v1
 gopkg.in/yaml.v2
 # launchpad.net/gocheck v0.0.0-20140225173054-000000000087
 ## explicit
-# github.com/cloudfoundry/sonde-go => /Users/lcarson/workspace/sonde-go

@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77
 	github.com/cloudfoundry/gosteno v0.0.0-20150423193413-0c8581caea35
-	github.com/cloudfoundry/sonde-go v0.0.0-20220324234026-9851b3a0dce2
+	github.com/cloudfoundry/sonde-go v0.0.0-20220627221915-ff36de9c3435
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
@@ -25,5 +25,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	launchpad.net/gocheck v0.0.0-20140225173054-000000000087 // indirect
 )
-
-replace github.com/cloudfoundry/sonde-go => /Users/lcarson/workspace/sonde-go

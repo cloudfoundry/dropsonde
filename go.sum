@@ -2,6 +2,8 @@ github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77 h1:afT88tB6u9JCK
 github.com/apoydence/eachers v0.0.0-20181020210610-23942921fe77/go.mod h1:bXvGk6IkT1Agy7qzJ+DjIw/SJ1AaB3AvAuMDVV+Vkoo=
 github.com/cloudfoundry/gosteno v0.0.0-20150423193413-0c8581caea35 h1:HdAWGlVEbFxuALqHXYu14XvAbRbyWZLd817ojygGnk0=
 github.com/cloudfoundry/gosteno v0.0.0-20150423193413-0c8581caea35/go.mod h1:3YBPUR85RIrvaUTdA1dL38YSp6s3OHu1xrWLkGt2Mog=
+github.com/cloudfoundry/sonde-go v0.0.0-20220627221915-ff36de9c3435 h1:xDsJBppu1bIny3d5CqbOZuCzezFbKhnrmrNucWLpNOk=
+github.com/cloudfoundry/sonde-go v0.0.0-20220627221915-ff36de9c3435/go.mod h1:DX2nqnCgs66F/YWnEtB8EtKWewkiKDu2SRn4y6Ln5NI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
