@@ -13,7 +13,7 @@ import (
 	"github.com/cloudfoundry/sonde-go/events"
 	uuid "github.com/nu7hatch/gouuid"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
