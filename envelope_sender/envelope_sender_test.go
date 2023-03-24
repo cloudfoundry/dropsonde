@@ -6,7 +6,7 @@ import (
 	"github.com/cloudfoundry/dropsonde/emitter/fake"
 
 	"github.com/cloudfoundry/dropsonde/envelope_sender"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/proto"
 )

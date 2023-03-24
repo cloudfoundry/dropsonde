@@ -5,7 +5,7 @@ import (
 
 	"github.com/cloudfoundry/dropsonde/envelopes"
 	"github.com/cloudfoundry/sonde-go/events"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"google.golang.org/protobuf/proto"
 
