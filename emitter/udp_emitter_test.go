@@ -2,6 +2,7 @@ package emitter_test
 
 import (
 	"net"
+	"time"
 
 	"github.com/cloudfoundry/dropsonde/emitter"
 
@@ -45,7 +46,7 @@ var _ = Describe("UdpEmitter", func() {
 				agentListener.Close()
 			})
 
-			It("should send the data", func(done Done) {
+			It("should send the data", func(ctx SpecContext) {
 				err := udpEmitter.Emit(testData)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -53,9 +54,7 @@ var _ = Describe("UdpEmitter", func() {
 				readCount, _, err := agentListener.ReadFrom(buffer)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(buffer[:readCount]).To(Equal(testData))
-
-				close(done)
-			})
+			}, NodeTimeout(5*time.Second))
 		})
 
 		Context("when the agent is not listening", func() {
@@ -69,7 +68,7 @@ var _ = Describe("UdpEmitter", func() {
 			})
 
 			Context("then the agent starts Listening", func() {
-				It("should eventually send data", func(done Done) {
+				It("should eventually send data", func(ctx SpecContext) {
 					err := udpEmitter.Emit(testData)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -84,8 +83,7 @@ var _ = Describe("UdpEmitter", func() {
 					Expect(err).ToNot(HaveOccurred())
 					Expect(buffer[:readCount]).To(Equal(testData))
 
-					close(done)
-				})
+				}, NodeTimeout(5*time.Second))
 			})
 		})
 	})
