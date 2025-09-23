@@ -1,14 +1,14 @@
 // Package dropsonde_marshaller provides a tool for marshalling Envelopes
 // to Protocol Buffer messages.
 //
-// Use
+// # Use
 //
 // Instantiate a Marshaller and run it:
 //
-//		marshaller := dropsonde_marshaller.NewDropsondeMarshaller(logger)
-//		inputChan := make(chan *events.Envelope) // or use a channel provided by some other source
-//		outputChan := make(chan []byte)
-//		go marshaller.Run(inputChan, outputChan)
+//	marshaller := dropsonde_marshaller.NewDropsondeMarshaller(logger)
+//	inputChan := make(chan *events.Envelope) // or use a channel provided by some other source
+//	outputChan := make(chan []byte)
+//	go marshaller.Run(inputChan, outputChan)
 //
 // The marshaller self-instruments, counting the number of messages
 // processed and the number of errors. These can be accessed through the Emit

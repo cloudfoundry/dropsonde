@@ -1,15 +1,14 @@
 // Package envelopes provides a simple API for sending dropsonde envelopes
 // through the dropsonde system.
 //
-// Use
+// # Use
 //
 // See the documentation for package dropsonde for configuration details.
 //
 // Importing package dropsonde and initializing will initial this package.
 // To send envelopes use
 //
-//		envelopes.SendEnvelope(envelope)
-//
+//	envelopes.SendEnvelope(envelope)
 package envelopes
 
 import "github.com/cloudfoundry/sonde-go/events"

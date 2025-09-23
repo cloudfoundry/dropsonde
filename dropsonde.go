@@ -3,7 +3,7 @@
 // The default HTTP transport is instrumented, as well as some basic stats about
 // the Go runtime. The default emitter sends events over UDP.
 //
-// Use
+// # Use
 //
 // dropsonde.Initialize("localhost:3457", origins...)
 //

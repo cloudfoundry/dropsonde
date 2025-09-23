@@ -1,18 +1,18 @@
 // Package logs provides a simple API for sending app logs from STDOUT and STDERR
 // through the dropsonde system.
 //
-// Use
+// # Use
 //
 // See the documentation for package dropsonde for configuration details.
 //
 // Importing package dropsonde and initializing will initial this package.
 // To send logs use
 //
-//		logs.SendAppLog(appID, message, sourceType, sourceInstance)
+//	logs.SendAppLog(appID, message, sourceType, sourceInstance)
 //
 // for sending errors,
 //
-//		logs.SendAppErrorLog(appID, message, sourceType, sourceInstance)
+//	logs.SendAppErrorLog(appID, message, sourceType, sourceInstance)
 package logs
 
 import (

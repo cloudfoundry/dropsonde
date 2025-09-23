@@ -12,4 +12,4 @@ echo "Go vetting..."
 go vet ./...
 
 echo "Recursive ginkgo... ${*:+(with parameter(s) }$*${*:+)}"
-ginkgo -r -race -randomizeAllSpecs -cover $*
+ginkgo -r -race --randomize-all -cover $*
